@@ -1,0 +1,576 @@
+
+
+            @extends('layouts.dispatcher-layout')
+
+@section('content')
+<style>
+    .autocompletes{
+        z-index: 9999;
+        position: absolute;
+        background: #fff;
+        border: solid 1px #000;
+        height:auto;
+        max-height: 250px;
+        overflow: hidden;
+        overflow-y: scroll;
+    }
+    .autocompletes ul{
+        padding: 0px;
+    }
+    .autocompletes ul li{
+        list-style: none;
+        padding: 10px;
+        font-size: 15px;
+    }
+    .autocompletes ul li:hover{
+        cursor: pointer;
+        background: #52abeb;
+        color: #fff;
+    }
+    .list-group-item{
+        line-height: 1;
+    }
+    .clickCheck{
+        display:none;
+    }
+</style>
+<div class="page-header page-header-light">
+    <!-- <div class="page-header-content header-elements-md-inline">
+        <div class="page-title d-flex">
+            <h4> <span class="font-weight-semibold">{{ __('dispatcher') }} </span> </h4>
+            <a href="#" class="header-elements-toggle text-default d-md-none"><i class="icon-more"></i></a>
+        </div>
+    </div> -->
+
+    
+</div>
+<div class="content" id="map-canvas">
+    <div class="alert bg-warning text-white alert-styled-left alert-dismissible">
+		<!-- <button type="button" class="close" data-dismiss="alert"><span>×</span></button> -->
+		<span class="font-weight-semibold">Loading!</span> Seaarching for driver. Please wait
+	</div>
+    <div class="alert bg-danger text-white alert-styled-left alert-dismissible">
+		<!-- <button type="button" class="close" data-dismiss="alert"><span>×</span></button> -->
+		<span class="font-weight-semibold">Sorry!</span> <span id="error_message"></span>.
+	</div>
+</div>
+
+<!-- /horizontal form modal -->
+
+<script type="text/javascript">
+    var i =1;
+    $(".autocompletes").hide();
+    $(".bg-warning").hide();
+    $(".bg-danger").hide();
+    $("#trip_date_time").hide();
+    $("#add_rows").hide();
+    $(".trips_count").hide();
+
+    $(document).on('change',".form-input-styled",function(){
+        var value = $(this).val();
+
+        if(value == 'RIDE_LATER'){
+            $("#trip_date_time").show();
+        }
+        else{
+            $("#trip_date_time").hide();
+        }
+    });
+
+    $.ajaxSetup({
+          headers: {
+              'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+          }
+    });
+
+    $(document).on('click',".add_button",function(){
+        $("#button_view").hide();
+        $("#add_rows").show();
+    })
+
+    $(document).on('click',".remove_button",function(){
+        $("#button_view").show();
+        $("#add_rows").hide();
+        $("#stop_point").val('');
+        $("#stop_point_lat").val('');
+        $("#stop_point_lng").val('');
+        $("#stop_point_lng_id").val('');
+        originPlaceId = $("#pickup_point_lng_id").val();
+        destinationPlaceId = $("#drop_point_lng_id").val();
+        var request = {
+            origin: { placeId: originPlaceId },
+            destination: { placeId: destinationPlaceId },
+            travelMode: google.maps.TravelMode.DRIVING
+        };
+        directionsService.route(request, function(response, status) {
+            if (status == google.maps.DirectionsStatus.OK) {
+                directionsDisplay.setDirections(response);
+                directionsDisplay.setMap(map);
+            } else {
+                alert("Directions Request from " + start.toUrlValue(6) + " to " + end.toUrlValue(6) + " failed: " + status);
+            }
+        });
+        getVehicles();
+
+    })
+
+    function myFunction() {
+        var value = $("#customer_number").val();
+        var text = "";
+        $.ajax({
+            url: "{{ url('get_customer') }}/"+value,
+            type: "GET",
+            dataType: 'json',
+            success: function (data) {
+
+                if(data.data.length > 0){
+                    $.each( data.data, function( key, value ) {
+                        text += "<li id='"+value.slug+"' class='getCustomer' >"+value.firstname+" "+value.lastname+" ("+value.phone_number+")</li>"
+                    });
+                    $(".autocompletes").show();
+                    $("#autocompletes").html(text);
+                }
+                else{
+                    $(".autocompletes").hide();
+                }
+                
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                $('#errorbox').show();
+                $(".autocompletes").hide();
+                var err = eval("(" + xhr.responseText + ")");
+                // console.log(err.error);
+                $('#errorContent').html('');
+                $.each(err.error, function(key, value) {
+                    $('#errorContent').append('<strong><li>'+value+'</li></strong>');
+                });
+                $('#saveBtn').html("{{ __('save-changes') }}");
+            }
+        });
+    }
+
+    $(document).on('click',".getCustomer",function(){
+        var id = $(this).attr('id');
+        var trips_id = '';
+        var piickup_list = '';
+        var drops_list = '';
+        $.ajax({
+            url: "{{ url('get-customer-detail') }}/"+id,
+            type: "GET",
+            dataType: 'json',
+            success: function (data) {
+                $(".trips_count").show();
+                $("#customer_number").val(data.data.phone_number);
+                $("#customer_name").val(data.data.firstname+" "+data.data.lastname);
+                $("#customer_address").val(data.data.address);
+                $("#customer_slug").val(data.data.slug);
+                $(".completed_trips_count").text(data.data.completed_trips);
+                $(".cancelled_trips_count").text(data.data.cancelled_trips);
+                
+                jQuery.each( data.data.trips, function( i, val ) {
+                    console.log(val);
+                    trips_id += '<a href="dispatch-request-view/'+val.id+'" class="btn btn-success ml-1">'+val.request_number+'</a>';
+                    piickup_list += '<button type="button" class="list-group-item list-group-item-action setPickup" data-value="'+val.request_place.pick_lat+';'+val.request_place.pick_lng+';'+val.request_place.pick_address+'"><i class="icon-user mr-3"></i>'+val.request_place.pick_address+'</button>'
+                    drops_list += '<button type="button" class="list-group-item list-group-item-action setDrop" data-value="'+val.request_place.drop_lat+';'+val.request_place.drop_lng+';'+val.request_place.drop_address+'"><i class="icon-user mr-3"></i>'+val.request_place.drop_address+'</button>'
+                });
+                $("#trips_id").html(trips_id);
+                $(".pickups_list").html(piickup_list);
+                $(".drops_list").html(drops_list);
+                $(".autocompletes").hide();
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                $('#errorbox').show();
+                var err = eval("(" + xhr.responseText + ")");
+                $('#errorContent').html('');
+                $.each(err.error, function(key, value) {
+                    $('#errorContent').append('<strong><li>'+value+'</li></strong>');
+                });
+                $('#saveBtn').html("{{ __('save-changes') }}");
+            }
+        });
+    })
+
+    $(document).on('click','.setPickup',function(){
+        var pick_lat = $(this).attr('data-value');
+        pick_lat = pick_lat.split(";")
+        $("#pickup_point_lat").val(pick_lat[0]);
+        $("#pickup_point_lng").val(pick_lat[1]);
+        $("#pickup_point").val(pick_lat[2]);
+        $(".collapsed").click();
+        $(".setPickup").removeClass( "active" );
+        $(this).addClass( "active" );
+        // $("#pickup_point_lng_id").val(pick_address);
+    });
+
+    $(document).on('click','.setDrop',function(){
+        var drop_lat = $(this).attr('data-value');
+        drop_lat = drop_lat.split(";");
+        $("#drop_point_lat").val(drop_lat[0]);
+        $("#drop_point_lng").val(drop_lat[1]);
+        $("#drop_point").val(drop_lat[2]);
+        $(".setDrop").removeClass( "active" );
+        $(this).addClass( "active" );
+        // $("#drop_point_lng_id").val(pick_address);
+    });
+    
+    // $(document).on('blur',"#drop_point",function(){
+    function getVehicles() {
+        var texts = "";
+        var formData = new FormData();
+        formData.append('pickup_lat',$('#pickup_point_lat').val());
+        formData.append('pickup_long',$('#pickup_point_lng').val());
+        formData.append('drop_lat',$('#drop_point_lat').val());
+        formData.append('drop_long',$('#drop_point_lng').val());
+        formData.append('pickup_address',$('#pickup_point').val());
+        formData.append('drop_address',$('#drop_point').val());
+        formData.append('ride_type',$('input[type=radio][name=trip_type]').val());
+        formData.append('ride_date',$('#tide_date_time').val());
+        formData.append('ride_time',$('#tide_date_time').val());
+        if($('#stop_point').val() != ""){
+            var stops = [
+                {
+                    'address':$('#stop_point').val(),
+                    'latitude':$('#stop_point_lat').val(),
+                    'longitude':$('#stop_point_lng').val(),
+                    'stopsCount':1,
+                }
+            ];
+            console.log(stops);
+            formData.append('stops',JSON.stringify(stops));
+        }
+        $(".bg-danger").hide();
+        $.ajax({
+            data: formData,
+            url: "{{ route('getVehicles') }}",
+            type: "POST",
+            dataType: 'json',
+            contentType : false,
+            processData: false,
+            success: function (data) {
+                data = data.data;
+                if(data.zone_type_price.length > 0){
+                    $(".bg-danger").hide();
+                    data.zone_type_price.forEach(element => {
+                        texts += '<div class="col-xl-12 col-md-12"><div class="card card-body"><div class="media"><div class="mr-3"><img src="'+element.type_image+'" class="rounded-circle" width="38" height="38" alt=""></div><div class="media-body" for="'+element.type_slug+'"><input type="radio" name="type" class="required clickCheck" value="'+element.type_slug+'" id="'+element.type_slug+'"><label class="media-title text-capitalize font-weight-semibold">'+element.type_name+'</label><br><span class="">'+data.currency_symble+' '+element.total_amount+'</span></div><div class="ml-3 align-self-center"><div class="list-icons"><div class="dropdown position-static"><a href="#" class="list-icons-item" data-toggle="dropdown" aria-expanded="false"><i class="icon-menu7"></i></a><div class="dropdown-menu dropdown-menu-right" style=""><ul class="list-group"><li class="list-group-item">Base Price <span class="ml-auto">'+data.currency_symble+' '+element.base_price+'</span></li><li class="list-group-item">Rate Per Km <span class="ml-auto">'+data.currency_symble+' '+element.price_per_distance+'</span></li><li class="list-group-item">Ride Time Charge <span class="ml-auto">'+data.currency_symble+' '+element.price_per_time+'</span></li><li class="list-group-item">Waiting Charge <span class="ml-auto">'+data.currency_symble+' '+element.waiting_charge+'</span></li><li class="list-group-item list-group-divider"></li><li class="list-group-item">Total <span class="ml-auto">'+data.currency_symble+' '+element.total_amount+'</span></li></ul></div></div></div></div></div></div></div>';
+                    });
+                }
+                $("#types_list").html(texts);
+                
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                var err = eval("(" + xhr.responseText + ")");
+                console.log(err);
+                if(err.success == false){
+                    $("#error_message").text(err.message);
+                    $(".bg-danger").show();
+                }
+            }
+        });
+    }
+
+    $(document).on('click','.media-body',function(){
+        var valu = $(this).attr("for");
+        $("#"+valu).attr('checked',true);
+        $(".clickCheck").parents(".card-body").removeClass('bg-success');
+        $("#"+valu).parents(".card-body").addClass('bg-success');
+    });
+
+    $(document).on('click','.submit',function(e){
+        e.preventDefault();
+        if($("#additional_info").val() != ""){
+            $.ajax({
+                data: $('#request_form').serialize(),
+                url: "{{ route('createDispatchRequest') }}",
+                type: "POST",
+                dataType: 'json',
+                success: function (data) {
+                    $(".bg-danger").hide();
+                    if(data.success){
+                        $(".bg-danger").hide();
+                        if(data.data.is_later){
+                            swal({
+                                title: "{{ __('success') }}",
+                                text: data.message,
+                                icon: "success",
+                            }).then((value) => {        
+                                window.location.href = "dispatch-request-view/"+data.data.id;
+                            });
+                        }
+                        else{
+                            // $(".bg-warning").show();
+                            searchDriver();
+                            setInterval(function () {
+                                $.ajax({
+                                    url: "{{ url('/get-dispatch-request') }}/"+data.data.data.id,
+                                    type: "GET",
+                                    dataType: 'json',
+                                    success: function (datas) {
+                                        if(datas.data.is_driver_started == 1){
+                                            swal({
+                                                title: "{{ __('success') }}",
+                                                text: datas.message,
+                                                icon: "success",
+                                            }).then((value) => {        
+                                                window.location.href = "dispatch-request-view/"+datas.data.id;
+                                            });
+                                        }
+                                        else if(datas.data.is_later == 1 && datas.data.trip_start_time == null){
+                                            swal({
+                                                title: "{{ __('errors') }}",
+                                                text: datas.message,
+                                                icon: "error",
+                                            }).then((value) => {        
+                                                window.location.href = "{{  route('dispatcherTripList') }}";
+                                            });
+                                        }
+                                        else{
+                                            searchDriver();
+                                        }
+                                    }
+                                })
+                            }, 30000);
+                        }
+                    }
+                    else{
+                        $(".bg-danger").show();
+                        $("#error_message").text(data.message);
+                    }
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    var err = eval("(" + xhr.responseText + ")");
+                    $(".bg-danger").show();
+                    $("#error_message").text(err.message);
+                }
+            });
+        }
+    });
+
+    function searchDriver(){
+        $.blockUI({ 
+            message: '<h1><i class="icon-spinner4 spinner"></i> <br>Loading...<br> Searching for driver. Please wait</h1>',
+            timeout: 30000, //unblock after 2 seconds
+            overlayCSS: {
+                backgroundColor: '#1b2024',
+                opacity: 0.8,
+                zIndex: 1200,
+                cursor: 'wait'
+            },
+            css: {
+                border: 0,
+                color: '#fff',
+                padding: 0,
+                zIndex: 1201,
+                backgroundColor: 'transparent'
+            },
+            onUnblock: function() { 
+                // searchDriver();
+            } 
+        });
+    };
+
+
+</script>
+<script type="text/javascript">
+    var i =1;
+    var message = "{{session()->get('message')}}";
+
+    if(message){
+        swal({
+            title: "{{ __('errors') }}",
+            text: message,
+            icon: "error",
+        }).then((value) => {        
+            // window.location.href = "../driver-document/"+$('#driver_id').val();
+        });
+    }
+
+</script>
+<!-- <script>
+    // google.maps.event.addDomListener(window, 'load', initMap);
+    var map = '';
+    var directionsDisplay;
+    var directionsService;
+    
+    var originPlaceId = '';
+    var destinationPlaceId = '';
+    var stopPlaceId = [];
+    var originInput = '';
+    var originAutocomplete = '';
+
+    function initMap() {
+        directionsDisplay = new google.maps.DirectionsRenderer();
+        directionsService = new google.maps.DirectionsService();
+        map = new google.maps.Map(document.getElementById('map-canvas'), {
+            center: {
+                lat: 11.1271225,
+                lng: 78.6568942
+            },
+            zoom: 10
+        });
+        directionsDisplay.setMap(map);
+    }
+
+    function getAddress(even) {
+        if(even == 'pickup'){
+            if($("#pickup_point").val().length > 3){ 
+                originInput = document.getElementById("pickup_point");
+                originAutocomplete = new google.maps.places.Autocomplete(
+                    originInput
+                );
+                originAutocomplete.setFields(["place_id","geometry"]);
+            }
+        }
+        else if(even == 'drop'){
+            if($("#drop_point").val().length > 3){ 
+                var originInput = document.getElementById("drop_point");
+                var originAutocomplete = new google.maps.places.Autocomplete(
+                    originInput
+                );
+                originAutocomplete.setFields(["place_id","geometry"]);
+            }
+        }
+        else if(even == 'stop'){
+            if($("#stop_point").val().length > 3){ 
+                var originInput = document.getElementById("stop_point");
+                var originAutocomplete = new google.maps.places.Autocomplete(
+                    originInput
+                );
+                originAutocomplete.setFields(["place_id","geometry"]);
+            }
+        }
+
+        // originAutocomplete.setComponentRestrictions({'country': ['IN']});
+        // originAutocomplete.bindTo("bounds", map);
+        originAutocomplete.addListener("place_changed", (event) => {
+            var place = originAutocomplete.getPlace();
+            if (even == 'pickup') {
+                originPlaceId = place.place_id;
+                $("#pickup_point_lat").val(place.geometry.location.lat());
+                $("#pickup_point_lng").val(place.geometry.location.lng());
+                $("#pickup_point_lng_id").val(originPlaceId);
+                getVehicles()
+            } else if(even == 'drop') {
+                destinationPlaceId = place.place_id;
+                $("#drop_point_lat").val(place.geometry.location.lat());
+                $("#drop_point_lng").val(place.geometry.location.lng());
+                $("#drop_point_lng_id").val(destinationPlaceId);
+                getVehicles()
+            } else if(even == 'stop') {
+                stopPlaceId = [];
+                stopPlaceId.push({
+                    location: $("#stop_point").val(),
+                    stopover: true,
+                });
+                $("#stop_point_lat").val(place.geometry.location.lat());
+                $("#stop_point_lng").val(place.geometry.location.lng());
+                $("#stop_point_lng_id").val(place.place_id);
+                getVehicles()
+            }
+            if (!originPlaceId || !destinationPlaceId) {
+                return;
+            }
+            else{
+                var pickup_point_lat = parseFloat($("#pickup_point_lat").val());
+                var pickup_point_lng = parseFloat($("#pickup_point_lng").val());
+                var drop_point_lat = parseFloat($("#drop_point_lat").val());
+                var drop_point_lng = parseFloat($("#drop_point_lng").val());
+                var stop_point_lat = parseFloat($("#stop_point_lat").val());
+                var stop_point_lng = parseFloat($("#stop_point_lng").val());
+                // var start = new google.maps.LatLng(pickup_point_lat, pickup_point_lng);
+                //var end = new google.maps.LatLng(38.334818, -181.884886);
+                // var end = new google.maps.LatLng(drop_point_lat, drop_point_lng);
+                // var stop = new google.maps.LatLng(stop_point_lat, stop_point_lng);
+                if(stopPlaceId.length > 0){
+                    var request = {
+                        // origin: start,
+                        // destination: end,
+                        origin: { placeId: originPlaceId },
+                        destination: { placeId: destinationPlaceId },
+                        waypoints: stopPlaceId,
+                        travelMode: google.maps.TravelMode.DRIVING
+                    };
+                }
+                else{
+                    var request = {
+                        // origin: start,
+                        // destination: end,
+                        origin: { placeId: originPlaceId },
+                        destination: { placeId: destinationPlaceId },
+                        travelMode: google.maps.TravelMode.DRIVING
+                    };
+                }
+                directionsService.route(request, function(response, status) {
+                    if (status == google.maps.DirectionsStatus.OK) {
+                        directionsDisplay.setDirections(response);
+                        directionsDisplay.setMap(map);
+                    } else {
+                        alert("Directions Request from " + start.toUrlValue(6) + " to " + end.toUrlValue(6) + " failed: " + status);
+                    }
+                });
+            }
+        });
+
+    }
+
+
+    $(document).on('click','.change_button',function(){
+        stopPlaceId = [];
+        var pickup_point_lat = parseFloat($("#pickup_point_lat").val());
+        var pickup_point_lng = parseFloat($("#pickup_point_lng").val());
+        var drop_point = $("#stop_point").val();
+        destinationPlaceId = $("#stop_point_lng_id").val();
+        var drop_point_lat = parseFloat($("#stop_point_lat").val());
+        var drop_point_lng = parseFloat($("#stop_point_lng").val());
+        var stop_point = $("#drop_point").val();
+        var destinationPlaceIds = $("#drop_point_lng_id").val();
+        var stop_point_lat = parseFloat($("#drop_point_lat").val());
+        var stop_point_lng = parseFloat($("#drop_point_lng").val());
+        $("#stop_point").val(stop_point);
+        $("#stop_point_lat").val(stop_point_lat);
+        $("#stop_point_lng").val(stop_point_lng);
+        $("#drop_point").val(drop_point);
+        $("#drop_point_lng_id").val(destinationPlaceId);
+        $("#stop_point_lng_id").val(destinationPlaceIds);
+        $("#drop_point_lat").val(drop_point_lat);
+        $("#drop_point_lng").val(drop_point_lng);
+        stopPlaceId.push({
+                    location: $("#stop_point").val(),
+                    stopover: true,
+                });
+        var request = {
+            origin: { placeId: originPlaceId },
+            destination: { placeId: destinationPlaceId },
+            waypoints: stopPlaceId,
+            travelMode: google.maps.TravelMode.DRIVING
+        };
+        directionsService.route(request, function(response, status) {
+            if (status == google.maps.DirectionsStatus.OK) {
+                directionsDisplay.setDirections(response);
+                directionsDisplay.setMap(map);
+            } else {
+                alert("Directions Request from " + start.toUrlValue(6) + " to " + end.toUrlValue(6) + " failed: " + status);
+            }
+        });
+        getVehicles();
+    })
+    
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{array_key_exists('google_map_key', session('data')) ? session('data')['google_map_key'] : ''}}&libraries=drawing,places&callback=initMap" async defer>    
+</script> -->
+
+<script src="https://apis.mapmyindia.com/advancedmaps/api/eab7d5cae02147918164985738222231/map_sdk?layer=vector&v=2.0&callback=initMap1" defer async></script>
+
+<script>
+    var map;
+            function initMap1(){
+                map = new MapmyIndia.Map('map-canvas', {
+                    center: [28.61, 77.23],
+                    zoomControl: true,
+                    location: true,
+                    search: false
+                    // backgroundColor:"red",
+                });
+            }
+        </script>
+
+@endsection
