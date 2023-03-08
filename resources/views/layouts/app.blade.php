@@ -131,7 +131,7 @@
 
 <body id="reloadDiv">
     <!-- Main navbar -->
-    <div class="navbar navbar-expand-md navbar-dark  navbar-static" style="background-color:#FFD60B">
+    <div class="navbar navbar-expand-md navbar-dark  navbar-static" style="background-color:#0767B1">
         <div class="navbar-brand">
             <a href="" class="d-inline-block">
                 <!-- <h3 style="color: #fff;">Taxiapp3.0</h3> -->
@@ -151,13 +151,13 @@
         <div class="collapse navbar-collapse" id="navbar-mobile">
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a href="#" class="navbar-nav-link sidebar-control sidebar-main-toggle d-none d-md-block" style="color:#000000">
+                    <a href="#" class="navbar-nav-link sidebar-control sidebar-main-toggle d-none d-md-block" style="color:#0767B1">
                         <i class="icon-paragraph-justify3"></i>
                     </a>
                 </li>
             </ul>
 
-            <span class="navbar-text ml-md-3" style="color:#000000">
+            <span class="navbar-text ml-md-3" style="color:#fff">
                 <span class="badge badge-mark border-success-300 mr-2"></span>
 
                 Welcome,{{ auth()->user()->firstname }} !!!
@@ -166,9 +166,9 @@
             <ul class="navbar-nav ml-md-auto">
 
             <li class="nav-item dropdown"  style="padding-top: 10px;">
-					<span href="#" class="navbar-nav-link dropdown-toggle nofication" data-toggle="dropdown" style="color:#000;">
-						<i class="icon-bubble-notification	font-size-base mr-2" style="font-size:16px; color:#000;"></i>
-						<span style="color:#000;">Notification </span>
+					<span href="#" class="navbar-nav-link dropdown-toggle nofication" data-toggle="dropdown" style="color:#fff;">
+						<i class="icon-bubble-notification	font-size-base mr-2" style="font-size:16px; color:#fff;"></i>
+						<span style="color:#fff;">Notification </span>
 					</span>
 					
 					<div class="dropdown-menu dropdown-menu-right dropdown-content wmin-md-350">
@@ -191,7 +191,7 @@
                     <form class="navbar-nav-link" method="POST" action="{{ route('logout') }}">
                         @csrf
                         
-                        <button type="submit" class="btn" ><i class="icon-switch2"></i></button>
+                        <button type="submit" class="btn" style="font-size:16px; color:#fff;"><i class="icon-switch2"></i></button>
                     </form>
                     <span class="d-md-none ml-2">Logout</span>
                 </li>

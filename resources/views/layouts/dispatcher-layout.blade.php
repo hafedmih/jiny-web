@@ -92,7 +92,7 @@
 
 <body id="reloadDiv" class="sidebar-xs">
     <!-- Main navbar -->
-    <div class="navbar navbar-expand-md navbar-dark  navbar-static" style="background-color:#FFD60B">
+    <div class="navbar navbar-expand-md navbar-dark  navbar-static" style="background-color:#0767B1">
         <div class="navbar-brand">
             <a href="" class="d-inline-block">
                 <!-- <h3 style="color: #fff;">Taxiapp3.0</h3> -->
@@ -112,13 +112,13 @@
         <div class="collapse navbar-collapse" id="navbar-mobile">
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a href="#" class="navbar-nav-link sidebar-control sidebar-main-toggle d-none d-md-block" style="color:#000000">
+                    <a href="#" class="navbar-nav-link sidebar-control sidebar-main-toggle d-none d-md-block" style="color:#fff">
                         <i class="icon-paragraph-justify3"></i>
                     </a>
                 </li>
             </ul>
 
-            <span class="navbar-text ml-md-3" style="color:#000000">
+            <span class="navbar-text ml-md-3" style="color:#fff">
                 <span class="badge badge-mark border-success-300 mr-2"></span>
 
                 Welcome,{{ auth()->user()->firstname }} !!!
@@ -129,9 +129,9 @@
                     <form class="navbar-nav-link" method="POST" action="{{ route('logout') }}">
                         @csrf
                         
-                        <button type="submit" class="btn" ><i class="icon-switch2"></i></button>
+                        <button type="submit" class="btn" ><i class="icon-switch2" style="font-size:16px; color:#fff;"></i></button>
                     </form>
-                    <span class="d-md-none ml-2">Logout</span>
+                    <span class="d-md-none ml-2" >Logout</span>
                 </li>
 
 
