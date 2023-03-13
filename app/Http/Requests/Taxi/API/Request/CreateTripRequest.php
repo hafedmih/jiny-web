@@ -21,9 +21,9 @@ class CreateTripRequest extends FormRequest
             // 'drop_lat' => 'required',
             // 'drop_lng' => 'required',
             // 'drop_address' => 'required',
-            'vehicle_type' => $res->ride_type == "RENTAL" ? '' : 'required',
+            'vehicle_type' => $res->ride_type == 'RENTAL' ? '' : 'required',
             'payment_opt' => 'required',
-            'ride_type' => 'required'
+            'ride_type' => 'required',
         ];
     }
 }
