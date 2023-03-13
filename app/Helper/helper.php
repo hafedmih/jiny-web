@@ -484,7 +484,7 @@ if (!function_exists('generateRequestNumber'))
 
         $index = (string) $lastIndex + 1;
 
-        return 'TAXI_'.sprintf("%06d", $index);
+        return 'LAH_'.sprintf("%06d", $index);
     }
 }
 

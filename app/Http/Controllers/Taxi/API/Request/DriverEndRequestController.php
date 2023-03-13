@@ -245,7 +245,7 @@ class DriverEndRequestController extends BaseController
                 $lang = $userModel->language;
                 $push_data = $this->pushlanguage($lang,'trip-end');
                 if(is_null($push_data)){
-                    $title = 'Thanks for choosing roda taxi';
+                    $title = 'Thanks for choosing Lahagni';
                     $body = 'Driver finished the ride, Please help us by rate the driver';
                     $sub_title = 'Driver finished the ride, Please help us by rate the driver';
 
@@ -256,11 +256,11 @@ class DriverEndRequestController extends BaseController
 
                 } 
 
-                if($userModel->email){
-                    $settings = Settings::where('status',1)->pluck('value','name')->toArray();
-                    $pdf = \PDF::loadView('emails.RequestBillMailPDF',['settings' => $settings,'request_detail' => $request_detail]);
-                    \Mail::to($userModel->email)->send(new \App\Mail\MyTestMail($request_detail,$settings,$pdf));
-                }
+                // if($userModel->email){
+                //     $settings = Settings::where('status',1)->pluck('value','name')->toArray();
+                //     $pdf = \PDF::loadView('emails.RequestBillMailPDF',['settings' => $settings,'request_detail' => $request_detail]);
+                //     \Mail::to($userModel->email)->send(new \App\Mail\MyTestMail($request_detail,$settings,$pdf));
+                // }
 
                 $push_data = ['notification_enum' => PushEnum::DRIVER_END_THE_TRIP];
 
@@ -835,6 +835,8 @@ class DriverEndRequestController extends BaseController
             
             $subTotal = $basePrice + $totalTimePrice + $totalDistancePrice + $finalWaitingPrice;
             $bookingbaseprice = 0;
+            $booking_km_amount = 0;
+            $price->ridenow_booking_base_fare = 0;
 
            
             $subTotal = $subTotal + $booking_km_amount + $price->ridenow_booking_base_fare;

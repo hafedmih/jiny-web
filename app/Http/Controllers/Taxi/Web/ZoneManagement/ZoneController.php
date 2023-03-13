@@ -86,8 +86,8 @@ class ZoneController extends Controller
             'driver_assign_method' => 'required',
             'zone_name' => 'required',
             'country' => 'required',
-            'admin_commission_type' => 'required',
-            'admin_commission' => 'required',
+           // 'admin_commission_type' => 'required',
+          //  'admin_commission' => 'required',
             'payment_type' => 'required',
             'unit' => 'required',
             'ridenow_base_price' => 'required',
@@ -111,10 +111,10 @@ class ZoneController extends Controller
             'ridenow_admin_commission' => 'required',
             'ridelater_admin_commission_type' => 'required',
             'ridelater_admin_commission' => 'required',
-            'ridenow_booking_base_fare' => 'required',
-            'ridenow_booking_base_per_kilometer' => 'required',
-            'ridelater_booking_base_fare' => 'required',
-            'ridelater_booking_base_per_kilometer' => 'required',
+           // 'ridenow_booking_base_fare' => 'required',
+           // 'ridenow_booking_base_per_kilometer' => 'required',
+           // 'ridelater_booking_base_fare' => 'required',
+           // 'ridelater_booking_base_per_kilometer' => 'required',
         ]);
         if ($validator->fails()) {
             return redirect('zone/add')
@@ -157,8 +157,8 @@ class ZoneController extends Controller
             'driver_assign_method' => $data['driver_assign_method'],
             'zone_name' => $data['zone_name'],
             'country' => $data['country'],
-            'admin_commission_type' => $data['admin_commission_type'],
-            'admin_commission' => $data['admin_commission'],
+           // 'admin_commission_type' => $data['admin_commission_type'],
+           // 'admin_commission' => $data['admin_commission'],
             'map_zone' => $multi_polygon,
             'payment_types' => implode(',', $data['payment_type']),
             'unit' => $data['unit'],
@@ -193,10 +193,10 @@ class ZoneController extends Controller
                     $data['ridenow_admin_commission_type'][$i],
                 'ridenow_admin_commission' =>
                     $data['ridenow_admin_commission'][$i],
-                'ridenow_booking_base_fare' =>
-                    $data['ridenow_booking_base_fare'][$i],
-                'ridenow_booking_base_per_kilometer' =>
-                    $data['ridenow_booking_base_per_kilometer'][$i],
+                // 'ridenow_booking_base_fare' =>
+                //     $data['ridenow_booking_base_fare'][$i],
+                // 'ridenow_booking_base_per_kilometer' =>
+                //     $data['ridenow_booking_base_per_kilometer'][$i],
                 'ridelater_base_price' => $data['ridelater_base_price'][$i],
                 'ridelater_price_per_time' =>
                     $data['ridelater_price_per_time'][$i],
@@ -216,10 +216,10 @@ class ZoneController extends Controller
                     $data['ridelater_admin_commission_type'][$i],
                 'ridelater_admin_commission' =>
                     $data['ridelater_admin_commission'][$i],
-                'ridelater_booking_base_fare' =>
-                    $data['ridelater_booking_base_fare'][$i],
-                'ridelater_booking_base_per_kilometer' =>
-                    $data['ridelater_booking_base_per_kilometer'][$i],
+                // 'ridelater_booking_base_fare' =>
+                //     $data['ridelater_booking_base_fare'][$i],
+                // 'ridelater_booking_base_per_kilometer' =>
+                //     $data['ridelater_booking_base_per_kilometer'][$i],
 
                 'status' => 1,
                 'slug' => Carbon::now()->timestamp,
@@ -383,8 +383,8 @@ class ZoneController extends Controller
             'driver_assign_method' => 'required',
             'zone_name' => 'required',
             'country' => 'required',
-            'admin_commission_type' => 'required',
-            'admin_commission' => 'required',
+            //'admin_commission_type' => 'required',
+            //'admin_commission' => 'required',
             'payment_type' => 'required',
             'unit' => 'required',
             'ridenow_base_price' => 'required',
@@ -408,10 +408,10 @@ class ZoneController extends Controller
             'ridenow_admin_commission' => 'required',
             'ridelater_admin_commission_type' => 'required',
             'ridelater_admin_commission' => 'required',
-            'ridenow_booking_base_fare' => 'required',
-            'ridenow_booking_base_per_kilometer' => 'required',
-            'ridelater_booking_base_fare' => 'required',
-            'ridelater_booking_base_per_kilometer' => 'required',
+            // 'ridenow_booking_base_fare' => 'required',
+            // 'ridenow_booking_base_per_kilometer' => 'required',
+            // 'ridelater_booking_base_fare' => 'required',
+            // 'ridelater_booking_base_per_kilometer' => 'required',
         ]);
         if ($validator->fails()) {
             return redirect()
@@ -467,8 +467,8 @@ class ZoneController extends Controller
         $zone->zone_name = $data['zone_name'];
         $zone->map_cooder = $data['bounds'];
         $zone->country = $data['country'];
-        $zone->admin_commission_type = $data['admin_commission_type'];
-        $zone->admin_commission = $data['admin_commission'];
+       // $zone->admin_commission_type = $data['admin_commission_type'];
+      //  $zone->admin_commission = $data['admin_commission'];
         $zone->payment_types = implode(',', $data['payment_type']);
         $zone->non_service_zone = $non_service_zone;
         $zone->unit = $data['unit'];
@@ -555,18 +555,18 @@ class ZoneController extends Controller
                 )
                     ? $data['ridenow_admin_commission'][$i]
                     : '';
-                $zone_price->ridenow_booking_base_fare = array_key_exists(
-                    $i,
-                    $data['ridenow_booking_base_fare']
-                )
-                    ? $data['ridenow_booking_base_fare'][$i]
-                    : '';
-                $zone_price->ridenow_booking_base_per_kilometer = array_key_exists(
-                    $i,
-                    $data['ridenow_booking_base_per_kilometer']
-                )
-                    ? $data['ridenow_booking_base_per_kilometer'][$i]
-                    : '';
+                // $zone_price->ridenow_booking_base_fare = array_key_exists(
+                //     $i,
+                //     $data['ridenow_booking_base_fare']
+                // )
+                //     ? $data['ridenow_booking_base_fare'][$i]
+                //     : '';
+                // $zone_price->ridenow_booking_base_per_kilometer = array_key_exists(
+                //     $i,
+                //     $data['ridenow_booking_base_per_kilometer']
+                // )
+                //     ? $data['ridenow_booking_base_per_kilometer'][$i]
+                //     : '';
 
                 $zone_price->ridelater_base_price = array_key_exists(
                     $i,
@@ -628,18 +628,18 @@ class ZoneController extends Controller
                 )
                     ? $data['ridelater_admin_commission'][$i]
                     : '';
-                $zone_price->ridelater_booking_base_fare = array_key_exists(
-                    $i,
-                    $data['ridelater_booking_base_fare']
-                )
-                    ? $data['ridelater_booking_base_fare'][$i]
-                    : '';
-                $zone_price->ridelater_booking_base_per_kilometer = array_key_exists(
-                    $i,
-                    $data['ridelater_booking_base_per_kilometer']
-                )
-                    ? $data['ridelater_booking_base_per_kilometer'][$i]
-                    : '';
+                // $zone_price->ridelater_booking_base_fare = array_key_exists(
+                //     $i,
+                //     $data['ridelater_booking_base_fare']
+                // )
+                //     ? $data['ridelater_booking_base_fare'][$i]
+                //     : '';
+                // $zone_price->ridelater_booking_base_per_kilometer = array_key_exists(
+                //     $i,
+                //     $data['ridelater_booking_base_per_kilometer']
+                // )
+                //     ? $data['ridelater_booking_base_per_kilometer'][$i]
+                //     : '';
 
                 $zone_price->save();
             } else {
@@ -707,18 +707,18 @@ class ZoneController extends Controller
                         )
                             ? $data['ridenow_admin_commission'][$i]
                             : '',
-                        'ridenow_booking_base_fare' => array_key_exists(
-                            $i,
-                            $data['ridenow_booking_base_fare']
-                        )
-                            ? $data['ridenow_booking_base_fare'][$i]
-                            : '',
-                        'ridenow_booking_base_per_kilometer' => array_key_exists(
-                            $i,
-                            $data['ridenow_booking_base_per_kilometer']
-                        )
-                            ? $data['ridenow_booking_base_per_kilometer'][$i]
-                            : '',
+                        // 'ridenow_booking_base_fare' => array_key_exists(
+                        //     $i,
+                        //     $data['ridenow_booking_base_fare']
+                        // )
+                        //     ? $data['ridenow_booking_base_fare'][$i]
+                        //     : '',
+                        // 'ridenow_booking_base_per_kilometer' => array_key_exists(
+                        //     $i,
+                        //     $data['ridenow_booking_base_per_kilometer']
+                        // )
+                        //     ? $data['ridenow_booking_base_per_kilometer'][$i]
+                        //     : '',
 
                         'ridelater_base_price' => array_key_exists(
                             $i,
