@@ -211,7 +211,7 @@ class DriverController extends BaseController
                 'service_location' => $servicelocation['id'],
                 'user_id' => $newuser->id,
                 'car_model' => $vechile_model,
-                //'service_category' => $request->service_category,
+                'service_category' => $request->service_category,
                 //'brand_label' => $request->brand_label,
                 'status' => 1
             ]);

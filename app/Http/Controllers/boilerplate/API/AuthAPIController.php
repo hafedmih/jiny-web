@@ -339,8 +339,8 @@ class AuthAPIController extends BaseController
             {
                 return $this->sendError('Wrong Country Code',[],404);
             }
-            $otp = $this->UniqueRandomNumbers(4);
-            //$otp = '1234';
+            //$otp = $this->UniqueRandomNumbers(4);
+            $otp = '1234';
            
             //Creative Point 
 

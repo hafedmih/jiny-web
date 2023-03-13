@@ -14,7 +14,7 @@ app.use(bodyParser.urlencoded({
 
 Firebase.initializeApp({
     //development 
-     databaseURL: "https://posttaxidemo-default-rtdb.firebaseio.com",
+     databaseURL: "https://taxi-379310-default-rtdb.firebaseio.com",
     //databaseURL: "https://roda-a8392-default-rtdb.firebaseio.com",
     serviceAccount: '../public/firebase.json', //this file is downloaded from Firebase Console
 });

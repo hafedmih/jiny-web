@@ -226,9 +226,9 @@ class RequestInProgressController extends BaseController
                     // }
                     
                 }else{
-                    // if($request_detail->is_instant_trip == 1 ){
+                    if($request_detail->is_instant_trip == 1 ){
                       
-                    // }else{
+                    }else{
                         $rating = RequestRating::where('request_id',$request_detail->id)->where('user_id',$user->id)->first();
                         
                         if(is_null($rating)){
@@ -242,7 +242,7 @@ class RequestInProgressController extends BaseController
                             }
                         }
                         
-                    // }
+                     }
                     
                 }
             }
