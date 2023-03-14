@@ -93,22 +93,22 @@ trait CommanFunctions
             $distance_amount = $balance_distance * $price_per_distance;
         }
         // Booking fee calculation
-        if($booking_base_fare != 0){
-            if($distance > $base_distance){
-                $balance_distance = $distance - $base_distance;
-                $booking_km_amount = $balance_distance * $booking_price_km;
-            }
-        }
+        // if($booking_base_fare != 0){
+        //     if($distance > $base_distance){
+        //         $balance_distance = $distance - $base_distance;
+        //         $booking_km_amount = $balance_distance * $booking_price_km;
+        //     }
+        // }
         
-        $sub_total = $base_amount + $distance_amount + $booking_base_fare + $booking_km_amount + $outofzonefee;
+        $sub_total = $base_amount + $distance_amount + $outofzonefee;
         
 
         return $data = [
             'base_amount' => $base_amount,
             'distance_cost'=>  $booking_km_amount,
-            'booking_base_fare'=>  $booking_base_fare,
-            'booking_km_amount'=>  $booking_km_amount,
-            'booking_fee'=>  $booking_km_amount +$booking_base_fare,
+            'booking_base_fare'=>  0,
+            'booking_km_amount'=>  0,
+            'booking_fee'=>  0,
             'outofzonefee'=>  $outofzonefee,
             'sub_total'=>  $sub_total,
         ];

@@ -160,16 +160,12 @@ class DocumentController extends BaseController
                     $documents[$key]->upload_status = 0;
                 }
 
-<<<<<<< HEAD
                 // dump($not_required);
                 // dump($not_required_upload_count);
-=======
->>>>>>> 99c0397aa9d1bdafb682f6221eb92df5f830c963
 
                 if($not_required == $not_required_upload_count){
                     $documents[$key]->upload_status = 1;
                 }
-<<<<<<< HEAD
                // else{
                  //   $documents[$key]->upload_status = 0;
                // }
@@ -182,8 +178,6 @@ class DocumentController extends BaseController
                 // else{
                 //     $documents[$key]->upload_status = 0;
                 // }
-=======
->>>>>>> 99c0397aa9d1bdafb682f6221eb92df5f830c963
 
                 
 

@@ -26,10 +26,10 @@ class GetTypesRequest extends FormRequest
         return [
             'pickup_lat' => 'required',
             'pickup_long' => 'required',
-            'drop_lat' => 'required',
-            'drop_long' => 'required',
+            //'drop_lat' => 'required',
+            //'drop_long' => 'required',
             'pickup_address' => 'required',
-            'drop_address' => 'required',
+            //'drop_address' => 'required',
             'ride_type' => 'required', //value = 'RIDE_NOW' or 'RIDE_LATER'
             'ride_date' => 'required',
             'ride_time' => 'required'
