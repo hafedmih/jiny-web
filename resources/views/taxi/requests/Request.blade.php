@@ -22,9 +22,9 @@
             <ul class="nav nav-tabs nav-tabs-bottom">
 			    <li class="nav-item"><a href="#justified-right-icon-tab1" class="nav-link active" data-toggle="tab"><i class="icon-racing"></i> {{ __('ride_now')}}</a></li>
 				<li class="nav-item"><a href="#justified-right-icon-tab2" class="nav-link" data-toggle="tab"><i class="icon-hour-glass2"></i> {{ __('schedule_trip')}}  </a></li> 
-                <li class="nav-item"><a href="#justified-right-icon-tab3" class="nav-link" data-toggle="tab"><i class="icon-forward"></i> {{ __('rental_ride_now_trips')}}</a></li>
+                <!-- <li class="nav-item"><a href="#justified-right-icon-tab3" class="nav-link" data-toggle="tab"><i class="icon-forward"></i> {{ __('rental_ride_now_trips')}}</a></li>
                 <li class="nav-item"><a href="#justified-right-icon-tab4" class="nav-link" data-toggle="tab"><i class="icon-hour-glass3"></i> {{ __('rental_ride_later_trips')}}</a></li>
-                <!-- <li class="nav-item"><a href="#justified-right-icon-tab5" class="nav-link" data-toggle="tab"><i class="icon-direction"></i> {{ __('outstation_trips')}}</a></li>  -->
+                <li class="nav-item"><a href="#justified-right-icon-tab5" class="nav-link" data-toggle="tab"><i class="icon-direction"></i> {{ __('outstation_trips')}}</a></li>  -->
                 <li class="nav-item"><a href="#justified-right-icon-tab6" class="nav-link" data-toggle="tab"><i class="icon-cancel-circle2"></i> {{ __('cancelled_trips')}}</a></li>
                 <li class="nav-item"><a href="#justified-right-icon-tab7" class="nav-link" data-toggle="tab"><i class="icon-meter-fast"></i> {{ __('on_going_trips')}}</a></li>
 			</ul>
