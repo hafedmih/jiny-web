@@ -99,7 +99,7 @@ class VehicleController extends BaseController
                 }
             }else{
                 // get distance for pickup lat long to drop lat long
-                $distance = $this->getDistance($data['pickup_lat'],$data['pickup_long'],$data['drop_lat'],$data['drop_long']);
+               // $distance = $this->getDistance($data['pickup_lat'],$data['pickup_long'],$data['drop_lat'],$data['drop_long']);
               
             }
 
@@ -128,7 +128,8 @@ class VehicleController extends BaseController
                     'sorting_order' => $value->getType->sorting_order,
                 ];
 
-                $drop_zone = $this->getZone($data['drop_lat'],$data['drop_long']);
+                // $drop_zone = $this->getZone($data['drop_lat'],$data['drop_long']);
+                $drop_zone =0 ;
                 $outofzonefee = 0;
                 if(!$drop_zone){                  
                     $int_distance = (int)$distance;
