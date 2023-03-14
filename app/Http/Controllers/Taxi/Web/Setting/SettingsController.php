@@ -56,6 +56,7 @@ class SettingsController extends Controller
                     'type' => $type
                 ]);
             }
+            // dump($setting);
         }
 
         return response()->json(['message' =>'success'], 200);

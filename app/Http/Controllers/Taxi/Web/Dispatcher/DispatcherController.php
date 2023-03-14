@@ -119,7 +119,9 @@ class DispatcherController extends BaseController
             
             }
         }else{
-            $distance = $this->getDistance($data['pickup_lat'],$data['pickup_long'],$data['drop_lat'],$data['drop_long']);
+            if($data['drop_address'] != ''){
+                $distance = $this->getDistance($data['pickup_lat'],$data['pickup_long'],$data['drop_lat'],$data['drop_long']);
+            }
         }
 
         // get eta calculation

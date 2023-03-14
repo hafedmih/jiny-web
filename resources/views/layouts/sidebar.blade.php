@@ -434,40 +434,40 @@
   <!--All profile view-->
 
   <script>
-    var mimes = {
-        'jpeg': 'data:image/jpeg;base64,'
-    };
+    // var mimes = {
+    //     'jpeg': 'data:image/jpeg;base64,'
+    // };
 
 
-      function encode(data)
-      {
-          var str = data.reduce(function(a,b){ return a+String.fromCharCode(b) },'');
-          return btoa(str).replace(/.{76}(?=.)/g,'$&\n');
-      }
+    //   function encode(data)
+    //   {
+    //       var str = data.reduce(function(a,b){ return a+String.fromCharCode(b) },'');
+    //       return btoa(str).replace(/.{76}(?=.)/g,'$&\n');
+    //   }
 
-      function getUrlByFileName(fileName,mimeType) {
+    //   function getUrlByFileName(fileName,mimeType) {
      
-          return new Promise(
-              function (resolve, reject) {
-                  bucket.getObject({Key: fileName}, function (err, file) {
-                      var result =  mimeType + encode(file.Body);
-                      resolve(result)
-                  });
-              }
-          );
+    //       return new Promise(
+    //           function (resolve, reject) {
+    //               bucket.getObject({Key: fileName}, function (err, file) {
+    //                   var result =  mimeType + encode(file.Body);
+    //                   resolve(result)
+    //               });
+    //           }
+    //       );
          
-      }
+    //   }
 
-      function openInNewTab(url) {
-          var redirectWindow = window.open(url, '_blank');
-          redirectWindow.location;
-      }
+    //   function openInNewTab(url) {
+    //       var redirectWindow = window.open(url, '_blank');
+    //       redirectWindow.location;
+    //   }
     
-        if("{{auth()->user()->profile_pic}}" != ""){
-          getUrlByFileName('{{auth()->user()->profile_pic}}', mimes.jpeg).then(function(data) {
-        $("#{{auth()->user()->slug}}").attr('src',data);
-      });
-      }
+    //     if("{{auth()->user()->profile_pic}}" != ""){
+    //       getUrlByFileName('{{auth()->user()->profile_pic}}', mimes.jpeg).then(function(data) {
+    //     $("#{{auth()->user()->slug}}").attr('src',data);
+    //   });
+    //   }
     
    
 
