@@ -14,7 +14,7 @@
         "cviebrock/eloquent-sluggable": "^8.0",
         "fideloper/proxy": "^4.4",
         "fruitcake/laravel-cors": "^3.0",
-        "grimzy/laravel-mysql-spatial": "^5.0",
+        "grimzy/laravel-mysql-spatial": "4.0",
         "guzzlehttp/guzzle": "^7.0.1",
         "intervention/image": "^2.7",
         "kreait/laravel-firebase": "^3.4",

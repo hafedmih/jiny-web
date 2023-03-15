@@ -19,9 +19,9 @@
                     <ul class="nav nav-tabs nav-tabs-bottom">
                         <li class="nav-item"><a href="#justified-right-icon-tab1" class="nav-link active" data-toggle="tab"><i class="icon-menu7"></i> Ride Now Trips </a></li>
                         <li class="nav-item"><a href="#justified-right-icon-tab2" class="nav-link" data-toggle="tab"><i class="icon-mention"></i> Schedule Trips </a></li>
-                        <li class="nav-item"><a href="#justified-right-icon-tab3" class="nav-link" data-toggle="tab"><i class="icon-mention"></i> Rental Ride now Trips </a></li>
+                        <!-- <li class="nav-item"><a href="#justified-right-icon-tab3" class="nav-link" data-toggle="tab"><i class="icon-mention"></i> Rental Ride now Trips </a></li>
                         <li class="nav-item"><a href="#justified-right-icon-tab4" class="nav-link" data-toggle="tab"><i class="icon-mention"></i> Rental Ride Later Trips </a></li>
-                        <!-- <li class="nav-item"><a href="#justified-right-icon-tab5" class="nav-link" data-toggle="tab"><i class="icon-mention"></i> Outstation Trips </a></li> -->
+                        <li class="nav-item"><a href="#justified-right-icon-tab5" class="nav-link" data-toggle="tab"><i class="icon-mention"></i> Outstation Trips </a></li> -->
                     </ul>
                     <div class="tab-content">
                         <div class="tab-pane fade show active" id="justified-right-icon-tab1">

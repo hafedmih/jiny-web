@@ -118,6 +118,7 @@
     }
     .header-elements-inline{
         padding: 5px 10px;
+        justify-content: center;
     }
     .mapboxgl-ctrl-top-left{
         display: none;
@@ -228,8 +229,8 @@
             <!-- <h6 class="card-title">Create Trip</h6> -->
             <ul class="card-title nav nav-pills nav-justified">
                 <li class="nav-item"><a href="#solid-tab1" onclick="changeType('local')" class="nav-link rounded-round legitRipple"  data-toggle="tab">Local</a></li>
-                <li class="nav-item"><a href="#solid-tab2" onclick="changeType('rental')" class="nav-link rounded-round legitRipple" data-toggle="tab">Rental</a></li>
-                <!-- <li class="nav-item"><a href="#solid-tab3" onclick="changeType('outstation')" class="nav-link rounded-round legitRipple" data-toggle="tab">Out Station</a></li> -->
+                <!-- <li class="nav-item"><a href="#solid-tab2" onclick="changeType('rental')" class="nav-link rounded-round legitRipple" data-toggle="tab">Rental</a></li>
+                <li class="nav-item"><a href="#solid-tab3" onclick="changeType('outstation')" class="nav-link rounded-round legitRipple" data-toggle="tab">Out Station</a></li> -->
             </ul>
             <input type="hidden" id="trip_type" />
             <div class="header-elements">
@@ -319,8 +320,8 @@
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group form-group-feedback form-group-feedback-right">
-                                    <label>{{ __('drop_point') }}: <span class="text-danger">*</span></label>
-                                    <input type="text" name="drop" id="drop_point" onkeyup="getAddress('drop')" class="form-control required type_location_input" placeholder="Drop Point">
+                                    <label>{{ __('drop_point') }}: </label>
+                                    <input type="text" name="drop" id="drop_point" onkeyup="getAddress('drop')" class="form-control type_location_input" placeholder="Drop Point">
                                     <div class="form-control-feedback form-control-feedback-lg" style="cursor: pointer;margin-top: 25px;">
                                         <i class="icon-cross" onclick="clearData('drop')" style="font-size:20px"></i>  
                                     </div>
@@ -329,9 +330,9 @@
                                     <input type="hidden" name="drop_lng_id" id="drop_point_lng_id">
                                 </div>
                             </div>
-                            <div class="col-md-12 text-right" id="button_view">
+                            <!-- <div class="col-md-12 text-right" id="button_view">
                                 <label class="badge badge-danger rounded-pill add_button"><i class="icon-plus2 mr-2"></i> Add one stop</label>
-                            </div>
+                            </div> -->
                             <div class="col-md-12 trips_count">
                                 <div id="accordion-group">
                                     <div class="card mb-0 rounded-bottom-0">
@@ -1602,7 +1603,7 @@
                                                     text: datas.message,
                                                     icon: "success",
                                                 }).then((value) => {        
-                                                    window.location.href = "dispatcher/edit/"+datas.data.id;
+                                                    window.location.href = "dispatch-request-view/"+datas.data.id;
                                                 });
                                             }
                                             else{
@@ -1780,47 +1781,40 @@
 
     function getAddress(even) {
         if(even == 'pickup'){
-            if($("#pickup_point").val().length > 10){ 
+            // if($("#pickup_point").val().length > 10){ 
                 originInput = document.getElementById("pickup_point");
                 originAutocomplete = new google.maps.places.Autocomplete(
                     originInput
                 );
                 originAutocomplete.setFields(["place_id","geometry"]);
-            }
-            else{
-                console.log(originAutocomplete);
-                // google.maps.event.clearInstanceListeners(originAutocomplete);
-                originAutocomplete.unbindAll(originInput);
-                // originAutocomplete = '';
-                // originAutocomplete = '';
-            }
+            // }
         }
         else if(even == 'drop'){
-            if($("#drop_point").val().length > 10){ 
+            // if($("#drop_point").val().length > 10){ 
                 var originInput = document.getElementById("drop_point");
                 originAutocomplete = new google.maps.places.Autocomplete(
                     originInput
                 );
                 originAutocomplete.setFields(["place_id","geometry"]);
-            }
+            // }
         }
         else if(even == 'stop'){
-            if($("#stop_point").val().length > 10){ 
+            // if($("#stop_point").val().length > 10){ 
                 var originInput = document.getElementById("stop_point");
                 var originAutocomplete = new google.maps.places.Autocomplete(
                     originInput
                 );
                 originAutocomplete.setFields(["place_id","geometry"]);
-            }
+            // }
         }
         else if(even == 'rental_pickup'){
-            if($("#rental_pickup_point").val().length > 10){ 
+            // if($("#rental_pickup_point").val().length > 10){ 
                 var originInput = document.getElementById("rental_pickup_point");
                 originAutocomplete = new google.maps.places.Autocomplete(
                     originInput
                 );
                 originAutocomplete.setFields(["place_id","geometry"]);
-            }
+            // }
         }
         // else if(even == 'rental_drop'){
         //     if($("#rental_drop_point").val().length > 3){ 
