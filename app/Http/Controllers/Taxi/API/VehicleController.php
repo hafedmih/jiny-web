@@ -99,11 +99,9 @@ class VehicleController extends BaseController
                 }
             }else{
                 // get distance for pickup lat long to drop lat long
-                if ($request->has('drop_lat')) {
-                   // dd("hai");
-                    $distance = $this->getDistance($data['pickup_lat'],$data['pickup_long'],$data['drop_lat'],$data['drop_long']);
+              if ($request->has('drop_lat')) {
+                   $distance = $this->getDistance($data['pickup_lat'],$data['pickup_long'],$data['drop_lat'],$data['drop_long']);
                 }
-              
             }
 
             // get eta calculation
@@ -130,14 +128,12 @@ class VehicleController extends BaseController
                     'type_image_select' => $value->getType->highlight_image,
                     'sorting_order' => $value->getType->sorting_order,
                 ];
-                if ($request->has('drop_lat')) {
+            if ($request->has('drop_lat')) {
                 $drop_zone = $this->getZone($data['drop_lat'],$data['drop_long']);
-             
-                $drop_zone =0 ;
                 $outofzonefee = 0;
-                if(!$drop_zone){  
-                   // dd($distance);
+                if(!$drop_zone){                  
                     $int_distance = (int)$distance;
+                    
                     $outofzone = Outofzone::orderby('id','desc')->get();
 
                     foreach($outofzone as $out){
@@ -146,6 +142,7 @@ class VehicleController extends BaseController
                         }
                     }
                     $outofzone = Outofzone::where('kilometer','>=',$int_distance)->orderby('id','desc')->first();
+                
                     if($outofzone){
                         $outofzonefee = $outofzone->price;
                     }
@@ -153,34 +150,32 @@ class VehicleController extends BaseController
                         $outofzone = Outofzone::orderby('id','desc')->first();
                         $outofzonefee = $outofzone->price;
                     }
-                }
                 }else{
-                    if ($request->has('drop_lat')) {
-                        //dd($drop_zone);
-                        if($drop_zone->non_service_zone == 'Yes'){
-                            $int_distance = (int)$distance;
-                            $outofzone = Outofzone::orderby('id','desc')->get();
+                    if($drop_zone->non_service_zone == 'Yes'){
+                        $int_distance = (int)$distance;
+                        $outofzone = Outofzone::orderby('id','desc')->get();
 
-                            foreach($outofzone as $out){
-                                if($out->kilometer >= $int_distance){
-                                    $outofzonefee = $out->price;
-                                }
-                                else{
-                                    $outofzone1 = Outofzone::orderby('id','desc')->first();
-                                    $outofzonefee = $outofzone1->price;
-                                }
+                        foreach($outofzone as $out){
+                            if($out->kilometer >= $int_distance){
+                                $outofzonefee = $out->price;
+                            }
+                            else{
+                                $outofzone1 = Outofzone::orderby('id','desc')->first();
+                                $outofzonefee = $outofzone1->price;
                             }
                         }
                     }
                 }
+            }
+            
                 $totalvalue = [];
                //Ride Now
                 if($data['ride_type'] == "RIDE_NOW"){
 
                     if ($request->has('drop_lat')) {
-                       $totalvalue = $this->etaCalculation($distance,$value->ridenow_base_distance,$value->ridenow_base_price,$value->ridenow_price_per_distance,$value->ridenow_booking_base_fare,$value->ridenow_booking_base_per_kilometer,$outofzonefee);
-                    }else {
-                        $outofzonefee =0;
+                        $totalvalue = $this->etaCalculation($distance,$value->ridenow_base_distance,$value->ridenow_base_price,$value->ridenow_price_per_distance,$value->ridenow_booking_base_fare,$value->ridenow_booking_base_per_kilometer,$outofzonefee);
+                    }else{
+                        $outofzonefee=0;
                         $totalvalue = $this->etaCalculation($distance,$value->ridenow_base_distance,$value->ridenow_base_price,$value->ridenow_price_per_distance,$value->ridenow_booking_base_fare,$value->ridenow_booking_base_per_kilometer,$outofzonefee);
                     }
                 }
@@ -189,8 +184,8 @@ class VehicleController extends BaseController
                     if ($request->has('drop_lat')) {
                         $totalvalue = $this->etaCalculation($distance,$value->ridelater_base_distance,$value->ridelater_base_price,$value->ridelater_price_per_distance,$value->ridelater_booking_base_fare,$value->ridelater_booking_base_per_kilometer,$outofzonefee);
                     }else {
-                        $outofzonefee =0;
-                        $totalvalue = $this->etaCalculation($distance,$value->ridenow_base_distance,$value->ridenow_base_price,$value->ridenow_price_per_distance,$value->ridenow_booking_base_fare,$value->ridenow_booking_base_per_kilometer,$outofzonefee);
+                        $outofzonefee=0;
+                        $totalvalue = $this->etaCalculation($distance,$value->ridelater_base_distance,$value->ridelater_base_price,$value->ridelater_price_per_distance,$value->ridelater_booking_base_fare,$value->ridelater_booking_base_per_kilometer,$outofzonefee);
                     }
                 }
 
@@ -201,26 +196,21 @@ class VehicleController extends BaseController
                     // dump((double) $total_amount);
                     // dump((double) $expired['target_amount']);
                     if ($expired && $expired['promo_code'] == $request['promo_code']) {
-                        if(in_array($value->getType->id,$expired->types)){
                         $request_count = RequestModel::where('user_id',$user->id)->where('promo_id',$expired['id'])->where('is_completed',1)->count();
-                            if($expired['select_offer_option'] == 4 && $expired['from_date'] <= date('Y-m-d') && $expired['to_date'] >= date('Y-m-d') || $expired['select_offer_option'] != 4 || $expired['select_offer_option'] == 1 && $request_count >= $expired['new_user_count']){
-                                if($expired['select_offer_option'] != 5 || $expired['select_offer_option'] == 5 && $expired['user_id'] == $user->id){
-                                    if(!$expired['trip_type'] || $expired['trip_type'] == 'LOCAL'){
-                                        if((double) $total_amount >= (double) $expired['target_amount']){
-                                            $zonePrice->promo_code = 1;
-                                            $total_amounts = $this->promoCalculation($expired,$total_amount);
-                        
-                                            $zonePrice->promo_total_amount = $total_amounts;
-                                            $total_amounts = str_replace(',', '', $total_amounts);
-                                            $amounts = (double) $total_amount - (double) $total_amounts;
-                                            $zonePrice->promo_amount = number_format($amounts,2);
-                                        }
-                                        else{
-                                            $zonePrice->promo_code = 1;
-                                        }
+                        if($expired['select_offer_option'] == 4 && $expired['from_date'] <= date('Y-m-d') && $expired['to_date'] >= date('Y-m-d') || $expired['select_offer_option'] != 4 || $expired['select_offer_option'] == 1 && $request_count >= $expired['new_user_count']){
+                            if($expired['select_offer_option'] != 5 || $expired['select_offer_option'] == 5 && $expired['user_id'] == $user->id){
+                                if(!$expired['trip_type'] || $expired['trip_type'] == 'LOCAL'){
+                                    if((double) $total_amount >= (double) $expired['target_amount']){
+                                        $zonePrice->promo_code = 1;
+                                        $total_amounts = $this->promoCalculation($expired,$total_amount);
+                    
+                                        $zonePrice->promo_total_amount = $total_amounts;
+                                        $total_amounts = str_replace(',', '', $total_amounts);
+                                        $amounts = (double) $total_amount - (double) $total_amounts;
+                                        $zonePrice->promo_amount = number_format($amounts,2);
                                     }
                                     else{
-                                        $zonePrice->promo_code = 0;
+                                        $zonePrice->promo_code = 1;
                                     }
                                 }
                                 else{
