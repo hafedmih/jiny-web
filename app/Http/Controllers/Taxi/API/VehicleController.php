@@ -99,7 +99,10 @@ class VehicleController extends BaseController
                 }
             }else{
                 // get distance for pickup lat long to drop lat long
-               // $distance = $this->getDistance($data['pickup_lat'],$data['pickup_long'],$data['drop_lat'],$data['drop_long']);
+                if ($request->has('drop_lat')) {
+                   // dd("hai");
+                    $distance = $this->getDistance($data['pickup_lat'],$data['pickup_long'],$data['drop_lat'],$data['drop_long']);
+                }
               
             }
 
@@ -127,13 +130,14 @@ class VehicleController extends BaseController
                     'type_image_select' => $value->getType->highlight_image,
                     'sorting_order' => $value->getType->sorting_order,
                 ];
-
-                // $drop_zone = $this->getZone($data['drop_lat'],$data['drop_long']);
+                if ($request->has('drop_lat')) {
+                $drop_zone = $this->getZone($data['drop_lat'],$data['drop_long']);
+             
                 $drop_zone =0 ;
                 $outofzonefee = 0;
-                if(!$drop_zone){                  
+                if(!$drop_zone){  
+                   // dd($distance);
                     $int_distance = (int)$distance;
-                    
                     $outofzone = Outofzone::orderby('id','desc')->get();
 
                     foreach($outofzone as $out){
@@ -141,27 +145,30 @@ class VehicleController extends BaseController
                             $outofzonefee = $out->price;
                         }
                     }
-                    // $outofzone = Outofzone::where('kilometer','>=',$int_distance)->orderby('id','desc')->first();
-                
-                    // if($outofzone){
-                    //     $outofzonefee = $outofzone->price;
-                    // }
-                    // else{
-                    //     $outofzone = Outofzone::orderby('id','desc')->first();
-                    //     $outofzonefee = $outofzone->price;
-                    // }
+                    $outofzone = Outofzone::where('kilometer','>=',$int_distance)->orderby('id','desc')->first();
+                    if($outofzone){
+                        $outofzonefee = $outofzone->price;
+                    }
+                    else{
+                        $outofzone = Outofzone::orderby('id','desc')->first();
+                        $outofzonefee = $outofzone->price;
+                    }
+                }
                 }else{
-                    if($drop_zone->non_service_zone == 'Yes'){
-                        $int_distance = (int)$distance;
-                        $outofzone = Outofzone::orderby('id','desc')->get();
+                    if ($request->has('drop_lat')) {
+                        //dd($drop_zone);
+                        if($drop_zone->non_service_zone == 'Yes'){
+                            $int_distance = (int)$distance;
+                            $outofzone = Outofzone::orderby('id','desc')->get();
 
-                        foreach($outofzone as $out){
-                            if($out->kilometer >= $int_distance){
-                                $outofzonefee = $out->price;
-                            }
-                            else{
-                                $outofzone1 = Outofzone::orderby('id','desc')->first();
-                                $outofzonefee = $outofzone1->price;
+                            foreach($outofzone as $out){
+                                if($out->kilometer >= $int_distance){
+                                    $outofzonefee = $out->price;
+                                }
+                                else{
+                                    $outofzone1 = Outofzone::orderby('id','desc')->first();
+                                    $outofzonefee = $outofzone1->price;
+                                }
                             }
                         }
                     }
@@ -170,12 +177,21 @@ class VehicleController extends BaseController
                //Ride Now
                 if($data['ride_type'] == "RIDE_NOW"){
 
-                    $totalvalue = $this->etaCalculation($distance,$value->ridenow_base_distance,$value->ridenow_base_price,$value->ridenow_price_per_distance,$value->ridenow_booking_base_fare,$value->ridenow_booking_base_per_kilometer,$outofzonefee);
+                    if ($request->has('drop_lat')) {
+                       $totalvalue = $this->etaCalculation($distance,$value->ridenow_base_distance,$value->ridenow_base_price,$value->ridenow_price_per_distance,$value->ridenow_booking_base_fare,$value->ridenow_booking_base_per_kilometer,$outofzonefee);
+                    }else {
+                        $outofzonefee =0;
+                        $totalvalue = $this->etaCalculation($distance,$value->ridenow_base_distance,$value->ridenow_base_price,$value->ridenow_price_per_distance,$value->ridenow_booking_base_fare,$value->ridenow_booking_base_per_kilometer,$outofzonefee);
+                    }
                 }
                 // Ride Later
                 else if($data['ride_type'] == "RIDE_LATER"){
-
-                    $totalvalue = $this->etaCalculation($distance,$value->ridelater_base_distance,$value->ridelater_base_price,$value->ridelater_price_per_distance,$value->ridelater_booking_base_fare,$value->ridelater_booking_base_per_kilometer,$outofzonefee);
+                    if ($request->has('drop_lat')) {
+                        $totalvalue = $this->etaCalculation($distance,$value->ridelater_base_distance,$value->ridelater_base_price,$value->ridelater_price_per_distance,$value->ridelater_booking_base_fare,$value->ridelater_booking_base_per_kilometer,$outofzonefee);
+                    }else {
+                        $outofzonefee =0;
+                        $totalvalue = $this->etaCalculation($distance,$value->ridenow_base_distance,$value->ridenow_base_price,$value->ridenow_price_per_distance,$value->ridenow_booking_base_fare,$value->ridenow_booking_base_per_kilometer,$outofzonefee);
+                    }
                 }
 
                 $total_amount = $totalvalue['sub_total'];

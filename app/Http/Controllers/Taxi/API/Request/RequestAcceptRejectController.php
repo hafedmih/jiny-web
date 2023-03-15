@@ -246,11 +246,11 @@ class RequestAcceptRejectController extends BaseController
 
                     // Cancell the request as automatic cancel state
                     if($request_detail->is_later == 0){
-                        // $request_detail->update([
-                        //     'is_cancelled'=>true,
-                        //     'cancel_method'=>CancelMethod::AUTOMATIC,
-                        //     'cancelled_at'=>date('Y-m-d H:i:s')
-                        // ]);
+                        $request_detail->update([
+                            'is_cancelled'=>true,
+                            'cancel_method'=>CancelMethod::AUTOMATIC,
+                            'cancelled_at'=>date('Y-m-d H:i:s')
+                        ]);
 
 
                         if ($request_detail->user_id != null) {

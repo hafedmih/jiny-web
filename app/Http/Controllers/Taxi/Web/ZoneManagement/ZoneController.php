@@ -782,18 +782,18 @@ class ZoneController extends Controller
                         )
                             ? $data['ridelater_admin_commission'][$i]
                             : '',
-                        'ridelater_booking_base_fare' => array_key_exists(
-                            $i,
-                            $data['ridelater_booking_base_fare']
-                        )
-                            ? $data['ridelater_booking_base_fare'][$i]
-                            : '',
-                        'ridelater_booking_base_per_kilometer' => array_key_exists(
-                            $i,
-                            $data['ridelater_booking_base_per_kilometer']
-                        )
-                            ? $data['ridelater_booking_base_per_kilometer'][$i]
-                            : '',
+                        // 'ridelater_booking_base_fare' => array_key_exists(
+                        //     $i,
+                        //     $data['ridelater_booking_base_fare']
+                        // )
+                        //     ? $data['ridelater_booking_base_fare'][$i]
+                        //     : '',
+                        // 'ridelater_booking_base_per_kilometer' => array_key_exists(
+                        //     $i,
+                        //     $data['ridelater_booking_base_per_kilometer']
+                        // )
+                        //     ? $data['ridelater_booking_base_per_kilometer'][$i]
+                        //     : '',
 
                         'status' => 1,
                         'slug' => Carbon::now()->timestamp,

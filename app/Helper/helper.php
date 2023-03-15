@@ -23,8 +23,8 @@ if (!function_exists('uploadImage'))
         if(Storage::exists($uploadPath.$separator.$uploadedFile)){
             Storage::delete($uploadPath.$separator.$uploadedFile);
         }
-
-        Storage::put('public/'.$uploadPath,$image);
+        Storage::put($uploadPath,$image);
+      //  Storage::put('public/'.$uploadPath,$image);
 
         $filename = $image->hashName();
 

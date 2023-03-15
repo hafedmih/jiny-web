@@ -248,8 +248,6 @@ class RequestInProgressController extends BaseController
             }
 
             $request = RequestMeta::where('driver_id',$user->id)->where('active',1)->first();
-            // dd($request);
-            // dd($request->request_id);
             if(is_null($request)){
                 $request_detail = RequestModel::where('driver_id',$user->id)->where('is_cancelled',0)->where('is_completed',0)->where('is_driver_started',0)->first();
                 if(!is_null($request_detail)){
@@ -261,7 +259,6 @@ class RequestInProgressController extends BaseController
             }else{
                 
                 $request_detail = RequestModel::where('id',$request->request_id)->first();
-                // dd($request_detail );
                 $result = fractal($request_detail, new TripRequestTransformer);
                 $data['driver']['meta']= $result;
             }

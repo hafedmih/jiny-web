@@ -65,7 +65,7 @@ class DriverArrivedController extends BaseController
         $request_detail->update([
                 'is_driver_arrived' => 1,
                 'is_trip_start' => 0,
-                'trip_start_time' => null,
+               // 'trip_start_time' => null,
                 'arrived_at' => now()
             ]);
 
