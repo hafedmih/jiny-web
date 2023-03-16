@@ -156,30 +156,14 @@
                                     </div>
                                 </div> -->
                                 <div class="form-group row required col-md-6">
-                                    <label class="col-form-label col-lg-3">{{ __('service_type') }}</label>
+                                    <label class="col-form-label col-lg-3">{{ __('address') }}</label>
                                     <div class="col-lg-9">
-                                        <!-- <label class="custom-control custom-control-secondary custom-checkbox mb-2">
-                                            <input type="checkbox" class="custom-control-input" name="service_type[]" value="OUTSTATION" id="outstation" @if(in_array("OUTSTATION", $user->driver->service_category)) checked @endif>
-                                            <span class="custom-control-label">{{ __('outstation') }}</span>
-                                        </label> -->
-
-                                        <label class="custom-control custom-control-danger custom-checkbox mb-2">
-                                            <input type="checkbox" class="custom-control-input" name="service_type[]" value="RENTAL" id="rental" @if(in_array("RENTAL", $user->driver->service_category)) checked @endif >
-                                            <span class="custom-control-label">{{ __('rental') }}</span>
-                                        </label>
-
-                                        <label class="custom-control custom-control-success custom-checkbox mb-2">
-                                            <input type="checkbox" class="custom-control-input" name="service_type[]" value="LOCAL" id="local" @if(in_array("LOCAL", $user->driver->service_category)) checked @endif>
-                                            <span class="custom-control-label">{{ __('local') }}</span>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="form-group row col-md-12">
-                                    <label class="col-form-label col-lg-2 font-weight-bold">{{ __('address') }}</label>
                                     <div class="col-lg-10">
                                         <textarea name="address" id="address" class="form-control" placeholder="{{ __('address') }}">{{$driver->address}}</textarea>
                                     </div>
                                 </div>
+                                </div>
+                                
                                 <div class="form-group row col-md-6">
                                     <label class="col-form-label col-lg-3 font-weight-bold">{{ __('driver-image') }}</label>
                                     <div class="col-lg-9">

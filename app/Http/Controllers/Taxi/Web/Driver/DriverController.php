@@ -554,7 +554,7 @@ class DriverController extends Controller
                 'state' => $driver['state'],
                 'company_id' => $company ? $company->id : null,
                 'pincode' => $driver['pincode'],
-                'service_category' => $driver['service_type'],
+               // 'service_category' => $driver['service_type'],
                 'login_method' => $driver['category'],
                 // 'notes' => $driver['notes'],     
                 'approved_by' => auth()->user()->id,           
