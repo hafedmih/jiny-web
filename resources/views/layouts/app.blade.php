@@ -164,7 +164,7 @@
             </span>
 
             <ul class="navbar-nav ml-md-auto">
-
+            @if(auth()->user()->can('notify'))
             <li class="nav-item dropdown"  style="padding-top: 10px;">
 					<span href="#" class="navbar-nav-link dropdown-toggle nofication" data-toggle="dropdown" style="color:#fff;">
 						<i class="icon-bubble-notification	font-size-base mr-2" style="font-size:16px; color:#fff;"></i>
@@ -185,6 +185,7 @@
 						</div>
 					</div>
 			</li>
+            @endif
 
                
                 <li class="nav-item">

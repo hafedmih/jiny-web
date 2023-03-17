@@ -77,5 +77,16 @@ class Promocode extends Model
         return $this->belongsTo(Country::class,'country', 'id');
     }
 
+    public function getUsersListAttribute()
+    {
+        $value = $this->user_id;
+        if (empty($value)) {
+            return [];
+        }
+        return explode(',',$value);
+    }
+
+
+
    
 }

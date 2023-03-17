@@ -158,7 +158,7 @@
                 Welcome,{{ auth()->user()->firstname }} !!!
             </span>
             <ul class="navbar-nav ml-md-auto">
-                
+            @if(auth()->user()->can('notify'))    
             <li class="nav-item dropdown"  style="padding-top: 10px;">
 					<span href="#" class="navbar-nav-link dropdown-toggle nofication" data-toggle="dropdown">
 						<i class="icon-bubble-notification	font-size-base mr-2" style="font-size:16px;"></i>
@@ -179,6 +179,7 @@
 						</div>
 					</div>
 			</li>
+            @endif
                 
                 <li class="nav-item">
                     <form class="navbar-nav-link" method="POST" action="{{ route('logout') }}">

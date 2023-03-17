@@ -102,11 +102,6 @@
                                                 <a href="{{ route('dispatcherEdit',$request->id) }}" class="btn bg-success-400 btn-icon rounded-round legitRipple" data-popup="tooltip" title="" data-placement="bottom" data-original-title="Edit Trip"> <i class="icon-pencil5"></i> </a>
                                             @endif   
                                         @endif    
-                                        @if(auth()->user()->can('request-category-change'))
-                                        @if($request->is_cancelled == 0 && $request->is_completed == 0)
-                                            <button class="btn bg-primary-400 btn-icon rounded-round legitRipple categoryChange ml-1" data-popup="tooltip" title="" id="{{$request->id}}" data-value="{{$request->request_number}}" data-placement="bottom" data-original-title="Change Category"> <i class="icon-loop"></i> </button>
-                                        @endif  
-                                        @endif  
                                         </div>
                                     </td>
             
@@ -191,11 +186,6 @@
                                             <a href="#" onclick="Javascript: return deleteAction('$request->id', `{{ route('dispatchTripCancel',$request->id) }}`)" class="btn bg-danger-400 btn-icon rounded-round legitRipple ml-1" data-popup="tooltip" title="" data-placement="bottom" data-original-title="Delete Trip"> <i class="icon-trash"></i> </a>
                                         @endif 
                                         @endif
-                                        @if(auth()->user()->can('request-category-change'))
-                                        @if($request->is_cancelled == 0 && $request->is_completed == 0)
-                                            <button class="btn bg-primary-400 btn-icon rounded-round legitRipple categoryChange ml-1" data-popup="tooltip" title="" id="{{$request->id}}" data-value="{{$request->request_number}}" data-placement="bottom" data-original-title="Change Category"> <i class="icon-loop"></i> </button>
-                                        @endif  
-                                        @endif 
                                         </div>
                                     </td>
             

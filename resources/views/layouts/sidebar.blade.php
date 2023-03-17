@@ -384,7 +384,7 @@
 							<li class="nav-item"><a href="{{route('reference')}}" class="nav-link "><i class="icon-book"></i>{{ __('reference') }}</a></li>
 						@endif
 						@if(auth()->user()->can('others-heat_map'))
-							<li class="nav-item"><a href="{{route('heatmap')}}" class="nav-link "><i class="icon-map"></i>{{ __('heat_map') }}</a></li>
+							<!-- <li class="nav-item"><a href="{{route('heatmap')}}" class="nav-link "><i class="icon-map"></i>{{ __('heat_map') }}</a></li> -->
 						@endif
 				    </ul>
 			    </li>

@@ -198,7 +198,7 @@ class VehicleController extends BaseController
                     if ($expired && $expired['promo_code'] == $request['promo_code']) {
                         $request_count = RequestModel::where('user_id',$user->id)->where('promo_id',$expired['id'])->where('is_completed',1)->count();
                         if($expired['select_offer_option'] == 4 && $expired['from_date'] <= date('Y-m-d') && $expired['to_date'] >= date('Y-m-d') || $expired['select_offer_option'] != 4 || $expired['select_offer_option'] == 1 && $request_count >= $expired['new_user_count']){
-                            if($expired['select_offer_option'] != 5 || $expired['select_offer_option'] == 5 && $expired['user_id'] == $user->id){
+                            if($expired['select_offer_option'] != 5 || $expired['select_offer_option'] == 5 && in_array($user->id,$expired['UsersList'])){
                                 if(!$expired['trip_type'] || $expired['trip_type'] == 'LOCAL'){
                                     if((double) $total_amount >= (double) $expired['target_amount']){
                                         $zonePrice->promo_code = 1;
