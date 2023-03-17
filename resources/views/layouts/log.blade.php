@@ -126,7 +126,7 @@
 
 <body id="reloadDiv">
     <!-- Main navbar -->
-    <div class="navbar navbar-expand-md navbar-dark  navbar-static" style="background-color:#FFD60B">
+    <div class="navbar navbar-expand-md navbar-dark  navbar-static" style="background-color:#0767B1">
         <div class="navbar-brand">
             <a href="" class="d-inline-block">
                 <!-- <h3 style="color: #fff;">Taxiapp3.0</h3> -->

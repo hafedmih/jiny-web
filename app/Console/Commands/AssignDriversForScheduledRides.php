@@ -389,7 +389,7 @@ class AssignDriversForScheduledRides extends Command
                         $lang = $driverdet->language;
                         $push_data = $this->pushlanguage($lang,'silent-push');
                         if(is_null($push_data)){
-                            $title = 'Roda Raja You Are Online';
+                            $title = 'Lahagni you are online';
                             $body = 'Silent Push';
                             $sub_title = 'Silent Push';
                         }else{

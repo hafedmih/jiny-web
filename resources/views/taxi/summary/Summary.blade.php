@@ -69,8 +69,8 @@
                                 <select name="trip_type" id="trip_type" class="form-control">
                                     <option value="">{{ __('select_trip_type')}}</option>
                                     <option value="LOCAL" @if($request->trip_type == 'LOCAL') selected @endif>{{ __('local') }}</option>
-                                    <option value="RENTAL" @if($request->trip_type == 'RENTAL') selected @endif>{{ __('rental') }}</option>
-                                    <!-- <option value="OUTSTATION" @if($request->trip_type == 'OUTSTATION') selected @endif>{{ __('outstation') }}</option> -->
+                                    <!--<option value="RENTAL" @if($request->trip_type == 'RENTAL') selected @endif>{{ __('rental') }}</option>
+                                     <option value="OUTSTATION" @if($request->trip_type == 'OUTSTATION') selected @endif>{{ __('outstation') }}</option> -->
                                 </select>
                             </div>
                             

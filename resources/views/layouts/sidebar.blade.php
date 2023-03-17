@@ -87,11 +87,6 @@
 						<a href="{{ route('user') }}" class="nav-link"><i class="icon-user-tie"></i> <span>{{ __('admin') }}</span></a>
 					</li>
 					@endif
-					@if(auth()->user()->can('company-bar'))
-					<li class="nav-item">
-						<a href="{{ route('company') }}" class="nav-link"><i class="icon-office"></i> <span>{{ __('company') }}</span></a>
-					</li>
-					@endif
 					@if(auth()->user()->can('user-bar'))
 					<li class="nav-item">
 						<a href="{{ route('userManage') }}" class="nav-link"><i class="icon-users"></i> <span>{{ __('user') }}</span></a>
@@ -182,20 +177,6 @@
 				</ul>
 			</li>
 			@endif
-            @if(auth()->user()->can('rental-bar'))
-			<li class="nav-item nav-item-submenu">
-				<a href="#" class="nav-link"><i class="icon-align-top"></i> <span>{{ __('rental') }}</span></a>
-				<ul class="nav nav-group-sub" data-submenu-title="{{ __('rental') }}">	
-					@if(auth()->user()->can('master-bar'))
-						<li class="nav-item"><a href="{{ route('packagelist') }}" class="nav-link"><i class="icon-bubble-notification"></i>{{ __('master') }}</a></li>
-					@endif		
-					@if(auth()->user()->can('rental-list-bar'))
-						<li class="nav-item"><a href="{{ route('rental')}}" class="nav-link"><i class="icon-file-text2"></i>{{ __('rental-list') }}</a></li>
-					@endif	
-				</ul>
-			</li>
-			@endif
-
 			@if(auth()->user()->can('masters-bar'))
 				<li class="nav-item nav-item-submenu">
 					<a href="#" class="nav-link"><i class="icon-graduation2"></i> <span>{{ __('masters') }}</span></a>
@@ -315,11 +296,6 @@
 						@if(auth()->user()->can('reports-driver'))
 							<li class="nav-item"><a href="{{route('driverWallet')}}" class="nav-link "><i class="icon-wallet"></i>{{ __('driver_wallet') }}</a></li>
 						@endif
-						@if(auth()->user()->can('card-payment-report'))
-							<li class="nav-item"><a href="{{route('card-payment-List')}}" class="nav-link "><i class="icon-credit-card"></i>{{ __('card_payment') }}</a></li>
-						@endif
-						
-
 						@if(auth()->user()->can('questions-reports'))
 							<li class="nav-item"><a href="{{route('questionsReports')}}" class="nav-link "><i class="icon-bubbles4"></i>{{ __('questions_reports') }}</a></li>
 						@endif
