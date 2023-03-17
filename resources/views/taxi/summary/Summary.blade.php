@@ -155,7 +155,6 @@
                                 <th>{{ __('sl') }}</th>
                                 <th>{{ __('Request Number') }}</th>
                                 <th>{{ __('driver_name') }}</th> 
-                                <th>{{  __('Travel Operator')}}</th>
                                 <th>{{  __('Service Type')}}</th>
                                 <th>{{ __('Customer Name') }}</th>
                                 <th>{{ __('Contact Number') }}</th>
@@ -186,7 +185,6 @@
                                         {!! $request->driverDetail ? $request->driverDetail->firstname.' '.$request->driverDetail->lastname : '' !!}
                                         </a>
                                     </td>
-                                    <td></td>
                                     <td>{{ $request->trip_type }}</td>
                                     <td>{!! $request->userDetail ? $request->userDetail->firstname.' '.$request->userDetail->lastname : '' !!}</td>
                                     <td>{!! $request->userDetail ? $request->userDetail->phone_number : '' !!}</td>

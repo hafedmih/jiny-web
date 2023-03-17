@@ -84,9 +84,9 @@ class PromoController extends BaseController
                         if($use_request_count < $promolist->promo_user_reuse_count || $promolist->select_offer_option == 1){
                             if($use_request_count < $promolist->new_user_count && $user->created_at > $promolist->created_at && $promolist->select_offer_option == 1 || $promolist->select_offer_option != 1){
                                 if($promolist->user_id && in_array($user->id,$promolist->UsersList) && $promolist->select_offer_option == 5 || $promolist->select_offer_option != 5){
-                                    if(in_array($request->type_id,$promolist->types)){
+                                    // if(in_array($request->type_id,$promolist->types)){
                                         array_push($promocodes, $promolist);
-                                    }
+                                    // }
                                 }
                             }
                         }
@@ -144,8 +144,8 @@ class PromoController extends BaseController
                 if($promo_check->select_offer_option == 5 && !$promo_check->user_id && !in_array($user->id,$promo_check->UsersList))
                     return $this->sendError('Provided promocode invalid or expired',[],403);
                 
-                if(!in_array($request->type_id,$promo_check->types))
-                    return $this->sendError('Provided promocode invalid or expired',[],403);
+                // if(!in_array($request->type_id,$promo_check->types))
+                //     return $this->sendError('Provided promocode invalid or expired',[],403);
                 
                 // if($promo_check->trip_type != $request->trip_type)
                 //     return $this->sendError('Provided promocode invalid or expired',[],403);

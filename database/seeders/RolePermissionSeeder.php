@@ -15,6 +15,8 @@ class RolePermissionSeeder extends Seeder
     public function run()
     {
         $modules = array( 
+            ['name'=>'notify','guard_name'=>'web','display_name'=>'notification of doc expire','slug'=>'','category'=>'nav-notify','description'=>'notification of doc expire','created_at'=>NOW(),'updated_at'=>NOW()],
+            ['name'=>'edit-users','guard_name'=>'web','display_name'=>'edit users','slug'=>'','category'=>'user','description'=>'edit users','created_at'=>NOW(),'updated_at'=>NOW()],
             ['name'=>'updated-document','guard_name'=>'web','display_name'=>'updated document','slug'=>'','category'=>'driver','description'=>'updated document','created_at'=>NOW(),'updated_at'=>NOW()],
             ['name'=>'submit-driver-detail','guard_name'=>'web','display_name'=>'submit driver detail','slug'=>'','category'=>'driver','description'=>'submit driver detail','created_at'=>NOW(),'updated_at'=>NOW()],
             ['name'=>'profile-bar','guard_name'=>'web','display_name'=>'profile bar','slug'=>'','category'=>'sidebars','description'=>'profile bar','created_at'=>NOW(),'updated_at'=>NOW()],
@@ -126,6 +128,7 @@ class RolePermissionSeeder extends Seeder
         ['name'=>'new-faq','guard_name'=>'web','display_name'=>'new faq','slug'=>'new-faq','category'=>'faq','description'=>'adding new faq','created_at'=>NOW(),'updated_at'=>NOW()],
         ['name'=>'edit-faq','guard_name'=>'web','display_name'=>'edit faq','slug'=>'edit-faq','category'=>'faq','description'=>'editing faq','created_at'=>NOW(),'updated_at'=>NOW()],
         ['name'=>'delete-faq','guard_name'=>'web','display_name'=>'delete faq','slug'=>'delete-faq','category'=>'faq','description'=>'deleting faq','created_at'=>NOW(),'updated_at'=>NOW()],
+        // ['name'=>'view-faq','guard_name'=>'web','display_name'=>'View FAQ','slug'=>'view-faq','category'=>'faq','description'=>'View FAQ','created_at'=>NOW(),'updated_at'=>NOW()],
         ['name'=>'status-change-faq','guard_name'=>'web','display_name'=>'status change faq','slug'=>'active-faq','category'=>'faq','description'=>'changing status for faq','created_at'=>NOW(),'updated_at'=>NOW()],
         ['name'=>'new-sos','guard_name'=>'web','display_name'=>'new sos','slug'=>'new-sos','category'=>'sos','description'=>'add new sos','created_at'=>NOW(),'updated_at'=>NOW()],
         ['name'=>'edit-sos','guard_name'=>'web','display_name'=>'edit sos user','slug'=>'edit-sos','category'=>'sos','description'=>'editing the user of sos SOS','created_at'=>NOW(),'updated_at'=>NOW()],
@@ -207,7 +210,6 @@ class RolePermissionSeeder extends Seeder
         ['name'=>'request-category-change','guard_name'=>'web','display_name'=>'request category change','slug'=>'','category'=>'request','description'=>'request category','created_at'=>NOW(),'updated_at'=>NOW()],   
         ['name'=>'fare-amount-details','guard_name'=>'web','display_name'=>'fare amount bar','slug'=>'','category'=>'sidebars','description'=>'fare amount details','created_at'=>NOW(),'updated_at'=>NOW()],    
         ['name'=>'block-drivers','guard_name'=>'web','display_name'=>'Block drivers','slug'=>'','category'=>'driver','description'=>'block drivers','created_at'=>NOW(),'updated_at'=>NOW()],
-        ['name'=>'card-payment-report','guard_name'=>'web','display_name'=>'card payment','slug'=>'','category'=>'report','description'=>'card-payment-report','created_at'=>NOW(),'updated_at'=>NOW()],
     );
 
     foreach($modules as $module){

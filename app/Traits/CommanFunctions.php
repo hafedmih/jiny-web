@@ -9,6 +9,7 @@ use Grimzy\LaravelMysqlSpatial\Types\Polygon;
 use Grimzy\LaravelMysqlSpatial\Types\Point;
 use App\Models\taxi\PushTranslationMaster;
 use App\Models\taxi\Zone;
+use App\Models\taxi\RiderAddress;
 use App\Models\taxi\Promocode;
 use App\Models\User;
 use App\Models\taxi\Settings;
@@ -29,6 +30,17 @@ trait CommanFunctions
         if(is_null($zone)){
             //check whether having a Primary Zone
             $zone = Zone::contains('map_zone', $point)->where('status', 1)->where('zone_level','SECONDARY')->first();
+        }
+        return $zone;
+    }
+
+    private function getRider($lat,$long) {
+        $point = new Point($lat, $long);
+        // check whether the Zone have the Secondary Zone
+        $zone = RiderAddress::contains('location', $point)->first();
+        if(is_null($zone)){
+            //check whether having a Primary Zone
+            $zone = RiderAddress::contains('location', $point)->first();
         }
         return $zone;
     }

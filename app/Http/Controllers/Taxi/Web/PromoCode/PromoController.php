@@ -76,7 +76,7 @@ class PromoController extends Controller
         ]); 
         $filename =  uploadImage('promo',$request->file('promo_icon'));
 
-        $types = Vehicle::whereIn('slug',$request['types'])->pluck('id')->toArray();
+        // $types = Vehicle::whereIn('slug',$request['types'])->pluck('id')->toArray();
         $promo = new Promocode();
         $promo->zone_id = strip_tags(trim($request->input('zone_id')));
         $promo->promo_code = strip_tags(trim($request->input('promo_code')));
@@ -108,7 +108,7 @@ class PromoController extends Controller
         //     'promo_type' => 'required',                     
         // ]); 
 
-        $types = Vehicle::whereIn('slug',$request['types'])->pluck('id')->toArray();
+        // $types = Vehicle::whereIn('slug',$request['types'])->pluck('id')->toArray();
         $promo = Promocode::where('slug',$request->promo_slug)->first();
         $promo->description = strip_tags(trim($request->input('description')));
         $promo->target_amount = strip_tags(trim($request->input('target_amount')));
