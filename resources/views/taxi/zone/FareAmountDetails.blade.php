@@ -21,8 +21,8 @@
         <div class="card-body">
             <ul class="nav nav-tabs nav-tabs-bottom">
 			    <li class="nav-item"><a href="#justified-right-icon-tab1" class="nav-link active" data-toggle="tab"><i class="icon-racing"></i> {{ __('local')}}</a></li>
-				<li class="nav-item"><a href="#justified-right-icon-tab2" class="nav-link" data-toggle="tab"><i class="icon-hour-glass2"></i> {{ __('rental')}}  </a></li> 
-                <!-- <li class="nav-item"><a href="#justified-right-icon-tab3" class="nav-link" data-toggle="tab"><i class="icon-forward"></i> {{ __('outstation')}}</a></li> -->
+				<!-- <li class="nav-item"><a href="#justified-right-icon-tab2" class="nav-link" data-toggle="tab"><i class="icon-hour-glass2"></i> {{ __('rental')}}  </a></li> 
+                <li class="nav-item"><a href="#justified-right-icon-tab3" class="nav-link" data-toggle="tab"><i class="icon-forward"></i> {{ __('outstation')}}</a></li> -->
 			</ul>
 		    <div class="tab-content">
 				<div class="tab-pane fade show active" id="justified-right-icon-tab1">
