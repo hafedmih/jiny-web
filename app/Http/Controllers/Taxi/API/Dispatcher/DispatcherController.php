@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Taxi\Web\Dispatcher;
+namespace App\Http\Controllers\Taxi\API\Dispatcher;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -41,22 +41,23 @@ class DispatcherController extends BaseController
     public function __construct(RequestModel $request) {
         
         $this->request = $request;
-    } 
-
-    public function dispatcher(Request $request)
-    {
-        $zone = Zone::where('zone_name','Nouakchott')->where('status',1)->first();
-        $package_detail = PackageMaster::where('status',1)->get();
-
-        $outstanding_pickup = OutstationMaster::where('status',1)->groupby('pick_up')->get();
-        $outstanding_drops = OutstationMaster::where('status',1)->groupby('drop')->get();
-        $outstation_price = OutstationPriceFixing::where('status',1)->get();
-
-        return view('taxi.dispatcher.DispatcherAddTrip',['package_detail' => $package_detail,'outstanding_pickup' => $outstanding_pickup,'outstanding_drops' => $outstanding_drops,'outstation_price' => $outstation_price,'zone' => $zone]);
     }
 
     public function getCustomer($number)
     {
+        $clientlogin = $this::getCurrentClient(request());
+        
+        if(is_null($clientlogin)) return $this->sendError('Token Expired',[],401);
+
+        $user = User::find($clientlogin->user_id);
+        if(is_null($user)) return $this->sendError('Unauthorized',[],401);
+        
+        if($user->active == false) return $this->sendError('User is blocked so please contact admin',[],403);
+
+        // if (!$user->hasRole('driver')) {
+        //     return $this->sendError('Unauthorized',[],401);    
+        // }
+
     	$customers = User::where('phone_number','LIKE','%'.$number.'%')->role('user')->get();
 
     	if(is_null($customers)){
