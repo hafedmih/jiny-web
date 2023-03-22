@@ -58,6 +58,7 @@ require __DIR__.'/taxi/api/Payment.php';
 require __DIR__.'/taxi/api/changepayment.php';
 require __DIR__.'/taxi/api/updatedpaymentstatus.php';
 require __DIR__.'/taxi/api/rideraddress.php';
+require __DIR__.'/taxi/api/transactionCheck.php';
 
 
 use Salman\Mqtt\MqttClass\Mqtt;

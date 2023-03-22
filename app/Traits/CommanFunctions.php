@@ -325,4 +325,66 @@ trait CommanFunctions
         
     }
 
+    public function transactionCheck($token, $data)
+    {
+        
+        $url = "https://ebankily-tst.appspot.com/checkTransaction";
+        $authorization = "Authorization: Bearer ".$token;
+        $curl = curl_init();
+        
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $url,// your preferred url
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30000,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_POSTFIELDS => json_encode($data),
+            CURLOPT_HTTPHEADER => array(
+                // Set here requred headers
+                "accept: */*",
+                "accept-language: en-US,en;q=0.8",
+                "content-type: application/json",$authorization
+            ),
+        ));
+        
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        
+        curl_close($curl);
+        // $response = json_decode($get_response, 1);
+        return $response;
+    }
+
+    public function refreshToken($refresh_token_data)
+    {
+        $url = "https://ebankily-tst.appspot.com/authentification";
+        $curl = curl_init();
+        
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $url,// your preferred url
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30000,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_POSTFIELDS => json_encode($refresh_token_data),
+            CURLOPT_HTTPHEADER => array(
+                // Set here requred headers
+                "accept: */*",
+                "accept-language: en-US,en;q=0.8",
+                "content-type: application/json",
+            ),
+        ));
+        
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        
+        curl_close($curl);
+        // $response = json_decode($get_response, 1);
+        // dd($response);
+        return $response;
+    }
 }
