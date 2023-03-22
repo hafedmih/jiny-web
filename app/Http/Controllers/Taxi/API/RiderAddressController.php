@@ -30,7 +30,7 @@ class RiderAddressController extends BaseController
                     {
                        $ride_list = RiderAddress::select('title','latitude','longitude')->where('title','LIKE', "%{$request->search}%")->limit(5)->get();
                     }
-                    
+                                        
                 if(is_null($ride_list)){
                     return $this->sendError('No Data Found',[],404);  
                 }
