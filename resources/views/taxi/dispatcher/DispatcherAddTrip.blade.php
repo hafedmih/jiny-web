@@ -296,7 +296,7 @@
                                     <label>{{ __('pickup_point') }}: <span class="text-danger">*</span></label>
                                     <input type="text" name="pickup" id="pickup_point" onkeyup="getAddress('pickup')" class="form-control required type_location_input" placeholder="Pickup Point">
                                     <div class="form-control-feedback form-control-feedback-lg" style="cursor: pointer;margin-top: 25px;">
-                                        <i class="icon-location3 get_location" style="font-size:20px"></i>
+                                        <!-- <i class="icon-location3 get_location" style="font-size:20px"></i> -->
                                         <i class="icon-cross" onclick="clearData('pickup')" style="font-size:20px"></i>  
                                     </div>
                                     <input type="hidden" name="pickup_lat" id="pickup_point_lat">
@@ -1835,7 +1835,7 @@
             }
         }
         if(originAutocomplete){
-            originAutocomplete.setComponentRestrictions({'country': ['IN']});
+            // originAutocomplete.setComponentRestrictions({'country': ['IN','MR']});
             originAutocomplete.bindTo("bounds", map);
             // originAutocomplete.radius(500);
             originAutocomplete.addListener("place_changed", (event) => {
@@ -2211,8 +2211,8 @@
     var heatmapData = [];
     var pickLat = [];
     var pickLng = [];
-    var default_lat = '11.0176052';
-    var default_lng = '76.9586527';
+    var default_lat = '18.087569035831216';
+    var default_lng = '-15.962143967987672';
     var driverLat,driverLng,bearing,type;
     var marker = [];
     var online_marker = [];

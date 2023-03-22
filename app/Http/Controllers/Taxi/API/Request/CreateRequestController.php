@@ -334,9 +334,9 @@ class CreateRequestController extends BaseController
                     return $this->sendError('Sorry! promo code exit', [], 403);
                 }
 
-                if (!in_array($type->id, $promocode->types)) {
-                    return $this->sendError('Sorry! promo code exit', [], 403);
-                }
+                // if (!in_array($type->id, $promocode->types)) {
+                //     return $this->sendError('Sorry! promo code exit', [], 403);
+                // }
             }
             $requestNumber = generateRequestNumber();
             $request_otp = $this->UniqueRandomNumbers(4);
