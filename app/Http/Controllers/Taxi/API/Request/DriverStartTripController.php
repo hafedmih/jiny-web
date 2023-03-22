@@ -49,7 +49,7 @@ class DriverStartTripController extends BaseController
 
         $request_detail = $this->request->where('id', $request->request_id)->first();
 
-        if($request->has('request_otp')){
+        if($request->has('request_otp') && settingValue('trip_otp_active')){
             if($request_detail->request_otp != $request->request_otp) return $this->sendError('OTP is invalid. Plesae enter correct OTP',[],403);
         }
         

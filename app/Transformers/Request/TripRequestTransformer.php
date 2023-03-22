@@ -173,6 +173,7 @@ class  TripRequestTransformer extends TransformerAbstract
             'skip_night_photo'          => $request->skip ? true : false,
             'start_night_time'          => $start_night_time,
             'end_night_time'            => $end_night_time,
+            'trip_otp_active'           => settingValue('trip_otp_active')
 
         ];
         

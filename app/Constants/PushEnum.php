@@ -31,6 +31,7 @@ class PushEnum
     const PAYMENT_CHANGE = 'payment_change';
     const USER_PAYMENT_DONE = 'user_payment_done';
     const PAYMENT_DONE = 'payment_done';
+    const ALREADY_DRIVER_ACCEPT_TRIP = 'already_driver_accept_trip';
 
 
 

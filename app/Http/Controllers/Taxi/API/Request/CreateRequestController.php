@@ -578,61 +578,61 @@ class CreateRequestController extends BaseController
             }
             // dd($selected_drivers);
             // $metaDriverslug = $selected_drivers[0]['driver_id'];
-
-            $metaDriver = User::where(
-                'id',
-                $selected_drivers[0]['driver_id']
-            )->first();
-
-            $result = fractal($request_detail, new TripRequestTransformer());
-            // $result['request_number'] = $request_detail->request_number;
-
-            $title = null;
-            $body = '';
-            $lang = $metaDriver->language;
-
-            $push_data = $this->pushlanguage($lang, 'trip-created');
-            if (is_null($push_data)) {
-                $title = 'New Trip Requested 😊️';
-                $body =
-                    'New Trip Requested, you can accept or Reject the request';
-                $sub_title =
-                    'New Trip Requested, you can accept or Reject the request';
-            } else {
-                $title = $push_data->title;
-                $body = $push_data->description;
-                $sub_title = $push_data->description;
-            }
-
-            $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
-            // dd($pushData);
-            $socket_data = new \stdClass();
-            $socket_data->success = true;
-            $socket_data->success_message = PushEnum::REQUEST_CREATED;
-            $socket_data->result = $result;
-
-            $socketData = [
-                'event' => 'request_' . $metaDriver->slug,
-                'message' => $socket_data,
-            ];
-            sendSocketData($socketData);
-
-            // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$result->toJson()];
-
-            // dd($metaDriver->mobile_application_type);
-            dispatch(
-                new SendPushNotification(
-                    $title,
-                    $sub_title,
-                    $pushData,
-                    $metaDriver->device_info_hash,
-                    $metaDriver->mobile_application_type,
-                    1
-                )
-            );
-
             // dd($selected_drivers);
             foreach ($selected_drivers as $key => $selected_driver) {
+
+                $metaDriver = User::where(
+                    'id',
+                    $selected_driver['driver_id']
+                )->first();
+
+                $result = fractal($request_detail, new TripRequestTransformer());
+                // $result['request_number'] = $request_detail->request_number;
+
+                $title = null;
+                $body = '';
+                $lang = $metaDriver->language;
+
+                $push_data = $this->pushlanguage($lang, 'trip-created');
+                if (is_null($push_data)) {
+                    $title = 'New Trip Requested 😊️';
+                    $body =
+                        'New Trip Requested, you can accept or Reject the request';
+                    $sub_title =
+                        'New Trip Requested, you can accept or Reject the request';
+                } else {
+                    $title = $push_data->title;
+                    $body = $push_data->description;
+                    $sub_title = $push_data->description;
+                }
+
+                $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
+                // dd($pushData);
+                $socket_data = new \stdClass();
+                $socket_data->success = true;
+                $socket_data->success_message = PushEnum::REQUEST_CREATED;
+                $socket_data->result = $result;
+
+                $socketData = [
+                    'event' => 'request_' . $metaDriver->slug,
+                    'message' => $socket_data,
+                ];
+                sendSocketData($socketData);
+
+                // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$result->toJson()];
+
+                // dd($metaDriver->mobile_application_type);
+                dispatch(
+                    new SendPushNotification(
+                        $title,
+                        $sub_title,
+                        $pushData,
+                        $metaDriver->device_info_hash,
+                        $metaDriver->mobile_application_type,
+                        1
+                    )
+                );
+
                 $request_meta = $request_detail
                     ->requestMeta()
                     ->create($selected_driver);

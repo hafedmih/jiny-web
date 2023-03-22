@@ -169,6 +169,24 @@
                                                     <input id="cancel_fees_distance" name="cancel_fees_distance" placeholder="{{ __('cancel_fees_distance') }}" type="text" class="form-control" value="{{array_key_exists('cancel_fees_distance', $settings) ? $settings['cancel_fees_distance'] : ''}}" required>
                                                     </div>
                                                 </div>
+
+                                                <div class="form-group row">
+                                                    <label class="col-form-label col-sm-3"><b>{{ __('trip_otp_active') }}</b></label>
+                                                    <div class="col-sm-9">
+                                                        <div class="form-check form-check-inline">
+                                                            <label class="form-check-label">
+                                                                <input type="radio" name="trip_otp_active" class="form-input-styled required" data-fouc value="1" @if(array_key_exists('trip_otp_active', $settings) && $settings['trip_otp_active'] == '1') checked @endif>
+                                                                True
+                                                            </label>
+                                                        </div>
+                                                        <div class="form-check form-check-inline">
+                                                            <label class="form-check-label">
+                                                                <input type="radio" name="trip_otp_active" class="form-input-styled required" data-fouc value="0" @if(array_key_exists('trip_otp_active', $settings) && $settings['trip_otp_active'] == '0') checked @endif>
+                                                                False
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 <button type="submit" id="trip_setting_saveBtn" class="btn bg-primary ">{{ __('save-changes') }}</button>
                                             </form>
                                         </div>
