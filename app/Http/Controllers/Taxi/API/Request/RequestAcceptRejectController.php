@@ -88,29 +88,31 @@ class RequestAcceptRejectController extends BaseController
                 $meta_drivers = RequestMeta::where('request_id', $request->request_id)->get();
 
                 foreach ($meta_drivers as $key => $value) {
-                    $driverModel = User::find($value->driver_id);
-                    $title = Null;
-                    $body = '';
-                    $lang = $driverModel->language;
-                    $push_data = $this->pushlanguage($lang,'trip-accept');
-                    if(is_null($push_data)){
-                        $title = 'Already driver accepted trip';
-                        $body = 'The Driver is already accepted this trip';
-                        $sub_title = 'The Driver is already accepted this trip';
-                    }else{
-                        $title = $push_data->title;
-                        $body =  $push_data->description;
-                        $sub_title =  $push_data->description;
-                    } 
-                    $push_data = ['notification_enum'=>PushEnum::ALREADY_DRIVER_ACCEPT_TRIP];
-                    // Form a socket sturcture using users'id and message with event name
-                    $socket_data = new \stdClass();
-                    $socket_data->success = true;
-                    $socket_data->success_message  = PushEnum::ALREADY_DRIVER_ACCEPT_TRIP;
-                    $socket_data->result = $request_result;
-                    $socketData = ['event' => 'request_'.$driverModel->slug,'message' => $socket_data];
-                    sendSocketData($socketData);
-                    dispatch(new SendPushNotification($title,$sub_title, $push_data, $driverModel->device_info_hash, $driverModel->mobile_application_type,0));
+                    if($value->driver_id != $user->id){
+                        $driverModel = User::find($value->driver_id);
+                        $title = Null;
+                        $body = '';
+                        $lang = $driverModel->language;
+                        $push_data = $this->pushlanguage($lang,'trip-accept');
+                        if(is_null($push_data)){
+                            $title = 'Already driver accepted trip';
+                            $body = 'The Driver is already accepted this trip';
+                            $sub_title = 'The Driver is already accepted this trip';
+                        }else{
+                            $title = $push_data->title;
+                            $body =  $push_data->description;
+                            $sub_title =  $push_data->description;
+                        } 
+                        $push_data = ['notification_enum'=>PushEnum::ALREADY_DRIVER_ACCEPT_TRIP];
+                        // Form a socket sturcture using users'id and message with event name
+                        $socket_data = new \stdClass();
+                        $socket_data->success = true;
+                        $socket_data->success_message  = PushEnum::ALREADY_DRIVER_ACCEPT_TRIP;
+                        $socket_data->result = $request_result;
+                        $socketData = ['event' => 'request_'.$driverModel->slug,'message' => $socket_data];
+                        sendSocketData($socketData);
+                        dispatch(new SendPushNotification($title,$sub_title, $push_data, $driverModel->device_info_hash, $driverModel->mobile_application_type,0));
+                    }
                 }
                 // dd($request_detail);
                 $this->deleteMetaRecords($request);
