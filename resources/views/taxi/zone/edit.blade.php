@@ -797,7 +797,7 @@ if(message){
         $('input[name="available_days['+id+'][0]"]').val('');
         $('input[name="start_time['+id+'][0]"]').val('');
         $('input[name="end_time['+id+'][0]"]').val('');
-        $('input[name="sruge_price_id['+id+'][0]"]').val('');
+        // $('input[name="sruge_price_id['+id+'][0]"]').val('');
         var available_days = $('input[name="available_days['+id+'][0]"]').attr('id');
         $('#'+available_days).select2();
     });

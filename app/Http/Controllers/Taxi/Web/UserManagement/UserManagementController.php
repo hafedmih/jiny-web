@@ -109,7 +109,8 @@ class UserManagementController extends Controller
     {
         $user = User::where('slug',$slug)->first();
         $wallet = Wallet::where('user_id',$user->id)->first();
-        $currency = RequestModel::pluck('requested_currency_symbol')->first();
+        // $currency = RequestModel::pluck('requested_currency_symbol')->first();
+        $currency = $user && $user->getCountry ? $user->getCountry->currency_symbol : '';
 
         
         if(!$wallet){

@@ -84,7 +84,9 @@ class CreateRideLaterController extends BaseController
             'requested_currency_symbol' => $zone->getCountry->currency_symbol,
             'driver_info'             => $request->driver_notes,
             'ride_type'               =>  "Ride Later",
-            'trip_type'               => $request->ride_type
+            'trip_type'               => $request->ride_type,
+            'destination_type' => $request->has('drop_address') && $request->has('drop_lat') && $request->has('drop_lng') ? 'NORMAL' : 'OPEN',
+            'amount' => $request->trip_amount
 
         ];
         // dd("hai");

@@ -339,6 +339,7 @@ class CreateRequestController extends BaseController
                 // }
             }
             $requestNumber = generateRequestNumber();
+            dd($requestNumber);
             $request_otp = $this->UniqueRandomNumbers(4);
             //Booking for by deena
             $booking_for = $request->booking_for;
@@ -359,6 +360,8 @@ class CreateRequestController extends BaseController
                 'driver_notes' => $request->driver_notes,
                 'booking_for' => $booking_for,
                 'trip_start_time' => NOW(),
+                'destination_type' => $request->has('drop_address') && $request->has('drop_lat') && $request->has('drop_lng') ? 'NORMAL' : 'OPEN',
+                'amount' => $request->trip_amount
             ];
             //    dd($request_params);
             $request_detail = $this->request->create($request_params);

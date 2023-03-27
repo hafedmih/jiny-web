@@ -90,7 +90,7 @@ return [
     // 'timezone' => settingValue('time_zone'),
    //'timezone' => 'UTC',
 
-      'timezone' => 'Asia/Kolkata',
+      'timezone' => 'Africa/Nouakchott',
 
 
     /*

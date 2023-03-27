@@ -84,6 +84,15 @@ class RequestAcceptRejectController extends BaseController
                 ];
 
                 $request_detail->update($updated_params);
+                
+                $totalAccepted += 1;
+                // Update the driver's available state as false
+                $driver->is_available = false;
+                $driver->total_accept = $totalAccepted;
+                $driver->reject_count = 0;
+                $driver->save();
+
+                $request_result =  fractal($request_detail, new TripRequestTransformer);
 
                 $meta_drivers = RequestMeta::where('request_id', $request->request_id)->get();
 
@@ -116,15 +125,6 @@ class RequestAcceptRejectController extends BaseController
                 }
                 // dd($request_detail);
                 $this->deleteMetaRecords($request);
-                
-                $totalAccepted += 1;
-                // Update the driver's available state as false
-                $driver->is_available = false;
-                $driver->total_accept = $totalAccepted;
-                $driver->reject_count = 0;
-                $driver->save();
-
-                $request_result =  fractal($request_detail, new TripRequestTransformer);
                 
                 if ($request_detail->user_id != null) {
 

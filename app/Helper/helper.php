@@ -474,7 +474,8 @@ if (!function_exists('generateRequestNumber'))
 {
     function generateRequestNumber()
     {
-        $requestModel = Request::latest()->first();
+        // $requestModel = Request::latest()->first();
+        $requestModel = Request::orderBy('request_number','desc')->first();
         if ($requestModel) {
             $requestNumber = explode('_', $requestModel->request_number);
             $lastIndex = $requestNumber[1];
