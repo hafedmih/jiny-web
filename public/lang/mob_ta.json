@@ -27,7 +27,6 @@
     "num_two": "2",
     "refferal_code": "பரிந்துரை குறியீடு",
     "show_otp_error": "தொடர,முழுமையான otp ஐ உள்ளிடவும்",
-    "tamil": "தமிழ்",
     "text_Alert": "எச்சரிக்கை",
     "text_Done": "முடிந்தது",
     "text_Enter_Address": "முகவரியை உள்ளிடவும்",
@@ -148,7 +147,6 @@
     "txt_NoInternet": "இணைய இணைப்பு இல்லை",
     "txt_NoInternet_title": "உங்கள் இணைய இணைப்பைச் சரிபார்க்கவும்",
     "txt_Other": "மற்றவைகள்",
-    "txt_Payment": "கட்டண முறை",
     "txt_RateperKm": "ஒரு கிமீ வீதம்",
     "txt_RideNow": "இப்போது சவாரி செய்",
     "txt_Ridetime": "சவாரி நேர கட்டணம்",
@@ -353,6 +351,7 @@
     "txt_otp_expires_in": "குறியீடு காலாவதி ஆகும் நேரம்",
     "txt_outstation": "வெளியூர்",
     "txt_pay_methods": "பணம் செலுத்தும் முறைகள்",
+    "txt_payment": "கட்டண முறை",
     "txt_phone_cannot_be_empty": "தொலைபேசி எண் காலியாக இருக்கக்கூடாது",
     "txt_phone_error": "தொலைபேசி எண் 10 இலக்கங்களாக இருக்க வேண்டும்",
     "txt_pickupTime": "ஏற்றும் நேரம்",
@@ -476,6 +475,5 @@
     "txt_your_trip_dis": "உங்கள் வருவாய்",
     "txt_zone": "மண்டலத்தின் பெயர்",
     "user_blocked_text": "நீங்கள் மறுக்கப்படுகிறீர்கள்",
-    "waiting_time_price": "காத்திருப்பு விலை",
-    "yes": "ஆம்"
+    "waiting_time_price": "காத்திருப்பு விலை"
 }
