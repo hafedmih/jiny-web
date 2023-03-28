@@ -19,6 +19,7 @@ use App\Traits\CommanFunctions;
 use Illuminate\Support\Carbon;
 use Log;
 use App\Models\taxi\DriverLogs;
+use App\Models\taxi\Wallet;
 
 
 class AssignDriversForScheduledRides extends Command

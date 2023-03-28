@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8ad40c34a0dbe6415dc1b0fb5119451a",
+    "content-hash": "cb246ce22b469e6e2e2e31113c6f3579",
     "packages": [
         {
             "name": "alsofronie/eloquent-uuid",

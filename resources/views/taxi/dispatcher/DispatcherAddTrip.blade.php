@@ -845,6 +845,11 @@
     $(document).on('change',".change-type",function(){
         var value = $(this).val();
 
+        $("#drop_point").val('');
+        $("#drop_lat").val('');
+        $("#drop_lng").val('');
+        $("#drop_lng_id").val('');
+
         if(value == 'Normal'){
             $("#drop_row").show();
             $("#drop_point").addClass("required");

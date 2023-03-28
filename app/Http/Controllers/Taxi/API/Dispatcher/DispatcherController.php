@@ -31,6 +31,8 @@ use App\Models\taxi\Zone;
 use App\Models\User;
 use App\Models\taxi\OutstationUploadImages;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth; 
+use Validator;
 
 class DispatcherController extends BaseController
 {
@@ -41,6 +43,40 @@ class DispatcherController extends BaseController
     public function __construct(RequestModel $request) {
         
         $this->request = $request;
+    }
+
+    public function login(Request $request)
+    {
+        $validator = Validator::make($request->all(), [ 
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+        if ($validator->fails()) { 
+            return response()->json(['error'=>$validator->errors()], 401);            
+        }
+        if (!Auth::attempt($request->only('email', 'password')))
+        {
+            return response()
+                ->json(['message' => 'Unauthorized'], 401);
+        }
+        
+        $user = User::where('email',$request->email)->where('active',true)->first();
+        if(is_null($user)){
+            return $this->sendResponse('Data Not Found',[],200); 
+        }
+        $user->device_info_hash = $request->device_info_hash;
+        $user->update();
+        // fetch the oauth credentials
+        $fetchOauth = OauthClients::where('user_id',$user->id)->first();
+        if(is_null($fetchOauth)){
+            return $this->sendError('No user Found',[],403);
+        }
+        $data = array();
+        $data['client_id'] = $fetchOauth->id;
+        $data['client_secret'] = $fetchOauth->secret;
+
+        return response()
+            ->json(['success' => true,'data' => $data],200);
     }
 
     public function getCustomer($number)

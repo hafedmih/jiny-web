@@ -30,6 +30,7 @@ use App\Models\taxi\Outofzone;
 use App\Models\taxi\Zone;
 use App\Models\User;
 use App\Models\taxi\OutstationUploadImages;
+use App\Models\taxi\Wallet;
 use Illuminate\Support\Carbon;
 
 class DispatcherController extends BaseController
@@ -644,11 +645,7 @@ class DispatcherController extends BaseController
             }
         }
         if($request_detail->requestMeta()->count() == 0){
-            return $this->sendError(
-                'No Driver Found',
-                ['request_id' => $request_detail->id, 'error_code' => 2001],
-                404
-            );
+            return $this->sendError('No Driver Found',$request_detail,404);
         }
 
         return $this->sendResponse('Data Found', $result, 200);
