@@ -176,7 +176,7 @@ class  TripRequestTransformer extends TransformerAbstract
             'trip_otp_active'           => settingValue('trip_otp_active'),
             'destination_type'          => $request->destination_type,
             'trip_amount'               => $request->amount,
-            'trip_driver_cancel'        => $request->trip_driver_cancel,
+            'is_requesting_cancel'        => $request->trip_driver_cancel,
         ];
         
 

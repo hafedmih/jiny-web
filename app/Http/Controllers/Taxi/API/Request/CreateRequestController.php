@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Traits\CommanFunctions;
 use App\Transformers\Request\TripRequestTransformer;
 use App\Models\taxi\Vehicle;
+use App\Models\taxi\Wallet;
 use App\Models\taxi\UserInstantTrip;
 
 use App\Models\taxi\Promocode;
@@ -339,7 +340,7 @@ class CreateRequestController extends BaseController
                 // }
             }
             $requestNumber = generateRequestNumber();
-            dd($requestNumber);
+            // dd($requestNumber);
             $request_otp = $this->UniqueRandomNumbers(4);
             //Booking for by deena
             $booking_for = $request->booking_for;
@@ -588,65 +589,75 @@ class CreateRequestController extends BaseController
                     'id',
                     $selected_driver['driver_id']
                 )->first();
+                $wallet = Wallet::where('user_id',$selected_driver['driver_id'])->where('balance_amount','>',settingValue('wallet_driver_minimum_balance_for_trip'))->first();
 
-                $result = fractal($request_detail, new TripRequestTransformer());
-                // $result['request_number'] = $request_detail->request_number;
+                if($metaDriver && $wallet){
+                    $result = fractal($request_detail, new TripRequestTransformer());
+                    // $result['request_number'] = $request_detail->request_number;
 
-                $title = null;
-                $body = '';
-                $lang = $metaDriver->language;
+                    $title = null;
+                    $body = '';
+                    $lang = $metaDriver->language;
 
-                $push_data = $this->pushlanguage($lang, 'trip-created');
-                if (is_null($push_data)) {
-                    $title = 'New Trip Requested 😊️';
-                    $body =
-                        'New Trip Requested, you can accept or Reject the request';
-                    $sub_title =
-                        'New Trip Requested, you can accept or Reject the request';
-                } else {
-                    $title = $push_data->title;
-                    $body = $push_data->description;
-                    $sub_title = $push_data->description;
+                    $push_data = $this->pushlanguage($lang, 'trip-created');
+                    if (is_null($push_data)) {
+                        $title = 'New Trip Requested 😊️';
+                        $body =
+                            'New Trip Requested, you can accept or Reject the request';
+                        $sub_title =
+                            'New Trip Requested, you can accept or Reject the request';
+                    } else {
+                        $title = $push_data->title;
+                        $body = $push_data->description;
+                        $sub_title = $push_data->description;
+                    }
+
+                    $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
+                    // dd($pushData);
+                    $socket_data = new \stdClass();
+                    $socket_data->success = true;
+                    $socket_data->success_message = PushEnum::REQUEST_CREATED;
+                    $socket_data->result = $result;
+
+                    $socketData = [
+                        'event' => 'request_' . $metaDriver->slug,
+                        'message' => $socket_data,
+                    ];
+                    sendSocketData($socketData);
+
+                    // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$result->toJson()];
+
+                    // dd($metaDriver->mobile_application_type);
+                    // dispatch(
+                    //     new SendPushNotification(
+                    //         $title,
+                    //         $sub_title,
+                    //         $pushData,
+                    //         $metaDriver->device_info_hash,
+                    //         $metaDriver->mobile_application_type,
+                    //         1
+                    //     )
+                    // );
+                    sendPush(
+                        $title,
+                        $sub_title,
+                        $pushData,
+                        $metaDriver->device_info_hash,
+                        $metaDriver->mobile_application_type,
+                        1
+                    );
+
+                    $request_meta = $request_detail
+                        ->requestMeta()
+                        ->create($selected_driver);
                 }
-
-                $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
-                // dd($pushData);
-                $socket_data = new \stdClass();
-                $socket_data->success = true;
-                $socket_data->success_message = PushEnum::REQUEST_CREATED;
-                $socket_data->result = $result;
-
-                $socketData = [
-                    'event' => 'request_' . $metaDriver->slug,
-                    'message' => $socket_data,
-                ];
-                sendSocketData($socketData);
-
-                // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$result->toJson()];
-
-                // dd($metaDriver->mobile_application_type);
-                // dispatch(
-                //     new SendPushNotification(
-                //         $title,
-                //         $sub_title,
-                //         $pushData,
-                //         $metaDriver->device_info_hash,
-                //         $metaDriver->mobile_application_type,
-                //         1
-                //     )
-                // );
-                sendPush(
-                    $title,
-                    $sub_title,
-                    $pushData,
-                    $metaDriver->device_info_hash,
-                    $metaDriver->mobile_application_type,
-                    1
+            }
+            if($request_detail->requestMeta()->count() == 0){
+                return $this->sendError(
+                    'No Driver Found',
+                    ['request_id' => $request_detail->id, 'error_code' => 2001],
+                    404
                 );
-
-                $request_meta = $request_detail
-                    ->requestMeta()
-                    ->create($selected_driver);
             }
             // dd($metaDriver);
             return $this->sendResponse('Data Found', $result, 200);

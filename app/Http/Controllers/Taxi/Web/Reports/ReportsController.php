@@ -557,15 +557,19 @@ class ReportsController extends Controller
         $driver = $requestModel->driverDetail;
         $driver->trips_count = 0;
         $driver->save();
+        $driver = $driver->driver;
+        $driver->is_available = true;
+        $driver->save();
 
         $cancellationFee = (new UserCancelRequestController())->calculateFee($requestModel);
 
     // dd($cancellationFee);
     // dd($requestModel->requestPlace);
-        $driver_accept = RequestDriverLog::where('request_id',$requestModel->id)->where('user_id',$user->id)->where('type','ACCEPT')->first();
+        $driver_accept = RequestDriverLog::where('request_id',$requestModel->id)->where('user_id',$driver->id)->where('type','ACCEPT')->first();
 
         if($driver_accept && $driver_accept->driver_lat != "" && $driver_accept->driver_lng){
-            $travel_destance = $this->getDistance($driver_accept->driver_lat,$driver_accept->driver_lng,$request->driver_latitude,$request->driver_longitude);
+            $driver_reject = RequestDriverLog::where('request_id',$requestModel->id)->where('user_id',$driver->id)->where('type','CANCELLED')->first();
+            $travel_destance = $this->getDistance($driver_accept->driver_lat,$driver_accept->driver_lng,$driver_reject->driver_lat,$driver_reject->driver_lng);
             $cancel_fees_distance = Settings::where('name','cancel_fees_distance')->first();
             $cancel_fees_distance = $cancel_fees_distance ? $cancel_fees_distance->value : 0;
             if($travel_destance >= $cancel_fees_distance){
@@ -623,12 +627,12 @@ class ReportsController extends Controller
             dispatch(new SendPushNotification($title,$sub_title, $pushData, $user->device_info_hash, $user->mobile_application_type,0));
         }
 
-        $user = $requestModel->driverDetail;
+        $driver = $requestModel->driverDetail;
 
-        if ($user) {
+        if ($driver) {
             $title = Null;
             $body = '';
-            $lang = $user->language;
+            $lang = $driver->language;
             $push_data = $this->pushlanguage($lang,'admin-accepted-trip-cancelled');
             if(is_null($push_data)){
                 $title = 'Admin Accepted Trip Cancelled';
@@ -645,9 +649,10 @@ class ReportsController extends Controller
             $socket_data->success = true;
             $socket_data->success_message  = PushEnum::REQUEST_CANCELLED_BY_DRIVER;
             $socket_data->result = $request_result;
-            $socketData = ['event' => 'request_'.$user->slug,'message' => $socket_data];
+            $socketData = ['event' => 'request_'.$driver->slug,'message' => $socket_data];
             sendSocketData($socketData);
-            dispatch(new SendPushNotification($title,$sub_title, $pushData, $user->device_info_hash, $user->mobile_application_type,0));
+            // dispatch(new SendPushNotification($title,$sub_title, $pushData, $driver->device_info_hash, $driver->mobile_application_type,0));
+            sendPush($title,$sub_title, $pushData, $driver->device_info_hash, $driver->mobile_application_type,0);
         }
 
         return redirect()->route('driverTripCancel');

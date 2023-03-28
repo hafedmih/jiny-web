@@ -292,6 +292,22 @@
                     <fieldset class="fieldset">
                         <div class="row">
                             <div class="col-md-12">
+                                <div class="form-group">
+                                    <div class="form-check form-check-inline">
+                                        <label class="form-check-label">
+                                            <input type="radio" name="destination_type" class="form-input-styled change-type required" data-fouc value="Normal" checked>
+                                            Normal
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <label class="form-check-label">
+                                            <input type="radio" name="destination_type" class="form-input-styled change-type required" data-fouc value="Open">
+                                            Open
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
                                 <div class="form-group form-group-feedback form-group-feedback-right">
                                     <label>{{ __('pickup_point') }}: <span class="text-danger">*</span></label>
                                     <input type="text" name="pickup" id="pickup_point" onkeyup="getAddress('pickup')" class="form-control required type_location_input" placeholder="Pickup Point">
@@ -318,10 +334,10 @@
                                 </div>
                                 <div class="form-group text-right"><label class="badge badge-danger rounded-pill remove_button"><i class="icon-cross mr-2"></i> Remove Stop</label></div>
                             </div>
-                            <div class="col-md-12">
+                            <div class="col-md-12" id="drop_row">
                                 <div class="form-group form-group-feedback form-group-feedback-right">
                                     <label>{{ __('drop_point') }}: </label>
-                                    <input type="text" name="drop" id="drop_point" onkeyup="getAddress('drop')" class="form-control type_location_input" placeholder="Drop Point">
+                                    <input type="text" name="drop" id="drop_point" onkeyup="getAddress('drop')" class="form-control type_location_input required" placeholder="Drop Point">
                                     <div class="form-control-feedback form-control-feedback-lg" style="cursor: pointer;margin-top: 25px;">
                                         <i class="icon-cross" onclick="clearData('drop')" style="font-size:20px"></i>  
                                     </div>
@@ -825,6 +841,20 @@
             $("#datetime_local").removeClass("required");
         }
     });
+
+    $(document).on('change',".change-type",function(){
+        var value = $(this).val();
+
+        if(value == 'Normal'){
+            $("#drop_row").show();
+            $("#drop_point").addClass("required");
+        }
+        else{
+            $("#drop_row").hide();
+            $("#drop_point").removeClass("required");
+        }
+    });
+
     $(document).on('change',".rental-change-time",function(){
         var value = $(this).val();
 

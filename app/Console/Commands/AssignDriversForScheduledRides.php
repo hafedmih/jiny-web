@@ -128,43 +128,44 @@ class AssignDriversForScheduledRides extends Command
                     // if(count($selected_drivers) == 0){
                     //     return $this->sendError('No Driver Found',[],404);  
                     // }
-                    
-                    $metaDriver = User::where('id',$selected_drivers[0]['driver_id'])->first();
-                
-                    
 
                     $result = fractal($request_detail, new TripRequestTransformer);
 
-                    $title = Null;
-                    $body = '';
-                    $lang = $metaDriver->language;
-                    $push_data = $this->pushlanguage($lang,'trip-created');
-                    if(is_null($push_data)){
-                        $title = 'New Trip Requested 😊️';
-                        $body = 'New Trip Requested, you can accept or Reject the request';
-                        $sub_title = 'New Trip Requested, you can accept or Reject the request';
-
-                    }else{
-                        $title = $push_data->title;
-                        $body =  $push_data->description;
-                        $sub_title =  $push_data->description;
-
-                    }   
-
-                    $socket_data = new \stdClass();
-                    $socket_data->success = true;
-                    $socket_data->success_message  = PushEnum::REQUEST_CREATED;
-                    $socket_data->result = $result;
-
-                    $socketData = ['event' => 'request_'.$metaDriver->slug,'message' => $socket_data];
-                    sendSocketData($socketData);
-
-                    $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
-
-                    dispatch(new SendPushNotification($title, $sub_title, $pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,0));
-
                     foreach ($selected_drivers as $key => $selected_driver) {
-                        $request_meta = $request_detail->requestMeta()->create($selected_driver);
+                        $metaDriver = User::where('id',$selected_driver['driver_id'])->first();
+                        $wallet = Wallet::where('user_id',$selected_driver['driver_id'])->where('balance_amount','>',settingValue('wallet_driver_minimum_balance_for_trip'))->first();
+
+                        if($metaDriver && $wallet){
+                            $title = Null;
+                            $body = '';
+                            $lang = $metaDriver->language;
+                            $push_data = $this->pushlanguage($lang,'trip-created');
+                            if(is_null($push_data)){
+                                $title = 'New Trip Requested 😊️';
+                                $body = 'New Trip Requested, you can accept or Reject the request';
+                                $sub_title = 'New Trip Requested, you can accept or Reject the request';
+
+                            }else{
+                                $title = $push_data->title;
+                                $body =  $push_data->description;
+                                $sub_title =  $push_data->description;
+
+                            }   
+
+                            $socket_data = new \stdClass();
+                            $socket_data->success = true;
+                            $socket_data->success_message  = PushEnum::REQUEST_CREATED;
+                            $socket_data->result = $result;
+
+                            $socketData = ['event' => 'request_'.$metaDriver->slug,'message' => $socket_data];
+                            sendSocketData($socketData);
+
+                            $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
+
+                            // dispatch(new SendPushNotification($title, $sub_title, $pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,0));
+                            sendPush($title, $sub_title, $pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,0);
+                            $request_meta = $request_detail->requestMeta()->create($selected_driver);
+                        }
                     }
                 }
             }

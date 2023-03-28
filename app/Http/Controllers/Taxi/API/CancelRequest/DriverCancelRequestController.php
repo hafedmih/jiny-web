@@ -45,9 +45,9 @@ class DriverCancelRequestController extends BaseController
             return $this->sendError('Request not found',[],401);
         }
 
-        $driver = $user->driver;
-        $driver->is_available = true;
-        $driver->save();
+        // $driver = $user->driver;
+        // $driver->is_available = true;
+        // $driver->save();
 
         $requestModel->update([
             // 'is_cancelled'=>1,
@@ -57,9 +57,9 @@ class DriverCancelRequestController extends BaseController
             'cancel_method'=>CancelMethod::DRIVER_TEXT,
             'trip_driver_cancel'=>1
         ]);
-        $driver = $requestModel->driverDetail;
-        $driver->trips_count = 0;
-        $driver->save();
+        // $driver = $requestModel->driverDetail;
+        // $driver->trips_count = 0;
+        // $driver->save();
 
         $cancellationFee = (new UserCancelRequestController())->calculateFee($requestModel);
 
@@ -67,35 +67,35 @@ class DriverCancelRequestController extends BaseController
     // dd($requestModel->requestPlace);
         $driver_accept = RequestDriverLog::where('request_id',$requestModel->id)->where('user_id',$user->id)->where('type','ACCEPT')->first();
 
-        if($driver_accept && $driver_accept->driver_lat != "" && $driver_accept->driver_lng){
-            $travel_destance = $this->getDistance($driver_accept->driver_lat,$driver_accept->driver_lng,$request->driver_latitude,$request->driver_longitude);
-            $cancel_fees_distance = Settings::where('name','cancel_fees_distance')->first();
-            $cancel_fees_distance = $cancel_fees_distance ? $cancel_fees_distance->value : 0;
-            if($travel_destance >= $cancel_fees_distance){
-                $wallet = Wallet::where('user_id',$requestModel->driver_id)->first();
-                if(!$wallet){
-                    $wallet = new Wallet();
-                    $wallet->user_id = $requestModel->driver_id;
-                }
-                $wallet->earned_amount +=  $cancellationFee;
-                $wallet->balance_amount +=  $cancellationFee;
-                $wallet->save();
+        // if($driver_accept && $driver_accept->driver_lat != "" && $driver_accept->driver_lng){
+        //     $travel_destance = $this->getDistance($driver_accept->driver_lat,$driver_accept->driver_lng,$request->driver_latitude,$request->driver_longitude);
+        //     $cancel_fees_distance = Settings::where('name','cancel_fees_distance')->first();
+        //     $cancel_fees_distance = $cancel_fees_distance ? $cancel_fees_distance->value : 0;
+        //     if($travel_destance >= $cancel_fees_distance){
+        //         $wallet = Wallet::where('user_id',$requestModel->driver_id)->first();
+        //         if(!$wallet){
+        //             $wallet = new Wallet();
+        //             $wallet->user_id = $requestModel->driver_id;
+        //         }
+        //         $wallet->earned_amount +=  $cancellationFee;
+        //         $wallet->balance_amount +=  $cancellationFee;
+        //         $wallet->save();
 
-                WalletTransaction::create([
-                    'wallet_id' => $wallet->id,
-                    'request_id' => $requestModel->id,
-                    'amount' => $cancellationFee,
-                    'user_id' => $requestModel->driver_id,
-                    'purpose' => 'Request Cancellation Fees',
-                    'type' => 'EARNED',
-                ]);
-            }
-        }
+        //         WalletTransaction::create([
+        //             'wallet_id' => $wallet->id,
+        //             'request_id' => $requestModel->id,
+        //             'amount' => $cancellationFee,
+        //             'user_id' => $requestModel->driver_id,
+        //             'purpose' => 'Request Cancellation Fees',
+        //             'type' => 'EARNED',
+        //         ]);
+        //     }
+        // }
         RequestDriverLog::create([
             'request_id' => $requestModel->id,
             'user_id' => $user->id,
-            'driver_lat' => $request->driver_lat,
-            'driver_lng' => $request->driver_lng,
+            'driver_lat' => $request->driver_latitude,
+            'driver_lng' => $request->driver_longitude,
             'date_time' => NOW(),
             'type' => 'CANCELLED',
             'user_type' => 'DRIVER',

@@ -619,27 +619,36 @@ class DispatcherController extends BaseController
         
         foreach ($selected_drivers as $key => $selected_driver) {
             $metaDriver = User::where('id',$selected_driver['driver_id'])->first();
+            $wallet = Wallet::where('user_id',$selected_driver['driver_id'])->where('balance_amount','>',settingValue('wallet_driver_minimum_balance_for_trip'))->first();
+            if($metaDriver && $wallet){
             
-            $title = 'New Trip Requested 😊️';
-            $body = 'New Trip Requested, you can accept or Reject the request';
-            $sub_title = 'New Trip Requested, you can accept or Reject the request';
+                $title = 'New Trip Requested 😊️';
+                $body = 'New Trip Requested, you can accept or Reject the request';
+                $sub_title = 'New Trip Requested, you can accept or Reject the request';
 
+                $socket_data = new \stdClass();
+                $socket_data->success = true;
+                $socket_data->success_message  = PushEnum::REQUEST_CREATED;
+                $socket_data->result = $result;
 
-            $socket_data = new \stdClass();
-            $socket_data->success = true;
-            $socket_data->success_message  = PushEnum::REQUEST_CREATED;
-            $socket_data->result = $result;
+                $socketData = ['event' => 'request_'.$metaDriver->slug,'message' => $socket_data];
+                sendSocketData($socketData);
 
-            $socketData = ['event' => 'request_'.$metaDriver->slug,'message' => $socket_data];
-            sendSocketData($socketData);
+                // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$result->toJson()];
+                $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
+                    // dd($metaDriver);
+                // dispatch(new SendPushNotification($title, $sub_title,$pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1));
+                sendPush($title, $sub_title,$pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1);
 
-            // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$result->toJson()];
-            $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
-                // dd($metaDriver);
-            // dispatch(new SendPushNotification($title, $sub_title,$pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1));
-            sendPush($title, $sub_title,$pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1);
-
-            $request_meta = $request_detail->requestMeta()->create($selected_driver);   
+                $request_meta = $request_detail->requestMeta()->create($selected_driver);
+            }
+        }
+        if($request_detail->requestMeta()->count() == 0){
+            return $this->sendError(
+                'No Driver Found',
+                ['request_id' => $request_detail->id, 'error_code' => 2001],
+                404
+            );
         }
 
         return $this->sendResponse('Data Found', $result, 200);

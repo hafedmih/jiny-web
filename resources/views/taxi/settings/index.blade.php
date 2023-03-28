@@ -278,6 +278,13 @@
                                                 </div>
 
                                                 <div class="form-group row">
+                                                    <label class="col-form-label col-sm-3"><b>{{ __('wallet_driver_minimum_balance_for_trip') }}</b></label>
+                                                    <div class="col-sm-9">
+                                                    <input id="wallet_driver_minimum_balance_for_trip" name="wallet_driver_minimum_balance_for_trip" placeholder="{{ __('wallet_driver_minimum_balance_for_trip') }}" type="text" class="form-control" value="{{array_key_exists('wallet_driver_minimum_balance_for_trip', $settings) ? $settings['wallet_driver_minimum_balance_for_trip'] : ''}}" required>
+                                                    </div>
+                                                </div>
+
+                                                <div class="form-group row">
                                                     <label class="col-form-label col-sm-3"><b>{{ __('referal_one_time') }}</b></label>
                                                     <div class="col-sm-9">
                                                         <div class="form-check form-check-inline">

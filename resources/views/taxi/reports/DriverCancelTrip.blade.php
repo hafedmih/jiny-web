@@ -39,13 +39,13 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($list as $key => $list)
+                @foreach($list as $key => $lists)
                     <tr>
                         <td>{{ ++$key }}</td>
-                        <td>{{ $list->request_number }}</td>
-                        <td>{{ $list->userDetail ? $list->userDetail->firstname : '' }} {{ $list->userDetail ? $list->userDetail->lastname : '' }}</td>
-                        <td>{{ $list->driverDetail ? $list->driverDetail->firstname : '' }} {{ $list->driverDetail ? $list->driverDetail->lastname : '' }}</td>
-                        <td><a href="" class="btn btn-danger" ><i class="icon-trash"></i></a></td>
+                        <td>{{ $lists->request_number }}</td>
+                        <td>{{ $lists->userDetail ? $lists->userDetail->firstname : '' }} {{ $lists->userDetail ? $lists->userDetail->lastname : '' }}</td>
+                        <td>{{ $lists->driverDetail ? $lists->driverDetail->firstname : '' }} {{ $lists->driverDetail ? $lists->driverDetail->lastname : '' }}</td>
+                        <td><a href="{{ route('driverTripCancelSave',$lists->id) }}" class="btn btn-danger" ><i class="icon-trash"></i></a></td>
                     </tr>
                 @endforeach
             </tbody>
