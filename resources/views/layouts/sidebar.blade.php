@@ -141,6 +141,14 @@
 							</a>
 						</li>
 					@endif
+					@if(auth()->user()->can('request-list-bar'))
+						<li class="nav-item">
+							<a href="{{route('driverTripCancel')}}" class="nav-link ">
+								<i class="icon-list3"></i>
+								<span>{{ __('driver-cancel-request') }}</span>
+							</a>
+						</li>
+					@endif
 					
 				</ul>
 			</li>

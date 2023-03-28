@@ -625,15 +625,23 @@ class CreateRequestController extends BaseController
                 // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$result->toJson()];
 
                 // dd($metaDriver->mobile_application_type);
-                dispatch(
-                    new SendPushNotification(
-                        $title,
-                        $sub_title,
-                        $pushData,
-                        $metaDriver->device_info_hash,
-                        $metaDriver->mobile_application_type,
-                        1
-                    )
+                // dispatch(
+                //     new SendPushNotification(
+                //         $title,
+                //         $sub_title,
+                //         $pushData,
+                //         $metaDriver->device_info_hash,
+                //         $metaDriver->mobile_application_type,
+                //         1
+                //     )
+                // );
+                sendPush(
+                    $title,
+                    $sub_title,
+                    $pushData,
+                    $metaDriver->device_info_hash,
+                    $metaDriver->mobile_application_type,
+                    1
                 );
 
                 $request_meta = $request_detail

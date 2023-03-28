@@ -50,11 +50,12 @@ class DriverCancelRequestController extends BaseController
         $driver->save();
 
         $requestModel->update([
-            'is_cancelled'=>1,
-            'cancelled_at'=>NOW(),
+            // 'is_cancelled'=>1,
+            // 'cancelled_at'=>NOW(),
             'reason'=>$request->reason,
             'custom_reason'=>$request->custom_reason,
             'cancel_method'=>CancelMethod::DRIVER_TEXT,
+            'trip_driver_cancel'=>1
         ]);
         $driver = $requestModel->driverDetail;
         $driver->trips_count = 0;
@@ -98,7 +99,7 @@ class DriverCancelRequestController extends BaseController
             'date_time' => NOW(),
             'type' => 'CANCELLED',
             'user_type' => 'DRIVER',
-            'status' => 1
+            'status' => 0
         ]);
         $cancelType = $requestModel->is_driver_arrived == 1 ? CancelType::AFTER_ARRIVED : CancelType::BEFORE_ARRIVE;
         $distance = $this->getDistance($requestModel->requestPlace->pick_lat,$requestModel->requestPlace->pick_lng,$request->driver_latitude,$request->driver_longitude);
@@ -114,45 +115,47 @@ class DriverCancelRequestController extends BaseController
             'driver_lng'       => $request->driver_longitude,
             'user_location'    => $request->user_location,
             'driver_location'  => $request->driver_location,
-            'distance'         => $distance
+            'distance'         => $distance,
+            'active'         => 1,
+            
         ]);
 
         $user = $requestModel->userDetail;
 
         $request_result =  fractal($requestModel, new TripRequestTransformer);
 
-        if ($user) {
+        // if ($user) {
 
-            $title = Null;
-            $body = '';
-            $lang = $user->language;
-            $push_data = $this->pushlanguage($lang,'trip-driver-cancel');
-            if(is_null($push_data)){
-                $title = 'Trip Cancelled By Driver';
-                $body = 'The driver cancelled the ride, please create another ride';
-                $sub_title = 'The driver cancelled the ride, please create another ride';
+        //     $title = Null;
+        //     $body = '';
+        //     $lang = $user->language;
+        //     $push_data = $this->pushlanguage($lang,'trip-driver-cancel');
+        //     if(is_null($push_data)){
+        //         $title = 'Trip Cancelled By Driver';
+        //         $body = 'The driver cancelled the ride, please create another ride';
+        //         $sub_title = 'The driver cancelled the ride, please create another ride';
 
-            }else{
-                $title = $push_data->title;
-                $body =  $push_data->description;
-                $sub_title =  $push_data->description;
+        //     }else{
+        //         $title = $push_data->title;
+        //         $body =  $push_data->description;
+        //         $sub_title =  $push_data->description;
 
-            } 
+        //     } 
 
 
-            // $pushData = ['notification_enum' => PushEnum::REQUEST_CANCELLED_BY_DRIVER, 'result' => (string)$request_result->toJson()];
-            $pushData = ['notification_enum' => PushEnum::REQUEST_CANCELLED_BY_DRIVER];
+        //     // $pushData = ['notification_enum' => PushEnum::REQUEST_CANCELLED_BY_DRIVER, 'result' => (string)$request_result->toJson()];
+        //     $pushData = ['notification_enum' => PushEnum::REQUEST_CANCELLED_BY_DRIVER];
 
-            $socket_data = new \stdClass();
-            $socket_data->success = true;
-            $socket_data->success_message  = PushEnum::REQUEST_CANCELLED_BY_DRIVER;
-            $socket_data->result = $request_result;
+        //     $socket_data = new \stdClass();
+        //     $socket_data->success = true;
+        //     $socket_data->success_message  = PushEnum::REQUEST_CANCELLED_BY_DRIVER;
+        //     $socket_data->result = $request_result;
             
-            $socketData = ['event' => 'request_'.$user->slug,'message' => $socket_data];
-            sendSocketData($socketData);
+        //     $socketData = ['event' => 'request_'.$user->slug,'message' => $socket_data];
+        //     sendSocketData($socketData);
 
-            dispatch(new SendPushNotification($title,$sub_title, $pushData, $user->device_info_hash, $user->mobile_application_type,0));
-        }
+        //     dispatch(new SendPushNotification($title,$sub_title, $pushData, $user->device_info_hash, $user->mobile_application_type,0));
+        // }
 
         return $this->sendResponse('Data Found', $request_result, 200);
     }

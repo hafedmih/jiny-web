@@ -7,6 +7,7 @@ use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use App\Models\taxi\Settings;
+use Illuminate\Support\Facades\Log;
 /**
  * Upload images
  * @param $uploadPath Path to store file
@@ -530,5 +531,103 @@ if(!function_exists('settingValue')){
         }
 
         return $setting ? $setting->value : '';
+    }
+}
+
+if(!function_exists('sendPush')){
+    function sendPush($title = null,$sub_title = null,$body,$device_info_hash = null,$mobile_application_type = null,$sound = null,$notification_type = null)
+    {
+        $fcmKey = Settings::where('name','fcm_key')->first();
+
+        if (is_array($device_info_hash)) {
+            $deviceTokens = $device_info_hash;
+        }else{
+            $deviceTokens = [$device_info_hash];
+        }
+        
+        try {
+            $url = 'https://fcm.googleapis.com/fcm/send';
+     
+             $FcmKey = $fcmKey->value;
+            
+
+            $image = null;
+            if (array_key_exists('image',$body)) {
+                $image = $body['image'];
+            }
+            $notify_type = 0;
+            if($notification_type != null){
+                $notify_type = 1;
+            }
+           
+            if (strtolower($mobile_application_type) == 'android') {
+                $data = [
+                    "registration_ids" => $deviceTokens,
+                    'data'=>[
+                        "title" => $title,
+                        'body' => $body,
+                        'image' => $image,
+                        'notification_type' =>$notify_type, // 1 = General ; 0 = trip
+                    ],
+                ];
+            }
+            else{
+                if($sound == 1){
+                    $sounds = "rodataxi.aiff";
+                }
+                else{
+                    $sounds = 1;
+                }
+                $data = [
+                    "registration_ids" => $deviceTokens,
+                    "notification" => [
+                        "title" => $title,
+                        "body" => $sub_title,  
+                        "sound" => $sounds,
+                        "mutable-content" => 1,
+                        'image' => $image,
+                        'notification_type' =>$notify_type, // 1 = General ; 0 = trip
+                    ],
+                    'data'=>[
+                        'body' => $body,
+                    ]
+                ];
+            }
+
+          
+       
+
+            $RESPONSE = json_encode($data);
+        
+            $headers = [
+                'Authorization:key=' . $FcmKey,
+                'Content-Type: application/json',
+            ];
+        
+            // CURL
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+            curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $RESPONSE);
+
+            $output = curl_exec($ch);
+            if ($output === FALSE) {
+                die('Curl error: ' . curl_error($ch));
+            }        
+            curl_close($ch);
+            
+           
+
+            
+        } catch (\Throwable $th) {
+            Log::error($th);
+        }
+        
+        return true;
     }
 }

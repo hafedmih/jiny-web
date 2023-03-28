@@ -247,7 +247,8 @@ class RequestInProgressController extends BaseController
                 }
             }
 
-            $request = RequestMeta::where('driver_id',$user->id)->where('active',1)->first();
+            $request = RequestMeta::where('driver_id',$user->id)->first();
+            // $request = RequestMeta::where('driver_id',$user->id)->where('active',1)->first();
             if(is_null($request)){
                 $request_detail = RequestModel::where('driver_id',$user->id)->where('is_cancelled',0)->where('is_completed',0)->where('is_driver_started',0)->first();
                 if(!is_null($request_detail)){

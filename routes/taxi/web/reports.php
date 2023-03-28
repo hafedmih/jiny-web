@@ -18,6 +18,9 @@ Route::group(['middleware' => ['auth','settings']], function () {
     Route::get('promo-use-list',[ReportsController::class,'promoUseList'])->name('promoUseList');
     
     Route::get('card-payment-list',[ReportsController::class,'paymentList'])->name('card-payment-List');
+
+    Route::get('driver-trip-cancel',[ReportsController::class,'driverTripCancel'])->name('driverTripCancel');
+    Route::get('driver-trip-cancel/{id}',[ReportsController::class,'driverTripCancelSave'])->name('driverTripCancelSave');
   
     
 });

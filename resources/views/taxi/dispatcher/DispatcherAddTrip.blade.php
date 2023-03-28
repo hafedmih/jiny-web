@@ -419,6 +419,7 @@
                     </fieldset>
                     <h6>Vehicles</h6>
                     <fieldset class="fieldset">
+                        <input type="hidden" id="trip_amount" name="trip_amount" >
                         <div class="row" id="types_list"></div>
                     </fieldset>
                     <button type="reset" class="resets"></button>
@@ -1334,7 +1335,7 @@
                 if(data.zone_type_price.length > 0){
                     $(".bg-danger").hide();
                     data.zone_type_price.forEach(element => {
-                        texts += '<div class="col-xl-12 col-md-12"><div class="card card-body" for="'+element.type_slug+'"><div class="media"><div class="mr-3"><img src="'+element.type_image+'" class="rounded-circle" width="38" height="38" alt=""></div><div class="media-body"><input type="radio" name="type" class="required clickCheck" value="'+element.type_slug+'" id="'+element.type_slug+'"><label class="media-title text-capitalize font-weight-semibold">'+element.type_name+'</label><br><span class="">'+data.currency_symble+' '+element.promo_total_amount+'</span><p class="text-danger">'+element.promo_msg+'</p></div><div class="ml-3 align-self-center"><div class="list-icons"><div class="dropdown position-static"><a href="#" class="list-icons-item" data-toggle="dropdown" aria-expanded="false"><i class="icon-menu7"></i></a><div class="dropdown-menu dropdown-menu-right" style=""><ul class="list-group"><li class="list-group-item">Base Price <span class="ml-auto">'+data.currency_symble+' '+element.base_price+'</span></li><li class="list-group-item">Rate Per Km <span class="ml-auto">'+data.currency_symble+' '+element.price_per_distance+'</span></li><li class="list-group-item">Waiting Charge <span class="ml-auto">'+data.currency_symble+' '+element.waiting_charge+'</span></li>';
+                        texts += '<div class="col-xl-12 col-md-12"><div class="card card-body" for="'+element.type_slug+'" data-value="'+data.currency_symble+' '+element.promo_total_amount+'"><div class="media"><div class="mr-3"><img src="'+element.type_image+'" class="rounded-circle" width="38" height="38" alt=""></div><div class="media-body"><input type="radio" name="type" class="required clickCheck" value="'+element.type_slug+'" id="'+element.type_slug+'"><label class="media-title text-capitalize font-weight-semibold">'+element.type_name+'</label><br><span class="">'+data.currency_symble+' '+element.promo_total_amount+'</span><p class="text-danger">'+element.promo_msg+'</p></div><div class="ml-3 align-self-center"><div class="list-icons"><div class="dropdown position-static"><a href="#" class="list-icons-item" data-toggle="dropdown" aria-expanded="false"><i class="icon-menu7"></i></a><div class="dropdown-menu dropdown-menu-right" style=""><ul class="list-group"><li class="list-group-item">Base Price <span class="ml-auto">'+data.currency_symble+' '+element.base_price+'</span></li><li class="list-group-item">Rate Per Km <span class="ml-auto">'+data.currency_symble+' '+element.price_per_distance+'</span></li><li class="list-group-item">Waiting Charge <span class="ml-auto">'+data.currency_symble+' '+element.waiting_charge+'</span></li>';
                         if(element.booking_fees > 0){
                             texts += '<li class="list-group-item">Booking fees <span class="ml-auto">'+data.currency_symble+' '+element.booking_fees+'</span></li>';
                         }
@@ -1365,6 +1366,8 @@
 
     $(document).on('click','.card-body',function(){
         var valu = $(this).attr("for");
+        var amount = $(this).attr("data-value");
+        $("#trip_amount").val(amount);
         $("#"+valu).prop('checked',true);
         $(".clickCheck").parents(".card-body").removeClass('bg-success');
         $(this).addClass('bg-success');

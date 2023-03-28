@@ -80,6 +80,8 @@ class DispatcherRideLaterController extends BaseController
                 'driver_notes'            => $request->driver_notes,
                 'manual_trip'             => $request->manual_trip,
                 'created_by'              => $create_id,
+                'destination_type' => $request->has('drop') && $request->has('drop_lat') && $request->has('drop_lng') ? 'NORMAL' : 'OPEN',
+                'amount' => $request->trip_amount
             ];
             
             $request_detail = RequestModel::create($request_params);

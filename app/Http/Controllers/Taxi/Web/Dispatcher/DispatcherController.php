@@ -474,6 +474,8 @@ class DispatcherController extends BaseController
                 'driver_notes'            => $request->driver_notes,
                 'trip_start_time'         => NOW(),
                 'created_by'              => $create_id,
+                'destination_type' => $request->has('drop') && $request->has('drop_lat') && $request->has('drop_lng') ? 'NORMAL' : 'OPEN',
+                'amount' => $request->trip_amount
             ];
 
             // dd($request_params);
@@ -613,28 +615,30 @@ class DispatcherController extends BaseController
 
             return $this->sendError('No Driver Found',$request_detail,404);  
         }
-        $metaDriver = User::where('id',$selected_drivers[0]['driver_id'])->first();
+
         
-        $title = 'New Trip Requested 😊️';
-        $body = 'New Trip Requested, you can accept or Reject the request';
-        $sub_title = 'New Trip Requested, you can accept or Reject the request';
-
-
-        $socket_data = new \stdClass();
-        $socket_data->success = true;
-        $socket_data->success_message  = PushEnum::REQUEST_CREATED;
-        $socket_data->result = $result;
-
-        $socketData = ['event' => 'request_'.$metaDriver->slug,'message' => $socket_data];
-        sendSocketData($socketData);
-
-        // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$result->toJson()];
-        $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
-            // dd($metaDriver);
-        dispatch(new SendPushNotification($title, $sub_title,$pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1));
-
-        // dd($selected_drivers);
         foreach ($selected_drivers as $key => $selected_driver) {
+            $metaDriver = User::where('id',$selected_driver['driver_id'])->first();
+            
+            $title = 'New Trip Requested 😊️';
+            $body = 'New Trip Requested, you can accept or Reject the request';
+            $sub_title = 'New Trip Requested, you can accept or Reject the request';
+
+
+            $socket_data = new \stdClass();
+            $socket_data->success = true;
+            $socket_data->success_message  = PushEnum::REQUEST_CREATED;
+            $socket_data->result = $result;
+
+            $socketData = ['event' => 'request_'.$metaDriver->slug,'message' => $socket_data];
+            sendSocketData($socketData);
+
+            // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$result->toJson()];
+            $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
+                // dd($metaDriver);
+            // dispatch(new SendPushNotification($title, $sub_title,$pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1));
+            sendPush($title, $sub_title,$pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1);
+
             $request_meta = $request_detail->requestMeta()->create($selected_driver);   
         }
 

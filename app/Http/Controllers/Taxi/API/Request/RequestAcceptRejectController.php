@@ -55,6 +55,10 @@ class RequestAcceptRejectController extends BaseController
             if(is_null($request_detail)){
                 return $this->sendError('Wrong Request',[],404);  
             }
+
+            if($request_detail->is_driver_started == 1){
+                return $this->sendError('Alerady Driver Accepted this Trip',[],404);  
+            }
             $this->validateRequestDetail($request_detail,$user);
 
             $totalAccepted = $driver->total_accept;
@@ -118,9 +122,10 @@ class RequestAcceptRejectController extends BaseController
                         $socket_data->success = true;
                         $socket_data->success_message  = PushEnum::ALREADY_DRIVER_ACCEPT_TRIP;
                         $socket_data->result = $request_result;
-                        $socketData = ['event' => 'request_'.$driverModel->slug,'message' => $socket_data];
+                        $socketData = ['event' => 'already_driver_accept_trip_'.$driverModel->slug,'message' => $socket_data];
                         sendSocketData($socketData);
-                        dispatch(new SendPushNotification($title,$sub_title, $push_data, $driverModel->device_info_hash, $driverModel->mobile_application_type,0));
+                        // dispatch(new SendPushNotification($title,$sub_title, $push_data, $driverModel->device_info_hash, $driverModel->mobile_application_type,0));
+                        sendPush($title,$sub_title, $push_data, $driverModel->device_info_hash, $driverModel->mobile_application_type,0);
                     }
                 }
                 // dd($request_detail);
@@ -167,7 +172,8 @@ class RequestAcceptRejectController extends BaseController
                     $socketData = ['event' => 'request_'.$userModel->slug,'message' => $socket_data];
                     sendSocketData($socketData);
 
-                    dispatch(new SendPushNotification($title,$sub_title, $push_data, $userModel->device_info_hash, $userModel->mobile_application_type,0));
+                    sendPush($title,$sub_title, $push_data, $userModel->device_info_hash, $userModel->mobile_application_type,0);
+                    // dispatch(new SendPushNotification($title,$sub_title, $push_data, $userModel->device_info_hash, $userModel->mobile_application_type,0));
 
             
                     // $pushData = ['notification_enum' => PushEnum::TRIP_ACCEPTED_BY_DRIVER, 'result' => (string) $request_result->toJson()];
@@ -248,37 +254,37 @@ class RequestAcceptRejectController extends BaseController
                 $request_meta = RequestMeta::where('request_id', $request->request_id)->first();
 
                 if ($request_meta) {
-                    $request_meta->update(['active'=>true]);
-                    // Send push notification like create request to the driver
-                    $title = 'New Trip Requested 😊️';
-                    $body = 'Hi!! New Order Please Accept the trip request';
-                    $sub_title = 'Hi!! New Order Please Accept the trip request';
+                    // $request_meta->update(['active'=>true]);
+                    // // Send push notification like create request to the driver
+                    // $title = 'New Trip Requested 😊️';
+                    // $body = 'Hi!! New Order Please Accept the trip request';
+                    // $sub_title = 'Hi!! New Order Please Accept the trip request';
 
-                    // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$request_result->toJson()];
-                    $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
+                    // // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$request_result->toJson()];
+                    // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
                     
-                    $notifiable_driver = User::find($request_meta->driver_id);
-                    // dd($request_meta->driver_id);
-                    // $driver = Driver::where('user_id',$notifiable_driver->user_id)->first();;
+                    // $notifiable_driver = User::find($request_meta->driver_id);
+                    // // dd($request_meta->driver_id);
+                    // // $driver = Driver::where('user_id',$notifiable_driver->user_id)->first();;
 
-                    $socket_data = new \stdClass();
-                    $socket_data->success = true;
-                    $socket_data->success_message  = PushEnum::REQUEST_CREATED;
-                    $socket_data->result = $request_result;
+                    // $socket_data = new \stdClass();
+                    // $socket_data->success = true;
+                    // $socket_data->success_message  = PushEnum::REQUEST_CREATED;
+                    // $socket_data->result = $request_result;
                     
-                    $socketData = ['event' => 'request_'.$notifiable_driver->slug,'message' => $socket_data];
-                    sendSocketData($socketData);
+                    // $socketData = ['event' => 'request_'.$notifiable_driver->slug,'message' => $socket_data];
+                    // sendSocketData($socketData);
 
-                    dispatch(new SendPushNotification($title,$sub_title, $pushData, $notifiable_driver->device_info_hash, $notifiable_driver->mobile_application_type,1));
+                    // dispatch(new SendPushNotification($title,$sub_title, $pushData, $notifiable_driver->device_info_hash, $notifiable_driver->mobile_application_type,1));
 
                 } else {
                     $request_result =  fractal($request_detail, new TripRequestTransformer);
 
                     // Cancell the request as automatic cancel state
-                    if($request_detail->is_later == 0){
+                    if($request_detail->is_later == 0 && !$request_detail->driver_id && $request_detail->is_cancelled == 0){
                         $request_detail->update([
                             'is_cancelled'=>true,
-                            'cancel_method'=>CancelMethod::AUTOMATIC,
+                            'cancel_method'=>CancelMethod::AUTOMATIC_TEXT,
                             'cancelled_at'=>date('Y-m-d H:i:s')
                         ]);
 

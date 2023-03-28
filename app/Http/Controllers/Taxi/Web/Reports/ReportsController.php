@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Http;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Jobs\SendPushNotification;
+use App\Constants\PushEnum;
 use App\Models\taxi\Vehicle;
 use App\Models\taxi\Driver;
 use App\Models\taxi\RequestRating;
@@ -19,17 +20,25 @@ use App\Models\User;
 use App\Models\taxi\Requests\Request as RequestModel;
 use App\Models\taxi\DriverLogs;
 use App\Models\taxi\IndividualPromoMarketing;
+use App\Models\taxi\Requests\RequestDriverLog;
+use App\Transformers\Request\TripRequestTransformer;
 use App\Models\taxi\UpdatePaymentStatus;
+use App\Models\taxi\Settings;
 use Illuminate\Support\Carbon;
 use Carbon\CarbonInterval;
 use Carbon\CarbonPeriod;
 use DateTime;
 use DB;
 use DatePeriod;
+use App\Traits\CommanFunctions;
 use DateInterval;
+use App\Http\Controllers\Taxi\API\CancelRequest\UserCancelRequestController;
 
 class ReportsController extends Controller
 {
+
+    use CommanFunctions;
+
     public function reports(Request $request)
     {
         $drivers_online = User::role('driver')->with(['getCountry','driver','driver.vehicletype'])->where('online_by',1)->get();
@@ -529,5 +538,118 @@ class ReportsController extends Controller
             $payment = $payment->whereBetween('created_at',[$weekStartDate,$weekEndDate]);
         }
         return view('taxi.reports.card_payment_report',['payment' => $payment,'request' => $request]);
+    }
+
+    public function driverTripCancel(Request $request)
+    {
+        $list = RequestModel::where('trip_driver_cancel',1)->get();
+        return view('taxi.reports.DriverCancelTrip',['list' => $list]);
+    }
+
+    public function driverTripCancelSave($id)
+    {
+        $requestModel = RequestModel::where('trip_driver_cancel',1)->where('id',$id)->first();
+        $requestModel->is_cancelled = 1;
+        $requestModel->cancelled_at = NOW();
+        $requestModel->trip_driver_cancel = 0;
+        $requestModel->save();
+
+        $driver = $requestModel->driverDetail;
+        $driver->trips_count = 0;
+        $driver->save();
+
+        $cancellationFee = (new UserCancelRequestController())->calculateFee($requestModel);
+
+    // dd($cancellationFee);
+    // dd($requestModel->requestPlace);
+        $driver_accept = RequestDriverLog::where('request_id',$requestModel->id)->where('user_id',$user->id)->where('type','ACCEPT')->first();
+
+        if($driver_accept && $driver_accept->driver_lat != "" && $driver_accept->driver_lng){
+            $travel_destance = $this->getDistance($driver_accept->driver_lat,$driver_accept->driver_lng,$request->driver_latitude,$request->driver_longitude);
+            $cancel_fees_distance = Settings::where('name','cancel_fees_distance')->first();
+            $cancel_fees_distance = $cancel_fees_distance ? $cancel_fees_distance->value : 0;
+            if($travel_destance >= $cancel_fees_distance){
+                $wallet = Wallet::where('user_id',$requestModel->driver_id)->first();
+                if(!$wallet){
+                    $wallet = new Wallet();
+                    $wallet->user_id = $requestModel->driver_id;
+                }
+                $wallet->earned_amount +=  $cancellationFee;
+                $wallet->balance_amount +=  $cancellationFee;
+                $wallet->save();
+
+                WalletTransaction::create([
+                    'wallet_id' => $wallet->id,
+                    'request_id' => $requestModel->id,
+                    'amount' => $cancellationFee,
+                    'user_id' => $requestModel->driver_id,
+                    'purpose' => 'Request Cancellation Fees',
+                    'type' => 'EARNED',
+                ]);
+            }
+        }
+        $requestModel->cancellationRequest()->update([
+            'active'         => 0,
+        ]);
+
+        RequestDriverLog::where('request_id',$requestModel->id)->update(['status' => 1]);
+
+        $request_result =  fractal($requestModel, new TripRequestTransformer);
+
+        $user = $requestModel->userDetail;
+
+        if ($user) {
+            $title = Null;
+            $body = '';
+            $lang = $user->language;
+            $push_data = $this->pushlanguage($lang,'trip-driver-cancel');
+            if(is_null($push_data)){
+                $title = 'Trip Cancelled By Driver';
+                $body = 'The driver cancelled the ride, please create another ride';
+                $sub_title = 'The driver cancelled the ride, please create another ride';
+            }else{
+                $title = $push_data->title;
+                $body =  $push_data->description;
+                $sub_title =  $push_data->description;
+            } 
+            // $pushData = ['notification_enum' => PushEnum::REQUEST_CANCELLED_BY_DRIVER, 'result' => (string)$request_result->toJson()];
+            $pushData = ['notification_enum' => PushEnum::REQUEST_CANCELLED_BY_DRIVER];
+            $socket_data = new \stdClass();
+            $socket_data->success = true;
+            $socket_data->success_message  = PushEnum::REQUEST_CANCELLED_BY_DRIVER;
+            $socket_data->result = $request_result;
+            $socketData = ['event' => 'request_'.$user->slug,'message' => $socket_data];
+            sendSocketData($socketData);
+            dispatch(new SendPushNotification($title,$sub_title, $pushData, $user->device_info_hash, $user->mobile_application_type,0));
+        }
+
+        $user = $requestModel->driverDetail;
+
+        if ($user) {
+            $title = Null;
+            $body = '';
+            $lang = $user->language;
+            $push_data = $this->pushlanguage($lang,'admin-accepted-trip-cancelled');
+            if(is_null($push_data)){
+                $title = 'Admin Accepted Trip Cancelled';
+                $body = 'Admin Accepted Trip Cancelled';
+                $sub_title = 'Admin Accepted Trip Cancelled';
+            }else{
+                $title = $push_data->title;
+                $body =  $push_data->description;
+                $sub_title =  $push_data->description;
+            } 
+            // $pushData = ['notification_enum' => PushEnum::REQUEST_CANCELLED_BY_DRIVER, 'result' => (string)$request_result->toJson()];
+            $pushData = ['notification_enum' => PushEnum::REQUEST_CANCELLED_BY_DRIVER];
+            $socket_data = new \stdClass();
+            $socket_data->success = true;
+            $socket_data->success_message  = PushEnum::REQUEST_CANCELLED_BY_DRIVER;
+            $socket_data->result = $request_result;
+            $socketData = ['event' => 'request_'.$user->slug,'message' => $socket_data];
+            sendSocketData($socketData);
+            dispatch(new SendPushNotification($title,$sub_title, $pushData, $user->device_info_hash, $user->mobile_application_type,0));
+        }
+
+        return redirect()->route('driverTripCancel');
     }
 }
