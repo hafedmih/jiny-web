@@ -90,9 +90,9 @@ class DispatcherController extends BaseController
         
         if($user->active == false) return $this->sendError('User is blocked so please contact admin',[],403);
 
-        // if (!$user->hasRole('driver')) {
-        //     return $this->sendError('Unauthorized',[],401);    
-        // }
+        if (!$user->hasRole('Dispatcher approval')) {
+            return $this->sendError('Unauthorized',[],401);    
+        }
 
     	$customers = User::where('phone_number','LIKE','%'.$number.'%')->role('user')->get();
 
@@ -117,13 +117,42 @@ class DispatcherController extends BaseController
 
     public function getVehicles(Request $request)
     {
+        $req = [ 
+            'pickup_lat' => 'required',
+            'pickup_long' => 'required',
+            'ride_type' => 'required',
+            'trip_type' => 'required',
+            'pickup_address' => 'required',
+            'destination_type' => 'required',
+        ];
+        if($request->destination_type == 'NORMAL'){
+            $req['drop_lat'] = 'required';
+            $req['drop_long'] = 'required';
+            $req['drop_address'] = 'required';
+        }
+        $validator = Validator::make($request->all(), $req);
+        if ($validator->fails()) { 
+            return response()->json(['error'=>$validator->errors()], 401);            
+        }
+
+        $clientlogin = $this::getCurrentClient(request());
+        
+        if(is_null($clientlogin)) return $this->sendError('Token Expired',[],401);
+
+        $user = User::find($clientlogin->user_id);
+        if(is_null($user)) return $this->sendError('Unauthorized',[],401);
+        
+        if($user->active == false) return $this->sendError('User is blocked so please contact admin',[],403);
+
+        if (!$user->hasRole('Dispatcher approval')) {
+            return $this->sendError('Unauthorized',[],401);    
+        }
+
         $data = $request->all();
 
         // dd("hai");
         
         $zone = $this->getZone($data['pickup_lat'], $data['pickup_long']);
-
-       
 
         if(is_null($zone))
             return $this->sendError('Non services zone',[],404);
@@ -373,6 +402,26 @@ class DispatcherController extends BaseController
 
     public function createDispatchRequest(Request $request)
     {
+        $validator = Validator::make($request->all(), [ 
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+        if ($validator->fails()) { 
+            return response()->json(['error'=>$validator->errors()], 401);            
+        }
+
+        $clientlogin = $this::getCurrentClient(request());
+        
+        if(is_null($clientlogin)) return $this->sendError('Token Expired',[],401);
+
+        $user = User::find($clientlogin->user_id);
+        if(is_null($user)) return $this->sendError('Unauthorized',[],401);
+        
+        if($user->active == false) return $this->sendError('User is blocked so please contact admin',[],403);
+
+        if (!$user->hasRole('Dispatcher approval')) {
+            return $this->sendError('Unauthorized',[],401);    
+        }
         // dd($request->all());
         $create_id = NULL;
         if(!auth()->user()->hasRole("Super Admin")){
@@ -511,6 +560,8 @@ class DispatcherController extends BaseController
                 'driver_notes'            => $request->driver_notes,
                 'trip_start_time'         => NOW(),
                 'created_by'              => $create_id,
+                'destination_type' => $request->has('drop') && $request->has('drop_lat') && $request->has('drop_lng') ? 'NORMAL' : 'OPEN',
+                'amount' => $request->trip_amount
             ];
 
             // dd($request_params);
@@ -650,29 +701,36 @@ class DispatcherController extends BaseController
 
             return $this->sendError('No Driver Found',$request_detail,404);  
         }
-        $metaDriver = User::where('id',$selected_drivers[0]['driver_id'])->first();
+
         
-        $title = 'New Trip Requested 😊️';
-        $body = 'New Trip Requested, you can accept or Reject the request';
-        $sub_title = 'New Trip Requested, you can accept or Reject the request';
-
-
-        $socket_data = new \stdClass();
-        $socket_data->success = true;
-        $socket_data->success_message  = PushEnum::REQUEST_CREATED;
-        $socket_data->result = $result;
-
-        $socketData = ['event' => 'request_'.$metaDriver->slug,'message' => $socket_data];
-        sendSocketData($socketData);
-
-        // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$result->toJson()];
-        $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
-            // dd($metaDriver);
-        dispatch(new SendPushNotification($title, $sub_title,$pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1));
-
-        // dd($selected_drivers);
         foreach ($selected_drivers as $key => $selected_driver) {
-            $request_meta = $request_detail->requestMeta()->create($selected_driver);   
+            $metaDriver = User::where('id',$selected_driver['driver_id'])->first();
+            $wallet = Wallet::where('user_id',$selected_driver['driver_id'])->where('balance_amount','>',settingValue('wallet_driver_minimum_balance_for_trip'))->first();
+            if($metaDriver && $wallet){
+            
+                $title = 'New Trip Requested 😊️';
+                $body = 'New Trip Requested, you can accept or Reject the request';
+                $sub_title = 'New Trip Requested, you can accept or Reject the request';
+
+                $socket_data = new \stdClass();
+                $socket_data->success = true;
+                $socket_data->success_message  = PushEnum::REQUEST_CREATED;
+                $socket_data->result = $result;
+
+                $socketData = ['event' => 'request_'.$metaDriver->slug,'message' => $socket_data];
+                sendSocketData($socketData);
+
+                // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$result->toJson()];
+                $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
+                    // dd($metaDriver);
+                // dispatch(new SendPushNotification($title, $sub_title,$pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1));
+                sendPush($title, $sub_title,$pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1);
+
+                $request_meta = $request_detail->requestMeta()->create($selected_driver);
+            }
+        }
+        if($request_detail->requestMeta()->count() == 0){
+            return $this->sendError('No Driver Found',$request_detail,404);
         }
 
         return $this->sendResponse('Data Found', $result, 200);
@@ -734,12 +792,27 @@ class DispatcherController extends BaseController
 
     public function dispatchRequestView($ride)
     {
+
+        $clientlogin = $this::getCurrentClient(request());
+        
+        if(is_null($clientlogin)) return $this->sendError('Token Expired',[],401);
+
+        $user = User::find($clientlogin->user_id);
+        if(is_null($user)) return $this->sendError('Unauthorized',[],401);
+        
+        if($user->active == false) return $this->sendError('User is blocked so please contact admin',[],403);
+
+        if (!$user->hasRole('Dispatcher approval')) {
+            return $this->sendError('Unauthorized',[],401);    
+        }
         $request = $this->request->where('id',$ride)->first();
         $outstation_trip = OutstationUploadImages::where('request_id',$ride)->first();
         $types = Vehicle::where('status',1)->get();
         $outstations = OutstationPriceFixing::where('status',1)->get();
 
-        return view('taxi.dispatcher.DispatcherRequestView',['request' => $request,'outstation_trip' => $outstation_trip,'types'=>$types,'outstations' => $outstations]); 
+        $result = fractal($request, new TripRequestTransformer);
+
+        return $this->sendResponse('Data Found', $result, 200);
     }
 
     public function getDispatchRequest($ride)
@@ -764,47 +837,42 @@ class DispatcherController extends BaseController
         }
     }
 
-    public function dispatcherTripList(Request $request)
+    public function dispatcherTripList($status)
     {
-        $requests_now = RequestModel::where('is_later',0)->where('if_dispatch',1)->where('trip_type','LOCAL')->whereNotNull('driver_id')->where('is_cancelled',1)->orWhere(function($query) {
-            $query->whereNotNull('driver_id')
-                  ->where('is_cancelled',0)->where('is_later',0)->where('if_dispatch',1)->where('trip_type','LOCAL');
-        })->orderby('created_at','desc');
 
-        $requests_later = RequestModel::where('is_later',1)->where('if_dispatch',1)->where('trip_type','LOCAL')->orderby('created_at','desc');
+        $clientlogin = $this::getCurrentClient(request());
+        
+        if(is_null($clientlogin)) return $this->sendError('Token Expired',[],401);
 
-        $requests_rental_now = RequestModel::where('is_later',0)->where('if_dispatch',1)->where('trip_type','RENTAL')->whereNotNull('driver_id')->where('is_cancelled',1)->orderby('created_at','desc')->orWhere(function($query) {
-            $query->whereNotNull('driver_id')
-                  ->where('is_cancelled',0)->where('is_later',0)->where('if_dispatch',1)->where('trip_type','RENTAL');
-        });
+        $user = User::find($clientlogin->user_id);
+        if(is_null($user)) return $this->sendError('Unauthorized',[],401);
+        
+        if($user->active == false) return $this->sendError('User is blocked so please contact admin',[],403);
 
-        $requests_rental_later = RequestModel::where('is_later',1)->where('if_dispatch',1)->where('trip_type','RENTAL')->orderby('created_at','desc');
+        if (!$user->hasRole('Dispatcher approval')) {
+            return $this->sendError('Unauthorized',[],401);    
+        }
+        $requests_now = RequestModel::where('if_dispatch',1)->with('')->where('trip_type','LOCAL')->whereNotNull('driver_id')->orderby('created_at','desc');
 
-        $oustation_list = RequestModel::where('if_dispatch',1)->where('trip_type','OUTSTATION')->orderby('created_at','desc');
-
-        if(!auth()->user()->hasRole('Super Admin')){
-            $requests_now = RequestModel::where('is_later',0)->where('if_dispatch',1)->where('trip_type','LOCAL')->whereNotNull('driver_id')->where('is_cancelled',1)->where('created_by',auth()->user()->id)->orWhere(function($query) {
-                $query->whereNotNull('driver_id')
-                      ->where('is_cancelled',0)->where('is_later',0)->where('if_dispatch',1)->where('trip_type','LOCAL');
-                if(!auth()->user()->hasRole('Super Admin'))
-                    $query->where('created_by',auth()->user()->id);
-            })->orderby('created_at','desc');
-            $requests_later = $requests_later->where('created_by',auth()->user()->id);
-            $requests_rental_now = RequestModel::where('is_later',0)->where('if_dispatch',1)->where('trip_type','RENTAL')->whereNotNull('driver_id')->where('is_cancelled',1)->orderby('created_at','desc')->where('created_by',auth()->user()->id)->orWhere(function($query) {
-                $query->whereNotNull('driver_id')
-                      ->where('is_cancelled',0)->where('is_later',0)->where('if_dispatch',1)->where('trip_type','RENTAL');
-            });
-            $requests_rental_later = $requests_rental_later->where('created_by',auth()->user()->id);
-            $oustation_list = $oustation_list->where('created_by',auth()->user()->id);
+        if($status == 'completed'){
+            $requests_now = $requests_now->where('is_completed',1);
+        }
+        else if($status == 'cancelled'){
+            $requests_now = $requests_now->where('is_cancelled',1);
+        }
+        else if($status == 'on_going'){
+            $requests_now = $requests_now->where('is_completed',0)->where('is_cancelled',0)->where('is_driver_arrived',1);
+        }
+        else if($status == 'upcomming'){
+            $requests_now = $requests_now->where('is_completed',0)->where('is_cancelled',0)->where('is_driver_arrived',0)->where('is_driver_started',0);
         }
 
         $requests_now = $requests_now->get();
-        $requests_later = $requests_later->get();
-        $requests_rental_now = $requests_rental_now->get();
-        $requests_rental_later = $requests_rental_later->get();
-        $oustation_list = $oustation_list->get();
 
-        return view('taxi.dispatcher.DispatcherTripList',['requests_now' => $requests_now, 'requests_later' => $requests_later,'requests_rental_now' => $requests_rental_now, 'requests_rental_later' => $requests_rental_later,'oustation_list' => $oustation_list]);
+        $result = new \stdClass();
+        $result->history = $requests_now;
+
+        return $this->sendResponse('Data Found', $result, 200);
     }
 
     public function searchDriver($ride)
