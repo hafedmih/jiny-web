@@ -31,7 +31,7 @@ class Request extends Model
     protected $table = 'requests';
 
     protected $fillable = [
-        'request_number','is_later','user_id','driver_id','trip_start_time','arrived_at','accepted_at','completed_at','cancelled_at','is_driver_started','is_driver_arrived','is_trip_start','is_completed','is_cancelled','cancel_method','total_distance','total_time','payment_opt','is_paid','user_rated','driver_rated','timezone','unit','if_dispatch','zone_type_id','requested_currency_code','requested_currency_symbol','custom_reason','attempt_for_schedule','request_otp','dispatcher_id','driver_notes','is_instant_trip','promo_id','location_approve','ride_type','hold_status','availables_status','trip_type','rental_package','manual_trip','outstation_id','outstation_type_id','package_id','package_item_id','booking_for','others_user_id','created_by','outstation_trip_type','trip_end_time','destination_type','amount','trip_driver_cancel'
+        'request_number','is_later','user_id','driver_id','trip_start_time','arrived_at','accepted_at','completed_at','cancelled_at','is_driver_started','is_driver_arrived','is_trip_start','is_completed','is_cancelled','cancel_method','total_distance','total_time','payment_opt','is_paid','user_rated','driver_rated','timezone','unit','if_dispatch','zone_type_id','requested_currency_code','requested_currency_symbol','custom_reason','attempt_for_schedule','request_otp','dispatcher_id','driver_notes','is_instant_trip','promo_id','location_approve','ride_type','hold_status','availables_status','trip_type','rental_package','manual_trip','outstation_id','outstation_type_id','package_id','package_item_id','booking_for','others_user_id','created_by','outstation_trip_type','trip_end_time','destination_type','amount','base_price','distance_cost','trip_driver_cancel','closed_trip_amount','end_trip_request_alert','money_back_amount','wallet_deduct_amount','vehicle_type'
     ];
 
     public function requestPlace()
@@ -77,9 +77,20 @@ class Request extends Model
         return $this->belongsTo(User::class, 'driver_id', 'id');
     }
 
+    public function createdDetail()
+    {
+        return $this->belongsTo(User::class, 'created_by', 'id');
+    }
+
     public function requestMeta()
     {
         return $this->hasMany(RequestMeta::class, 'request_id', 'id');
+    }
+
+    
+    public function requestDedicatedDrivers()
+    {
+        return $this->hasMany(RequestDedicatedDrivers::class, 'request_id', 'id');
     }
 
     public function cancellationRequest()

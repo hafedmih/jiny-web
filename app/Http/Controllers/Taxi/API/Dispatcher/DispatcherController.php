@@ -29,10 +29,17 @@ use App\Models\taxi\OutstationPriceFixing;
 use App\Models\taxi\Outofzone;
 use App\Models\taxi\Zone;
 use App\Models\User;
+use App\Models\taxi\Favourite;
 use App\Models\taxi\OutstationUploadImages;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth; 
 use Validator;
+use App\Models\taxi\Wallet;
+use App\Models\taxi\RiderAddress;
+use App\Models\taxi\Settings;
+use DB;
+use GuzzleHttp\Client;
+use Spatie\Geocoder\Facades\Geocoder;
 
 class DispatcherController extends BaseController
 {
@@ -43,6 +50,57 @@ class DispatcherController extends BaseController
     public function __construct(RequestModel $request) {
         
         $this->request = $request;
+    }
+
+    public function checkzone(Request $request)
+    {
+        try{
+            $validator = Validator::make($request->all(), [ 
+                'pickup_lat' => 'required',
+                'pickup_long' => 'required',
+            ]);
+            if ($validator->fails()) { 
+                return response()->json(['error'=>$validator->errors()], 401);            
+            }
+            $clientlogin = $this::getCurrentClient(request());
+      
+            if(is_null($clientlogin)) 
+                return $this->sendError('Token Expired',[],401);
+         
+            $user = User::find($clientlogin->user_id);
+            if(is_null($user))
+                return $this->sendError('Unauthorized',[],401);
+            
+            if($user->active == false)
+                return $this->sendError('User is blocked so please contact admin',[],403);
+
+            $data = $request->all();
+
+            // get zone use pickup lat and long
+            $zone = $this->getZone($data['pickup_lat'], $data['pickup_long']);
+            if($zone){
+                if($zone->non_service_zone == 'No'){
+                    $data['zone'] = true;
+                }
+                else{
+                    $data['zone'] = false;
+                }
+            }else {
+                $data['zone'] = false;
+
+            }
+            // // dd($zone);
+            // if(is_null($zone))
+            //     return $this->sendError('Non services zone',[],404);
+
+            DB::commit();
+            return $this->sendResponse('Data Found',$data,200);  
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError('Catch error','failure.'.$e,400);  
+        }
+    
     }
 
     public function login(Request $request)
@@ -61,6 +119,7 @@ class DispatcherController extends BaseController
         }
         
         $user = User::where('email',$request->email)->where('active',true)->first();
+//dd($user);
         if(is_null($user)){
             return $this->sendResponse('Data Not Found',[],200); 
         }
@@ -71,10 +130,10 @@ class DispatcherController extends BaseController
         if(is_null($fetchOauth)){
             return $this->sendError('No user Found',[],403);
         }
-        $data = array();
+       // $data = array();
         $data['client_id'] = $fetchOauth->id;
         $data['client_secret'] = $fetchOauth->secret;
-
+        $data['slug']= $user->slug;
         return response()
             ->json(['success' => true,'data' => $data],200);
     }
@@ -90,11 +149,12 @@ class DispatcherController extends BaseController
         
         if($user->active == false) return $this->sendError('User is blocked so please contact admin',[],403);
 
-        if (!$user->hasRole('Dispatcher approval')) {
-            return $this->sendError('Unauthorized',[],401);    
-        }
+        // if (!$user->hasRole('Dispatcher approval')) {
+        //     return $this->sendError('Unauthorized',[],401);    
+        // }
 
-    	$customers = User::where('phone_number','LIKE','%'.$number.'%')->role('user')->get();
+    	$customers = User::where('phone_number','LIKE','%'.$number.'%')->role('user')->first();
+        
 
     	if(is_null($customers)){
     		$response = [
@@ -105,9 +165,19 @@ class DispatcherController extends BaseController
             return response()->json($response, 200);
         }
         else{
+            $get_favourite_place = Favourite::where('user_id',$customers->id)->where('status',1)->get();
+
+            if(is_null($get_favourite_place))
+            {
+                $customers['favourite_place'] = null;
+            }
+            else
+            {
+                $customers['favourite_place'] = $get_favourite_place;
+            }
            	$response = [
 	            'success' => true,
-	            'data'    => $customers,
+	            'data'    => array($customers),
 	            'message' => "Data Found",
 	        ];
             return response()->json($response, 200);
@@ -185,7 +255,7 @@ class DispatcherController extends BaseController
             
             }
         }else{
-            if($data['drop_address'] != ''){
+            if($request->has('drop_address')){
                 $distance = $this->getDistance($data['pickup_lat'],$data['pickup_long'],$data['drop_lat'],$data['drop_long']);
             }
         }
@@ -212,6 +282,7 @@ class DispatcherController extends BaseController
                     'category' => $value->getType->getCategory ? $value->getType->getCategory->category_name : '',
                     'type_image' => $value->getType->image,
                 ];
+                         if ($request->has('drop_lat')) {
 
                $drop_zone = $this->getZone($data['drop_lat'],$data['drop_long']);
                
@@ -251,6 +322,7 @@ class DispatcherController extends BaseController
                         }
                     }
                 }
+}
                 $totalvalue = [];
 
                 // if ( $data['trip_type'] == 'local') {
@@ -267,18 +339,83 @@ class DispatcherController extends BaseController
                //Ride Now
              
                 if($data['ride_type'] == "RIDE_NOW"){
+                    if ($request->has('drop_lat')) {
 
-                    $totalvalue = $this->etaCalculation($distance,$value->ridenow_base_distance,$value->ridenow_base_price,$value->ridenow_price_per_distance,$value->ridenow_booking_base_fare,$value->ridenow_booking_base_per_kilometer,$outofzonefee);
+                        $totalvalue = $this->etaCalculation($distance,$value->ridenow_base_distance,$value->ridenow_base_price,$value->ridenow_price_per_distance,$value->ridenow_booking_base_fare,$value->ridenow_booking_base_per_kilometer,$outofzonefee);
+
+                        $zonePrice->base_price = $value->ridenow_base_price;
+                        $zonePrice->free_waiting_time = $value->ridenow_free_waiting_time;
+                        $zonePrice->waiting_charge = $value->ridenow_waiting_charge;
+                        $zonePrice->price_per_time = $value->ridenow_price_per_time;
+                        $zonePrice->base_distance = $value->ridenow_base_distance;
+                        $zonePrice->price_per_distance = $value->ridenow_price_per_distance;
+                        $zonePrice->booking_base_fare = $value->ridenow_booking_base_fare;
+                        $zonePrice->booking_base_per_kilometer = $value->ridenow_booking_base_per_kilometer;                         
+                    }
+                    $computedDistance = $distance - $value->ridenow_base_distance;
+                    if($computedDistance >= 0 && $data['destination_type'] == 'NORMAL'){
+                        $zonePrice->computed_price = number_format($value->ridenow_price_per_distance * $computedDistance,2);
+                        $zonePrice->computed_distance = round($computedDistance,2);
+                    }
                 }
                 // Ride Later
                 else if($data['ride_type'] == "RIDE_LATER"){
+                    if ($request->has('drop_lat')) {
 
                     $totalvalue = $this->etaCalculation($distance,$value->ridelater_base_distance,$value->ridelater_base_price,$value->ridelater_price_per_distance,$value->ridelater_booking_base_fare,$value->ridelater_booking_base_per_kilometer,$outofzonefee);
+
+                    $zonePrice->base_price = $value->ridelater_base_price;
+                    $zonePrice->free_waiting_time = $value->ridelater_free_waiting_time;
+                    $zonePrice->waiting_charge = $value->ridelater_waiting_charge;
+                    $zonePrice->price_per_time = $value->ridelater_price_per_time;
+                    $zonePrice->base_distance = $value->ridelater_base_distance;
+                    $zonePrice->price_per_distance = $value->ridelater_price_per_distance;
+                    $zonePrice->booking_base_fare = $value->ridelater_booking_base_fare;
+                    $zonePrice->booking_base_per_kilometer = $value->ridelater_booking_base_per_kilometer;
+                    }
+                    $computedDistance = $distance - $value->ridelater_base_distance;
+                    if($computedDistance >= 0 && $data['destination_type'] == 'NORMAL'){
+                        $zonePrice->computed_price = number_format($value->ridelater_price_per_distance * $computedDistance,2);
+                        $zonePrice->computed_distance = round($computedDistance,2);
+                    }
+                }
+
+                if($data['destination_type'] == 'OPEN'){
+                    $outofzonefee=0;
+                    $totalvalue = $this->etaCalculation($distance,$value->open_base_distance,$value->open_base_price,$value->open_price_per_distance,$value->open_booking_base_fare,$value->open_booking_base_per_kilometer,$outofzonefee);
+                    $zonePrice->base_price = $value->open_base_price;
+                    $zonePrice->free_waiting_time = $value->open_free_waiting_time;
+                    $zonePrice->waiting_charge = $value->open_waiting_charge;
+                    $zonePrice->price_per_time = $value->open_price_per_time;
+                    $zonePrice->base_distance = $value->open_base_distance;
+                    $zonePrice->price_per_distance = $value->open_price_per_distance;
+                    $zonePrice->booking_base_fare = $value->open_booking_base_fare;
+                    $zonePrice->booking_base_per_kilometer = $value->open_booking_base_per_kilometer; 
                 }
                 
                 $total_amount = $totalvalue['sub_total'];
 
-                $zonePrice->promo_total_amount = $total_amount;
+                // set surge price
+                foreach($value->getSurgePrice as $key1 => $value1){
+                    if($value1->start_time <= date("H:i",strtotime($data['ride_time'])) && $value1->end_time >= date("H:i",strtotime($data['ride_time'])) && in_array(date("l",strtotime($data['ride_date'])),explode(',',$value1->available_days))){
+                        if($data['destination_type'] == 'NORMAL' && $distance > $zonePrice->base_distance){
+                            $zonePrice->computed_price = number_format($value1->surge_distance_price * ($distance - $zonePrice->base_distance),2);
+                            $zonePrice->computed_distance = round($distance - $zonePrice->base_distance,2);
+                            $total_amount = ($value1->surge_distance_price * ($distance - $zonePrice->base_distance)) + $value1->surge_price + $totalvalue['booking_fee'];
+                        }
+                        else{
+                            $total_amount = $value1->surge_price;
+                        }
+                        
+                        $zonePrice->base_price = $value1->surge_price;
+                        $final_distance =  $distance - $zonePrice->base_distance;
+                        $zonePrice->price_per_distance = $value1->surge_distance_price;
+                        $zonePrice->distance = $distance;
+                        $zonePrice->total_amount = (float)$total_amount;
+                    }
+                }
+
+                $zonePrice->promo_total_amount = number_format($total_amount,2);
                 $zonePrice->promo_msg = "";
                 // dd($total_amount);
                 if (request()->has('promo_code') && $request['promo_code'] != "") {
@@ -291,11 +428,12 @@ class DispatcherController extends BaseController
                     // if($expired->select_offer_option == 1 && $promo_count >= $expired->new_user_count){
                     //     return $this->sendError('Invalid Prome code',[],404);
                     // }
-                    // if($expired->select_offer_option == 5 && $user->id != $expired->user_id){
-                    //     return $this->sendError('Invalid Prome code',[],404);
-                    // }
+                    // dd($user->id,explode(',',$expired->user_id));
+                    if($expired->select_offer_option == 5 && !in_array($request['user_id'],explode(',',$expired->user_id))){
+                        return $this->sendError('Invalid Prome code',[],404);
+                    }
                     if ($expired->promo_code == $request['promo_code']) {    
-                        if(in_array($value->getType->id,$expired->types)){
+                        // if(in_array($value->getType->id,$expired->types)){
                             // dump($value->getType->vehicle_name);
                             // dump($total_amount,$expired->target_amount);
                             // dump($total_amount > $expired->target_amount);
@@ -304,50 +442,68 @@ class DispatcherController extends BaseController
 
                                 $total_amounts = $this->promoCalculation($expired,$total_amount);
 
-                                $zonePrice->promo_total_amount = $total_amounts;
+                                $zonePrice->promo_total_amount = (double)round($total_amounts,2);
                                 $total_amounts = str_replace(',', '', $total_amounts);
                                 $amounts = (double) $total_amount - (double) $total_amounts;
-                                $zonePrice->promo_amount = number_format($amounts,2);
+                                $zonePrice->promo_amount = (double)round($amounts,2);
                                 $zonePrice->promo_msg = "";
                             }
                             else{
                                 $zonePrice->promo_code = 1;
                                 $zonePrice->promo_msg = "Sorry, this promo not apply";
                             }
-                        }
-                        else{
-                            $zonePrice->promo_code = 1;
-                            $zonePrice->promo_msg = "Sorry, this promo not apply";
-                        }
+                        // }
+                        // else{
+                        //     $zonePrice->promo_code = 1;
+                        //     $zonePrice->promo_msg = "Sorry, this promo not apply";
+                        // }
                     } 
                     else  
                     {
                         $zonePrice->promo_code = 0;
                     }
                 }
-                    $zonePrice->base_price = $value->ridenow_base_price;
                     $zonePrice->distance = $distance;
-                    $zonePrice->total_amount = $total_amount;
-                    $zonePrice->free_waiting_time = $value->ridenow_free_waiting_time;
-                    $zonePrice->waiting_charge = $value->ridenow_waiting_charge;
-                    $zonePrice->price_per_time = $value->ridenow_price_per_time;
-                    $zonePrice->base_distance = $value->ridenow_base_distance;
-                    $zonePrice->price_per_distance = $value->ridenow_price_per_distance;
-                    $zonePrice->booking_base_fare = $value->ridenow_booking_base_fare;
-                    $zonePrice->booking_base_per_kilometer = $value->ridenow_booking_base_per_kilometer;
+
+                  //  $total_amount = number_format($total_amount,2);
+                    // $num =   explode('.', $total_amount);
+                    // if(count($num) > 1){
+    
+                    //     if ($num[1] < 10) {
+                    //         $num[1] = $num[1] . '0';
+                    //     }
+                    //     $num[1] = intval($num[1]);
+    
+                    //     if ($num[1] >= 0 && $num[1] < 26) {
+                    //         $num[1] = 00;
+                    //     } elseif ($num[1] >= 26 && $num[1] <= 75) {
+                    //         $num[1] = 50;
+                    //     } else {
+                    //         $num[0] = $num[0] + 1;
+                    //         $num[1] = 0;
+                    //     }
+                    //    $total_amount =  $num[0] . '.' . $num[1];
+                    // }
+
+                    $calculated_trip_price = (int) $total_amount;
+                    $remainder = fmod($calculated_trip_price, 10);
+                    $quotient = $calculated_trip_price - $remainder;
+                
+                    $amount_to_add = 0;
+                    if ($remainder >= 0 && $remainder < 2.6) {
+                        $amount_to_add = 00;
+                    } elseif ($remainder >= 2.6 && $remainder <= 7.5) {
+                        $amount_to_add = 5;
+                    } else {
+                        $amount_to_add = 10;
+                    }
+                    $total_amount = $quotient + $amount_to_add;
+
+                    
+
+                    $zonePrice->total_amount = (float)$total_amount;
                     $zonePrice->booking_fees = $totalvalue['booking_fee'];
                     $zonePrice->outofzone = $totalvalue['outofzonefee'];
-
-                // set surge price
-                foreach($value->getSurgePrice as $key1 => $value1){
-                    if($value1->start_time <= date("H:i",strtotime($data['ride_time'])) && $value1->end_time >= date("H:i",strtotime($data['ride_time'])) && in_array(date("l",strtotime($data['ride_date'])),explode(',',$value1->available_days))){
-                        $total_amount = $distance * $value1->surge_price;
-                        $zonePrice->price_per_distance = $value1->surge_distance_price;
-                        $zonePrice->base_price = $value1->surge_price;
-                        $zonePrice->distance = $distance;
-                        $zonePrice->total_amount = number_format($total_amount,2);
-                    }
-                }
 
                 if($totalvalue['outofzonefee'] > 0){
                     if($zonePrice->type_slug != "bajaj-auto"){
@@ -400,12 +556,30 @@ class DispatcherController extends BaseController
         return response()->json($response, 200);
     }
 
-    public function createDispatchRequest(Request $request)
+     public function createDispatchRequest(Request $request)
     {
-        $validator = Validator::make($request->all(), [ 
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+
+       // dd("hai");
+        $reqs = [ 
+            'trip_type' => 'required',
+            'customer_number' => 'required',
+            'customer_name' => 'required',
+            'trip_types' => 'required',
+            'pickup_lat' => 'required',
+            'pickup_lng' => 'required',
+            // 'customer_slug' => 'required',
+            'destination_type' => 'required',
+            'pickup' => 'required',
+            'trip_amount' => 'required',
+            'type' => 'required'
+        ];
+
+        if($request->destination_type == 'NORMAL'){
+            $reqs['drop_lat'] = 'required';
+            $reqs['drop_lng'] = 'required';
+            $reqs['drop'] = 'required';
+        }
+        $validator = Validator::make($request->all(), $reqs);
         if ($validator->fails()) { 
             return response()->json(['error'=>$validator->errors()], 401);            
         }
@@ -424,8 +598,8 @@ class DispatcherController extends BaseController
         }
         // dd($request->all());
         $create_id = NULL;
-        if(!auth()->user()->hasRole("Super Admin")){
-            $create_id = auth()->user()->id;
+        if(!$user->hasRole("Super Admin")){
+            $create_id = $user->id;
         }
         if($request->ride_date_time && $request->trip_type == "RIDE_LATER"){
             $one_hour = Carbon::now()->addMinutes(30)->format('Y-m-d H:i:s');
@@ -436,7 +610,7 @@ class DispatcherController extends BaseController
             }
         }
 
-        $user = User::where('phone_number',$request->customer_number)->first();
+        $user = User::where('phone_number',$request->customer_number)->role('user')->first();
 
         if(!$user){
             $user = User::create([
@@ -467,26 +641,10 @@ class DispatcherController extends BaseController
         // Send sms to driver details 
         session(["user_details"=>$user]);
 
-        if ($request->has('trip_types') && $request->trip_types == 'OUTSTATION') {
-            return (new DispatcherRideLaterController())->outstationRide($request,$user,$create_id);
-        }
-
         $zone = $this->getZone($request->pickup_lat, $request->pickup_lng);  
         if (!$zone) {
             return $this->sendError('Service not available at this location',[],403);
         }
-
-        if ($request->has('trip_types') && $request->trip_types == 'RENTAL') {
-            return (new DispatcherRideLaterController())->rentalRide($request,$user,$create_id);
-        }   
-        // if ($request->has('trip_types') && $request->trip_types == 'LOCAL') {
-        //     $zone =  $this->getZone($request['drop_lat'],$request['drop_lng']);
-
-        //     if($zone == null)
-        //     {
-        //         return $this->sendError('Please choose outstation trip',[],403);
-        //     }
-        // }  
 
         // Validate payment option for the trip
         $paymentOpt = $this->validatePaymentOption($request);
@@ -510,7 +668,7 @@ class DispatcherController extends BaseController
         }
 
         if ($request->has('trip_type') && $request->trip_type == 'RIDE_LATER') {
-            return (new DispatcherRideLaterController())->rideLater($request,$zone,$user,$zone_type_id,$create_id);
+            return (new DispatcherRideLaterController())->rideLater($request,$zone,$user_details,$zone_type_id,$create_id);
         }
         $promocode_id =0;
         if (request()->has('promo_code') && $request['promo_code'] != ""){
@@ -524,22 +682,51 @@ class DispatcherController extends BaseController
             $promo_count = $this->request->where('promo_id',$promocode_id)->where('user_id',$user->id)->where('is_completed',1)->count();
             if($promo_count >= $promocode->promo_user_reuse_count && $promocode->select_offer_option != 1)
                 return $this->sendError('Sorry! You already '.$promocode->promo_user_reuse_count.' times used this promo code',[],403);
-            
             if($promocode->select_offer_option == 1 && $promo_count >= $promocode->new_user_count){
                 return $this->sendError('Invalid Prome code',[],404);
             }
-            if($promocode->select_offer_option == 5 && $user->id != $promocode->user_id){
+            if($promocode->select_offer_option == 5 && !in_array($user->id,explode(',',$promocode->user_id))){
                 return $this->sendError('Invalid Prome code',[],404);
             }
-            if(!in_array($type->id,$promocode->types)){
-                return $this->sendError('Invalid Prome code',[],404);
-            }
+            // if(!in_array($type->id,$promocode->types)){
+            //     return $this->sendError('Invalid Prome code',[],404);
+            // }
 
             $promo_all_count = $this->request->where('promo_id',$promocode_id)->where('is_completed',1)->count();
             if($promo_all_count >= $promocode->promo_use_count)
                 return $this->sendError('Sorry! promo code exit',[],403);
         }
         // dd($promocode_id);
+
+
+        if ($request->has('pickup_lat')) {
+
+            $check_rider_address = RiderAddress::where('title',$request->pickup)->get();
+            if(count($check_rider_address) == 0){
+                RiderAddress::create([
+                    'title' => $request->pickup,
+                    'latitude' => $request->pickup_lat,
+                    'longitude' => $request->pickup_lng,
+                    'riderId' => 1,
+                ]);
+            }
+        }
+
+
+        if ($request->has('drop_lat')) {
+
+            $check_rider_address = RiderAddress::where('title',$request->drop)->get();
+            if(count($check_rider_address) == 0){
+                RiderAddress::create([
+                    'title' => $request->drop,
+                    'latitude' => $request->drop_lat,
+                    'longitude' => $request->drop_lng,
+                    'riderId' => 1,
+                ]);
+            }
+        }
+
+
         $request_detail = $this->request->leftJoin('request_places','request_places.request_id','=','requests.id')->where('requests.if_dispatch',1)->where('requests.user_id',$user->id)->where('pick_lat',$request->pickup_lat)->where('pick_lng',$request->pickup_lng)->where('drop_lat',$request->drop_lat)->where('drop_lng',$request->drop_lng)->where('requests.is_later',0)->where('requests.manual_trip',$request->manual_trip)->where('requests.is_trip_start',0)->where('requests.is_driver_started',0)->where('requests.is_cancelled',0)->whereNull('requests.driver_id')->select('requests.*')->first();
         if(!$request_detail){
             $requestNumber = generateRequestNumber();
@@ -561,11 +748,37 @@ class DispatcherController extends BaseController
                 'trip_start_time'         => NOW(),
                 'created_by'              => $create_id,
                 'destination_type' => $request->has('drop') && $request->has('drop_lat') && $request->has('drop_lng') ? 'NORMAL' : 'OPEN',
-                'amount' => $request->trip_amount
+                'base_price'       => $request->has('base_price') ? $request->base_price : 0,
+                'amount' => $request->trip_amount,
+                'distance_cost' => $request->computed_price,
+                'vehicle_type' => $request->type,
             ];
 
             // dd($request_params);
-                
+                    // @ TODO The trip amount deducted to user wallet.
+            $user_wallet = Wallet::where('user_id',$user->id)->first();
+            
+            if($request->has('drop') && $request->has('drop_lat') && $request->has('drop_lng')){
+                $tripAmount = $request->base_price;
+            }else{
+                $tripAmount = $request->trip_amount;
+            }
+            $request_params['wallet_deduct_amount'] = NULL;
+            if($user_wallet){
+                $user_deduct_amount = Settings::where('name','trip_wallet_deduct_amount')->first();
+                $wallet_deduct_amount = $user_deduct_amount ? $user_deduct_amount->value :50;  // static value 
+               
+
+                if($tripAmount > $wallet_deduct_amount && $user_wallet->balance_amount >= $wallet_deduct_amount ){
+                    $request_params['wallet_deduct_amount'] = $wallet_deduct_amount;
+                }elseif($user_wallet->balance_amount <= $wallet_deduct_amount){
+                    $request_params['wallet_deduct_amount'] = $user_wallet->balance_amount;  
+                }elseif($tripAmount < $user_wallet->balance_amount ){
+                    $request_params['wallet_deduct_amount'] = $tripAmount;
+                }
+
+            }
+
             $request_detail = $this->request->create($request_params);
 
             // dd($request_detail);
@@ -583,6 +796,7 @@ class DispatcherController extends BaseController
                 'stop_lng' => $request->stop_lng,
                 'stop_id'  => $request->stop_lng_id,
                 'stop_address' => $request->stop,
+                'poly_string' => $request->poly_string,
                 'stops' => $request->stop ? 1 : 0
             ];
 
@@ -613,49 +827,53 @@ class DispatcherController extends BaseController
         }
 
         if($request->manual_trip == 'MANUAL'){
-          
-            $selected_drivers = array();
+            $selected_drivers = [];
             $drivers = fetchDrivers($request->pickup_lat,$request->pickup_lng,$request->type, $request->trip_types);
             $drivers = json_decode($drivers->getContent());
-                //    dd($drivers);
+        //    dd($drivers);
             if ($drivers->success == true) {
+                
                 $noval =0;
                 foreach ($drivers->data as $key => $value) {
                     // dd($value);
                     $drivers_list = User::role('driver')->with('driver','driver.vehicletype')->where('slug',$value->id)->first();
-                    if($drivers_list){
-                        $drivers_list->trip_complete_count = $this->request->where('driver_id',$drivers_list->id)->where('is_completed',1)->where('is_cancelled',0)->count();
-                        $drivers_list->trip_cancel_count = $this->request->where('driver_id',$drivers_list->id)->where('is_completed',0)->where('is_cancelled',1)->count();
-                        $drivers_list->trip_today_complete_count = $this->request->where('driver_id',$drivers_list->id)->where('is_completed',1)->where('is_cancelled',0)->whereDate('accepted_at',date('Y-m-d'))->count();
-                        $drivers_list->trip_today_cancel_count = $this->request->where('driver_id',$drivers_list->id)->where('is_completed',0)->where('is_cancelled',1)->whereDate('accepted_at',date('Y-m-d'))->count();
-                        $distance = $value->distance / 1000 / 50;
-                        $time = (int)$distance * 60;
-                        if($time == 0){
-                            $time = 3;
-                        }
-                        $hours = $time / 60;
-                        $minite = $time % 60;
-
-                        $drivers_list->time = (int) $hours." hr ".(int) $minite." min";
-                        // dump($drivers_list);
-                        $selected_drivers[$key] = $drivers_list;
+                    $drivers_list->trip_complete_count = $this->request->where('driver_id',$drivers_list->id)->where('is_completed',1)->where('is_cancelled',0)->count();
+                    $drivers_list->trip_cancel_count = $this->request->where('driver_id',$drivers_list->id)->where('is_completed',0)->where('is_cancelled',1)->count();
+                    $drivers_list->trip_today_complete_count = $this->request->where('driver_id',$drivers_list->id)->where('is_completed',1)->where('is_cancelled',0)->whereDate('accepted_at',date('Y-m-d'))->count();
+                    $drivers_list->trip_today_cancel_count = $this->request->where('driver_id',$drivers_list->id)->where('is_completed',0)->where('is_cancelled',1)->whereDate('accepted_at',date('Y-m-d'))->count();
+                 
+                    $distance = $value->distance / 1000 / 50;
+                    $time = (int)$distance * 60;
+                    if($time == 0){
+                        $time = 3;
                     }
+                    $hours = $time / 60;
+                    $minite = $time % 60;
+
+                    $drivers_list->time = (int) $hours." hr ".(int) $minite." min";
+                    // $selected_drivers[$key] = $drivers_list;
+                    array_push($selected_drivers,$drivers_list);
+
+                     //dd($selected_drivers[$key]);
                 }
                
             }
             else{
-                // $request_detail->is_cancelled = true;
-                // $request_detail->cancelled_at = NOW();
-                // $request_detail->cancel_method = 'Automatic';
-                // $request_detail->save();
+                $request_detail->is_cancelled = true;
+                $request_detail->cancelled_at = NOW();
+                $request_detail->cancel_method = 'Automatic';
+                $request_detail->save();
     
                 return $this->sendError('No Driver Found',$request_detail,404);  
             }
             $data = new \stdCLass();
-
             $data->result = $request_detail;
-            $data->drivers = $selected_drivers;
-            // dd($data->drivers);
+            if((object) $selected_drivers) {
+                $data->drivers = (array)$selected_drivers;
+            }else {
+                $data->drivers = (array)$selected_drivers;
+
+            }
             return $this->sendResponse('Data Found', $data, 200);
         }
            
@@ -663,6 +881,8 @@ class DispatcherController extends BaseController
         $result = fractal($request_detail, new TripRequestTransformer);
 
         $drivers = fetchDrivers($request->pickup_lat,$request->pickup_lng,$request->type, $request->trip_types);
+
+      //  dd($drivers);
         
         $drivers = json_decode($drivers->getContent());
         // dd($drivers);
@@ -687,17 +907,17 @@ class DispatcherController extends BaseController
 
             // dd($selected_drivers);
             if(count($selected_drivers) == 0){
-                // $request_detail->is_cancelled = true;
-                // $request_detail->cancelled_at = NOW();
-                // $request_detail->cancel_method = 'Automatic';
-                // $request_detail->save();
+                $request_detail->is_cancelled = true;
+                $request_detail->cancelled_at = NOW();
+                $request_detail->cancel_method = 'Automatic';
+                $request_detail->save();
                 return $this->sendError('No Driver Found',$request_detail,404);  
             }
         }else{
-            // $request_detail->is_cancelled = true;
-            // $request_detail->cancelled_at = NOW();
-            // $request_detail->cancel_method = 'Automatic';
-            // $request_detail->save();
+            $request_detail->is_cancelled = true;
+            $request_detail->cancelled_at = NOW();
+            $request_detail->cancel_method = 'Automatic';
+            $request_detail->save();
 
             return $this->sendError('No Driver Found',$request_detail,404);  
         }
@@ -723,10 +943,12 @@ class DispatcherController extends BaseController
                 // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$result->toJson()];
                 $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
                     // dd($metaDriver);
-                // dispatch(new SendPushNotification($title, $sub_title,$pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1));
+                // dispatch(new SendPushNotification($title,$pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1,$sub_title));
                 sendPush($title, $sub_title,$pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1);
 
                 $request_meta = $request_detail->requestMeta()->create($selected_driver);
+
+                $request_meta = $request_detail->requestDedicatedDrivers()->create($selected_driver);
             }
         }
         if($request_detail->requestMeta()->count() == 0){
@@ -790,7 +1012,7 @@ class DispatcherController extends BaseController
         // @TODO
     }
 
-    public function dispatchRequestView($ride)
+    public function dispatchRequestView(Request $request,$ride)
     {
 
         $clientlogin = $this::getCurrentClient(request());
@@ -809,9 +1031,7 @@ class DispatcherController extends BaseController
         $outstation_trip = OutstationUploadImages::where('request_id',$ride)->first();
         $types = Vehicle::where('status',1)->get();
         $outstations = OutstationPriceFixing::where('status',1)->get();
-
-        $result = fractal($request, new TripRequestTransformer);
-
+        $result = fractal($request, new TripRequestTransformer)->parseIncludes('requestBill');
         return $this->sendResponse('Data Found', $result, 200);
     }
 
@@ -837,7 +1057,7 @@ class DispatcherController extends BaseController
         }
     }
 
-    public function dispatcherTripList($status)
+    public function dispatcherTripList(Request $request,$status)
     {
 
         $clientlogin = $this::getCurrentClient(request());
@@ -852,7 +1072,8 @@ class DispatcherController extends BaseController
         if (!$user->hasRole('Dispatcher approval')) {
             return $this->sendError('Unauthorized',[],401);    
         }
-        $requests_now = RequestModel::where('if_dispatch',1)->with('')->where('trip_type','LOCAL')->whereNotNull('driver_id')->orderby('created_at','desc');
+        $requests_now = RequestModel::where('if_dispatch',1)->where('trip_type','LOCAL')->orderby('created_at','desc');
+        // $requests_now = RequestModel::where('if_dispatch',1)->where('trip_type','LOCAL')->whereNotNull('driver_id')->orderby('created_at','desc');
 
         if($status == 'completed'){
             $requests_now = $requests_now->where('is_completed',1);
@@ -861,18 +1082,22 @@ class DispatcherController extends BaseController
             $requests_now = $requests_now->where('is_cancelled',1);
         }
         else if($status == 'on_going'){
-            $requests_now = $requests_now->where('is_completed',0)->where('is_cancelled',0)->where('is_driver_arrived',1);
+            $requests_now = $requests_now->where('is_completed',0)->where('is_cancelled',0)->where('is_driver_started',1);
         }
         else if($status == 'upcomming'){
             $requests_now = $requests_now->where('is_completed',0)->where('is_cancelled',0)->where('is_driver_arrived',0)->where('is_driver_started',0);
         }
 
-        $requests_now = $requests_now->get();
+        $requests_now = $requests_now->paginate(10);
 
+	foreach ($requests_now as $key => $requestlist)
+        {
+            $requests_now[$key] =  fractal($requestlist, new TripRequestTransformer);
+        }
         $result = new \stdClass();
         $result->history = $requests_now;
 
-        return $this->sendResponse('Data Found', $result, 200);
+        return $this->sendResponse('Data Found', $requests_now, 200);
     }
 
     public function searchDriver($ride)
@@ -944,7 +1169,7 @@ class DispatcherController extends BaseController
         // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$result->toJson()];
         $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
 
-        dispatch(new SendPushNotification($title,$sub_title,$pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1));
+        dispatch(new SendPushNotification($title,$pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1,$sub_title));
 
         // dd($selected_drivers);
         foreach ($selected_drivers as $key => $selected_driver) {
@@ -1009,8 +1234,29 @@ class DispatcherController extends BaseController
         // }
     }
 
-    public function assignDriver($ride,$driver)
+    public function assignDriver(Request $request)
     {
+
+        $req = [ 
+            'ride_id' => 'required',
+            'driver_id' => 'required'
+        ];
+        $validator = Validator::make($request->all(), $req);
+        if ($validator->fails()) { 
+            return response()->json(['error'=>$validator->errors()], 401);            
+        }
+
+        $clientlogin = $this::getCurrentClient(request());
+        
+        if(is_null($clientlogin)) return $this->sendError('Token Expired',[],401);
+
+        $user = User::find($clientlogin->user_id);
+        if(is_null($user)) return $this->sendError('Unauthorized',[],401);
+        
+        if($user->active == false) return $this->sendError('User is blocked so please contact admin',[],403);
+
+        $ride = $request->ride_id;
+        $driver = $request->driver_id;
         $request_detail = RequestModel::where('id',$ride)->first();
 
         $message = 'trip_accepted';
@@ -1020,12 +1266,10 @@ class DispatcherController extends BaseController
             // 'accepted_at'       => now(),
             // 'is_driver_started' => 1,
             'hold_status'       => 1,
-            'created_by'        => auth()->user()->id
+           // 'created_by'        => $request_detail->user_id
         ];
 
         $request_detail->update($updated_params);
-        
-        
         
         RequestMeta::where('request_id', $ride)->delete();
         // dd($request_detail->user_id);
@@ -1036,6 +1280,8 @@ class DispatcherController extends BaseController
 
         $car_details = Driver::where('user_id',$driver)->first();
 
+        $request_result =  fractal($request_detail, new TripRequestTransformer);
+        
         if($request_detail->is_later == 0){
 
             $driver_details = Driver::where('user_id',$driver)->first();
@@ -1046,7 +1292,6 @@ class DispatcherController extends BaseController
             $driver_details->reject_count = 0;
             $driver_details->save();
 
-            $request_result =  fractal($request_detail, new TripRequestTransformer);
                     
             if ($request_detail->user_id != null) {
                 $push_request_detail = $request_result->toJson();
@@ -1071,47 +1316,55 @@ class DispatcherController extends BaseController
                 // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$result->toJson()];
                 $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
 
-                dispatch(new SendPushNotification($title,$sub_title, $pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1));
+                dispatch(new SendPushNotification($title, $pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1,$sub_title));
             }
         }
-                $otp = $this->UniqueRandomNumbers(4);
-                
-               
-                    //  $data = Http::get('http://app.mydreamstechnology.in/vb/apikey.php?apikey=Adbhkho7qOd50OHK&senderid=NPTECH&number='.$userDetails->phone_number.'&message=Hi '.$userDetails->firstname.', your booking is confirmed with us. Your OTP for the ride is '.$otp.'. Driver name : '.$driverDetails->firstname.''.$driverDetails->lastname.' Phone number: '.$driverDetails->phone_number.' Vehicle Number: '.$car_details->car_number.' . Thank you for using our taxi service . Our City Our Taxi !!! - NPTECH.');
+        $otp = $this->UniqueRandomNumbers(4);
+        $otp_update = RequestModel::where('id',$ride)->first();
+            
+        $updated_params_otp = [
+            'request_otp'         => $otp,
+        ];
+            
+        $otp_update->update($updated_params_otp);
 
-                    $otp_update = RequestModel::where('id',$ride)->first();
-            
-                    $updated_params_otp = [
-                        'request_otp'         => $otp,
-                    ];
-            
-                    $otp_update->update($updated_params_otp);
-                    
-                    // $post = json_decode($data->getBody()->getContents());
-            
 
-        return $this->sendResponse('Driver Assign Successfully', $request_detail, 200);
+
+        return $this->sendResponse('Driver Assign Successfully', $request_result, 200);
     }
 
-    public function dispatchTripCancel($ride)
+    public function dispatchTripCancel(Request $request)
     {
-      
+
+        $req = [ 
+            'ride_id' => 'required'
+        ];
+        $validator = Validator::make($request->all(), $req);
+        if ($validator->fails()) { 
+            return response()->json(['error'=>$validator->errors()], 401);            
+        }
+
+        $ride = $request->ride_id;
+
+        $clientlogin = $this::getCurrentClient(request());
+        
+        if(is_null($clientlogin)) return $this->sendError('Token Expired',[],401);
+
+        $user = User::find($clientlogin->user_id);
+        if(is_null($user)) return $this->sendError('Unauthorized',[],401);
+        
+        if($user->active == false) return $this->sendError('User is blocked so please contact admin',[],403);
+
         $request_detail = RequestModel::where('id',$ride)->first();
+        if(!$request_detail || $request_detail->is_cancelled == 1){
+            return $this->sendError('Request not found',[],401);
+        }
 
-        // dd($request_detail);
-
-        // if($request_detail->is_cancelled == 1){
-        //     session()->flash('message',"Already this trip cancelled");
-        //     return back();
-        // }
-        // if($request_detail->is_driver_started == 1){
-        //     session()->flash('message',"Already driver accepted to this trip");
-        //     return back();
-        // }
         $request_detail->cancelled_at = NOW();
         $request_detail->is_cancelled = 1;
         $request_detail->cancel_method = CancelMethod::DISPATCHER_TEXT;
         $request_detail->hold_status = 0;
+        $request_detail->comments = $request->comments;
         $request_detail->save();
 
         $request_result =  fractal($request_detail, new TripRequestTransformer);
@@ -1145,7 +1398,8 @@ class DispatcherController extends BaseController
 
             $pushData = ['notification_enum' => PushEnum::REQUEST_CANCELLED_BY_DISPATCHER];
 
-            dispatch(new SendPushNotification($title,$sub_title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0));
+            // dispatch(new SendPushNotification($title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0,$sub_title));
+            sendPush($title,$sub_title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0);
         }
 
 
@@ -1178,11 +1432,11 @@ class DispatcherController extends BaseController
 
             $pushData = ['notification_enum' => PushEnum::REQUEST_CANCELLED_BY_DISPATCHER];
 
-            dispatch(new SendPushNotification($title,$sub_title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0));
+            // dispatch(new SendPushNotification($title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0,$sub_title));
+            sendPush($title,$sub_title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0);
         }
 
-        
-        return back();
+        return $this->sendResponse('Trip Cancelled Successfully', $request_result, 200);
     }
 
     public function dispatcherEdit($ride)
@@ -1338,8 +1592,8 @@ class DispatcherController extends BaseController
             'status' => 1,
         ]);
 
-        if($request->manual_trip == 'MANUAL'){
-          
+        if($request->manual_trip == "MANUAL"){
+//dd("dai");          
             $selected_drivers = array();
             $drivers = fetchDrivers($request->pickup_lat,$request->pickup_lng,$request->type, $request->trip_types);
             $drivers = json_decode($drivers->getContent());
@@ -1364,7 +1618,8 @@ class DispatcherController extends BaseController
                     $minite = $time % 60;
 
                     $drivers_list->time = (int) $hours." hr ".(int) $minite." min";
-                    $selected_drivers[$key] = $drivers_list;
+                    // $selected_drivers[$key] = $drivers_list;
+                    array_push($selected_drivers,$drivers_list);
                 }
                
             }
@@ -1444,7 +1699,7 @@ class DispatcherController extends BaseController
         // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$result->toJson()];
         $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
 
-        dispatch(new SendPushNotification($title,$sub_title, $pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1));
+        dispatch(new SendPushNotification($title, $pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1,$sub_title));
 
         // dd($selected_drivers);
         foreach ($selected_drivers as $key => $selected_driver) {
@@ -1716,11 +1971,125 @@ class DispatcherController extends BaseController
             // $pushData = ['notification_enum' => PushEnum::TRIP_ACCEPTED_BY_DRIVER, 'result' => (string) $request_result->toJson()];
             $pushData = ['notification_enum' => PushEnum::REQUEST_CANCELLED_BY_DISPATCHER, 'result' => $request_result];
             
-            dispatch(new SendPushNotification($title,$sub_title,$pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0));
+            dispatch(new SendPushNotification($title,$pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0,$sub_title));
         }
         return $this->sendResponse('Trip Cancelled', $request_detail, 200);
     }
-}
 
+    public function ClosedTrip(Request $request)
+    {
+        $data = $request->all();
+
+        $request_detail = RequestModel::where('id',$data['request_id'])->first();
+        
+        $trip_id = $request_detail->id;
+        
+        
+        if($request_detail->destination_type == "OPEN") {
+        
+            $validator = Validator::make($request->all(), [
+                'request_id' => 'required',
+                'amount' => 'required',
+            ]);
+        }else {
+               $validator = Validator::make($request->all(), [
+                'request_id' => 'required',
+            ]);
+        }
+      
+        if($validator->fails()){
+            return $this->sendError('Validation Error',$validator->errors(),412);       
+        }
+        
+
+        if(is_null($request_detail)){
+            return $this->sendError('Request not found',[],404);
+        }
+
+        if($request_detail->is_trip_start == 0){
+            return $this->sendError('Driver not started the trip',[],404);
+        }
+
+        if($request_detail->is_cancelled == 1 ||  $request_detail->is_completed == 1){
+            return $this->sendError('Already this trip closed',[],404);
+        }
+        
+        
+         $userModel = User::find($request_detail->driver_id);
+         
+         try {
+        
+           $client = new Client([
+            'base_uri' =>
+                env('NODE_GEOFIRE_URL', 'http://localhost') .
+                ':' .
+                env('NODE_GEOFIRE_PORT', 4000),
+        ]);
+
+        $url = "request/{$trip_id}";
+        
+        
+         $result = $client->get($url, [
+            'timeout' => 15,
+            'connect_timeout' => 5,
+        ]);
+        
+      
+      
+        if ($result->getStatusCode() == 200) {
+            $data = json_decode($result->getBody()->getContents());
+            
+          
+            $drop_lat = $data->data->lat;
+            $drop_lng = $data->data->lng;
+            $triprequest_id = $data->data->request_id;
+            $distancee = $data->data->distancee;
+            $id = $data->data->id;
+            $waiting_time = $data->data->waiting_time;
+            $user_id = $data->data->user_id;
+            
+             if($request_detail->destination_type == "OPEN") {
+                $location = $data->data->lat . ',' . $data->data->lng;
+                
+            if ($data->data->lat == '0.0' && $data->data->lng == '0.0') {
+                return $this->sendError('Reverse Geocode Failed...', [], 404);
+            } else {
+          
+                $request_result = $request_detail->update(['closed_trip_amount' => $request->amount]);
+                $drop_Address   = $this->reverse($location);
+            }
+            }else {
+                 $drop_Address = $data->data->drop_Address;
+            }
+           
+            $ch = curl_init();
+
+            curl_setopt($ch, CURLOPT_URL, 'http://85.214.68.2/taxi/public/api/V1/request/dispatcher/end');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, "drop_lat=$drop_lat&drop_lng=$drop_lng&request_id=$triprequest_id&distance=$distancee&waiting_time=$waiting_time&drop_address=$drop_Address");
+
+            $headers = array();
+            $headers[] = 'Accept: application/json';
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+            $result = curl_exec($ch);
+            
+            if (curl_errno($ch)) {
+                echo 'Error:' . curl_error($ch);
+            }
+            curl_close($ch);
+            
+        }
+
+    } catch (\Throwable $th) {
+      
+        return response()->json(['success' => false,'data' => 'No driver found']);
+    }
+        
+        
+        return $this->sendResponse('Dispatcher requested to close the trip', $request_detail, 200);
+    }
+}
 
 

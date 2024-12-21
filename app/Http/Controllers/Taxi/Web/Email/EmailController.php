@@ -17,7 +17,7 @@ class EmailController extends Controller
     {
         $email = Email::orderBy('created_at','DESC')->get();
         $users = User::role('user')->whereNotNull('email')->get();
-        // ($users);
+        //dd($users);
         $drivers = User::role('driver')->whereNotNull('email')->get();
         // dd($drivers);
         return view('taxi.email.email',['email' => $email,'users' => $users,'drivers' => $drivers]);
@@ -73,8 +73,9 @@ class EmailController extends Controller
     public function addemail(Request $request)
     {
         // $email = Email::get();
-        $users = User::role('user')->get();
-        $drivers = User::role('driver')->get();
+        $users = User::role('user')->whereNotNull('email')->get();
+        $drivers = User::role('driver')->whereNotNull('email')->get();
+        //dd($drivers);
         return view('taxi.email.addemail',['users' => $users,'drivers' => $drivers]);
     }
 }

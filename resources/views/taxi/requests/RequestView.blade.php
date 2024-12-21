@@ -219,7 +219,9 @@
                             Status: &nbsp;
                             @if($request->is_cancelled == 1)
                                 <label class="badge bg-danger-400 align-top">{{ __('cancelled')}}</label><br>
-                                <span class="text-danger">{{ $request->cancel_method  }}<br>{{$request->cancellationRequest  && $request->cancellationRequest->resonDetails ? $request->cancellationRequest->resonDetails->reason : ''}}</span>
+                                <span class="text-danger">{{ $request->cancel_method  }}<br>{{$request->cancellationRequest  && $request->cancellationRequest->resonDetails ? $request->cancellationRequest->resonDetails->reason : ''}}
+                               </span>
+                               @if($request->comments)Comments : {{ $request->comments ? : ''}}@endif
                             @elseif($request->is_completed == 1)
                                 <label class="badge bg-success-400 align-top">{{ __('completed')}}</label>
                             @elseif($request->is_trip_start == 1)
@@ -729,7 +731,6 @@
     var map = '';
     @if($request->requestPlace)
         function initMap() {
-            console.log(map);
             map = new google.maps.Map(document.getElementById('map-canvas'), {
                 center: {
                     lat: {{$request->requestPlace->pick_lat}},
@@ -737,71 +738,23 @@
                 },
                 zoom: 13
             });
-            
-            @if($request->requestPlace->poly_string != NULL)
-            var encodeString = google.maps.geometry.encoding.decodePath('{{$request->requestPlace->poly_string}}');
-
-            if(encodeString.length > 0){
+            @if($request->requestPlace->drop_lat == "")
+                const infoWindow = new google.maps.InfoWindow();
+                var image = '{{ asset("backend/point2.png") }}';
                 var markers = new google.maps.Marker({
                     position: { lat: {{$request->requestPlace->pick_lat}}, lng: {{$request->requestPlace->pick_lng}} },
                     map,
                     animation: google.maps.Animation.DROP,
-                    // icon: image,
-                    label: 'A',
                     title: "{{$request->requestPlace->pick_address}}" 
                 });
                 markers.addListener("click", () => {
-                    // infoWindow.close();
-                    // markers.setAnimation(google.maps.Animation.BOUNCE);
                     infoWindow.setContent("{{$request->requestPlace->pick_address}}");
                     infoWindow.open(markers.getMap(), markers);
                 });
-                var markers1 = new google.maps.Marker({
-                    position: { lat: {{$request->requestPlace->drop_lat}}, lng: {{$request->requestPlace->drop_lng}} },
-                    map,
-                    animation: google.maps.Animation.DROP,
-                    // icon: image,
-                    label: 'B',
-                    title: "{{$request->requestPlace->drop_address}}" 
-                });
-                markers1.addListener("click", () => {
-                    // infoWindow.close();
-                    // markers.setAnimation(google.maps.Animation.BOUNCE);
-                    infoWindow.setContent("{{$request->requestPlace->drop_address}}");
-                    infoWindow.open(markers.getMap(), markers);
-                });
-                const flightPath = new google.maps.Polyline({
-                    path: encodeString,
-                    geodesic: true,
-                    strokeColor: "#FF0000",
-                    strokeOpacity: 1.0,
-                    strokeWeight: 4,
-                });
-
-                flightPath.setMap(map);
-            }
-            @endif
-                @if($request->requestPlace->drop_lat == "")
-                    const infoWindow = new google.maps.InfoWindow();
-                    var image = '{{ asset("backend/point2.png") }}';
-                    var markers = new google.maps.Marker({
-                        position: { lat: {{$request->requestPlace->pick_lat}}, lng: {{$request->requestPlace->pick_lng}} },
-                        map,
-                        animation: google.maps.Animation.DROP,
-                        // icon: image,
-                        // label: 'A',
-                        title: "{{$request->requestPlace->pick_address}}" 
-                    });
-                    markers.addListener("click", () => {
-                        // infoWindow.close();
-                        // markers.setAnimation(google.maps.Animation.BOUNCE);
-                        infoWindow.setContent("{{$request->requestPlace->pick_address}}");
-                        infoWindow.open(markers.getMap(), markers);
-                    });
-                    map.setZoom(12);
-                    map.setCenter(markers.getPosition());
-                @else
-                travelMode = google.maps.TravelMode.WALKING;
+                map.setZoom(12);
+                map.setCenter(markers.getPosition());
+            @else
+                travelMode = google.maps.TravelMode.DRIVING;
                 directionsService = new google.maps.DirectionsService();
                 directionsRenderer = new google.maps.DirectionsRenderer();
                 directionsRenderer.setMap(map);
@@ -846,7 +799,7 @@
                         }
                     });
                 }
-                @endif
+            @endif
         }
 
         // class AutocompleteDirectionsHandler {
@@ -894,10 +847,11 @@
     
 </script>
 
-<!-- <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAwpTPjHhnVfQuq37V-Gc322b42qTKS-Io&libraries=drawing,places&callback=initMap" async defer>-->
+<!-- <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAwpTPjHhnVfQuq37V-Gc322b42qTKS-Io&libraries=drawing,places&callback=initMap" async defer>     -->
 
 <script src="https://maps.googleapis.com/maps/api/js?key={{settingValue('geo_coder')}}&libraries=drawing,places,geometry&callback=initMap" async defer>    
 </script>
+
 <script src="https://www.gstatic.com/firebasejs/7.19.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/7.19.0/firebase-database.js"></script>
 <!-- TODO: Add SDKs for Firebase products that you want to use https://firebase.google.com/docs/web/setup#available-libraries -->

@@ -36,6 +36,7 @@ class TripComplaintSaveRequest extends FormRequest
             'title' => ['required'],
             // 'category' => ['required'],
             'type' => ['required'],
+            'language' => ['required'],
             'slug' => $slug
         ];
     }

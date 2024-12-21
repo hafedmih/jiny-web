@@ -49,14 +49,7 @@ class LanguageTranslationAPIController extends BaseController
 
             $geo_coder_api_key = Settings::where('name','geo_coder')->first();
 
-            $directional_api_key = "AIzaSyCahpCowqRxzDAd37KP48sbNA0sC3QXv4w";
-
-
-            // $places_api_key = "AIzaSyBa6bO_40mnI3QIttrKQmKB9GErFDWDiK4";
-
-            // $distance_api_key = "AIzaSyCTsh5F3iGxRuomCvHI13bGwkyiIuNqvBc";
-
-            // $geo_coder_api_key = "AIzaSyCahpCowqRxzDAd37KP48sbNA0sC3QXv4w";
+            $directional_api_key = Settings::where('name','google_map_key')->first();
 
             if(is_null($languages)){
                 return $this->sendError('No Data Found',[],404);  
@@ -76,7 +69,7 @@ class LanguageTranslationAPIController extends BaseController
                 $data['places_api_key']    = $places_api_key->value;
                 $data['distance_api_key']  = $distance_api_key->value;
                 $data['geo_coder_api_key'] = $geo_coder_api_key->value;
-                $data['directional_api_key'] = $directional_api_key;
+                $data['directional_api_key'] = $directional_api_key->value;
 
 
                 return $this->sendResponse('Data Found',$data,200);  

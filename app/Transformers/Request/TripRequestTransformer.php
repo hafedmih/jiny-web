@@ -133,6 +133,8 @@ class  TripRequestTransformer extends TransformerAbstract
             'promo_applied'             => $promo_applied,
             'if_dispatch'               => (int)$request->if_dispatch,
             'trip_start_time'           => $request->trip_start_time,
+            'arrived_at'                => $request->arrived_at,
+            'accepted_at'               => $request->accepted_at,
             'is_driver_started'         => (int)$request->is_driver_started,
             'is_driver_arrived'         => (int)$request->is_driver_arrived,
             'is_trip_start'             => (int)$request->is_trip_start,
@@ -177,9 +179,12 @@ class  TripRequestTransformer extends TransformerAbstract
             'destination_type'          => $request->destination_type,
             'trip_amount'               => $request->amount,
             'is_requesting_cancel'        => $request->trip_driver_cancel,
+            'closed_trip_amount'        => $request->closed_trip_amount,
+            'end_trip_request_alert'    => $request->end_trip_request_alert,
+            'money_back_amount'         => $request->money_back_amount,
+            'wallet_deduct_amount'      => $request->wallet_deduct_amount,
         ];
         
-
         $passenger_upload_image_user = PassengerUploadImages::where('request_id',$request->id)->where('upload','USER')->first();
 
         if(!is_null($passenger_upload_image_user))

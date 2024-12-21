@@ -29,13 +29,14 @@ use App\Models\boilerplate\CompanyDetails;
 use App\Models\taxi\ReferalAmountList;
 use App\Models\taxi\Referral;
 use App\Traits\RandomHelper;
+use Nicolaslopezj\Searchable\SearchableTrait;
 
 use Mail;
 use App\Mail\TwoFactOtpMail;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable,Sluggable,HasRoles,SoftDeletes,RandomHelper;
+    use HasApiTokens, HasFactory, Notifiable,Sluggable,HasRoles,SoftDeletes,RandomHelper,SearchableTrait;
   
     /**
      * The attributes that are mass assignable.
@@ -50,6 +51,7 @@ class User extends Authenticatable
         'lastname',
         'email',
         'phone_number',
+        'country_code',
         'password',
         'country',
         'avatar',
@@ -93,6 +95,13 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+    ];
+
+    protected $searchable = [
+        'columns' => [
+            'users.firstname' => 10,
+            'users.phone_number' => 10,
+        ]
     ];
 
      public function getProfilePicAttribute($value)

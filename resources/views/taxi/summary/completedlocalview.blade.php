@@ -139,7 +139,7 @@ label {
     <div class="card" id="tableDiv">
         <div class="card-body">
 		    <div class="tab-content">
-				<div class="tab-pane fade show active" id="justified-right-icon-tab1">
+				<div class="tab-pane fade show active summarytable" id="justified-right-icon-tab1">
                     <table class="table datatable-button-print-columns1" id="roletable">
                         <thead>
                             <tr>
@@ -196,7 +196,27 @@ label {
                             
                         </tbody>
                         <tfoot>
-		                 <tr><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th>₹{{$requests_base_price}}</th><th>₹{{$requests_waiting_charges}}</th><th>₹{{$requests_promo_discount}}</th><th>₹{{$requests_service_tax}}</th><th>₹{{$requests_distance_price}}</th><th>₹{{$requests_total_amount}}</th><th>₹{{$requests_driver_earning}}</th><th>₹{{$requests_admin_commission}}</th></tr>
+		                 <tr>
+                            <!-- <th></th> -->
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th>₹{{$requests_base_price}}</th>
+                            <th>₹{{$requests_waiting_charges}}</th>
+                            <th>₹{{$requests_promo_discount}}</th>
+                            <th>₹{{$requests_service_tax}}</th>
+                            <th>₹{{$requests_distance_price}}</th>
+                            <th>₹{{$requests_total_amount}}</th>
+                            <th>₹{{$requests_driver_earning}}</th>
+                            <th>₹{{$requests_admin_commission}}</th>
+                        </tr>
 	                    </tfoot>
                        
                     </table>

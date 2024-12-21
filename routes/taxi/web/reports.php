@@ -21,6 +21,7 @@ Route::group(['middleware' => ['auth','settings']], function () {
 
     Route::get('driver-trip-cancel',[ReportsController::class,'driverTripCancel'])->name('driverTripCancel');
     Route::get('driver-trip-cancel/{id}',[ReportsController::class,'driverTripCancelSave'])->name('driverTripCancelSave');
+    Route::get('driver-trip-reject/{id}',[ReportsController::class,'driverTripReject'])->name('driverTripReject');
   
     
 });

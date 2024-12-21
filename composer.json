@@ -16,7 +16,7 @@
         "fruitcake/laravel-cors": "^3.0",
         "grimzy/laravel-mysql-spatial": "4.0",
         "guzzlehttp/guzzle": "^7.0.1",
-        "intervention/image": "^2.7",
+        "intervention/image": "^3.9",
         "kreait/laravel-firebase": "^3.4",
         "laracasts/flash": "^3.2",
         "laravel/framework": "^8.54",
@@ -34,10 +34,12 @@
         "rap2hpoutre/laravel-log-viewer": "^2.3",
         "razorpay/razorpay": "^2.8",
         "salmanzafar/laravel-mqtt": "^2.0",
+        "spatie/geocoder": "^3.15",
         "spatie/laravel-fractal": "^5.8",
         "spatie/laravel-ignition": "1.0",
         "spatie/laravel-permission": "^5.4",
-        "torann/geoip": "^3.0"
+        "torann/geoip": "^3.0",
+        "intervention/image": "^2.7"
     },
     "require-dev": {
         "spatie/laravel-ignition": "1.0",

@@ -19,7 +19,7 @@
     </div>
 
     <div class="row">
-        <div class="col-md-9">
+        <div class="col-md-12">
             <div class="card">
                 <div class="card-header header-elements-inline">
                     <h6 class="card-title">User list</h6>
@@ -31,19 +31,51 @@
                         </div>
                     </div>
                 </div>
+                <div class="card-body row">
+                        <div class="col-lg-11">
+                            <form action="{{ url()->current() }}" method="get">
+                                <div class="form-group row">
+                                    <div class="col-lg-6">
+                                        <div class=" form-group row ">
+                                            <div class="col-sm-3">
+                                                <span>Filter:</span>
+                                            </div>
+                                            <div class="col-sm-5">
+                                                <input type="text" name="search" class="form-control"
+                                                    value="{{ $result['request']->search }}" placeholder="Type phone number or name">
+                                            </div>
+                                            <div class="col-sm-4">
+                                                <button type="submit" id="add_new_btn" class="btn bg-purple btn-sm legitRipple"><i
+                                                        class="icon-search4 mr-2"></i> Search</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
 
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-lg-1">
+                            <a href="{{ url()->current() }}" class="nav-link " style="padding-top: 0px; padding-bottom: 0px;">
+                                <button class="btn btn-outline bg-danger-400 text-dark-600 border-danger-300 legitRipple">
+                                    <i class="icon-reset"></i></button>
+                            </a>
+                        </div>
+                    </div>
                 <div class="card-body">
                     <ul class="nav nav-tabs nav-tabs-highlight">
+                    @php $route = Request::route()->getName(); @endphp
                         @if(auth()->user()->can('active-users'))
-                         <li class="nav-item "><a href="#right-icon-tab1" class="nav-link active " data-toggle="tab"><i class="icon-user-check ml-2 text-success-800"></i><span class="text-success-400"> Active </span></a></li>
+                         <li class="nav-item "><a href="#right-icon-tab1" onclick="routeCall(`{{route('userManage') }}`)"  class="nav-link @if (in_array($route, ['userManage'])) active  @endif" data-toggle="tab"><i class="icon-user-check ml-2 text-success-800"></i><span class="text-success-400"> Active </span></a></li>
                         @endif
                         @if(auth()->user()->can('inactive-users'))
-                         <li class="nav-item"><a href="#right-icon-tab2" class="nav-link" data-toggle="tab"><i class="icon-user-block ml-2 text-danger-800"></i> <span class="text-danger-800"> Inactive </span> </a></li>
+                         <li class="nav-item"><a href="#right-icon-tab2" onclick="routeCall(`{{route('user_block') }}`)"  class="nav-link @if (in_array($route, ['user_block'])) active  @endif" data-toggle="tab"><i class="icon-user-block ml-2 text-danger-800"></i> <span class="text-danger-800"> Inactive </span> </a></li>
                         @endif
                     </ul>
 
                     <div class="tab-content">
-                        <div class="tab-pane fade show active" id="right-icon-tab1">
+                    @php $route = Request::route()->getName(); @endphp
+                        <div class="tab-pane fade  @if (in_array($route, ['userManage'])) show active @endif" " id="right-icon-tab1">
                             <table class="table datatable-button-print-columns1 table-bordered" id="roletable">
                                 <thead>
                                     <tr>
@@ -55,7 +87,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($users as $key => $user)
+                                    @foreach($result['users_active'] as $key => $user)
                                         <tr>
                                             <td>{{ ++$key }}</td>
                                             <td>
@@ -76,11 +108,6 @@
                                                             <br>
                                                             {!! $user->phone_number !!}
                                                         </a>
-                                                        <!-- @if($user->online_by)
-                                                            <div class="text-muted font-size-sm"><span class="badge badge-mark border-success mr-1"></span> Online</div>
-                                                        @else
-                                                            <div class="text-muted font-size-sm"><span class="badge badge-mark border-danger mr-1"></span> Offline</div>
-                                                        @endif -->
                                                     </div>
                                                 </div>                                            
                                             </td>
@@ -91,9 +118,10 @@
                                             <td>   
                                                 <a href="#" class="list-icons-item dropdown-toggle caret-0" data-toggle="dropdown" aria-expanded="false"><i class="icon-menu7"></i></a>
                                                 <div class="dropdown-menu dropdown-menu-right" x-placement="bottom-end" style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(16px, 19px, 0px);">
-                                                  @if(auth()->user()->can('view-users'))
+                                                  @if(auth()->user()->can('edit-users'))
                                                   <a href="#" onclick="Javascript: return editAction(`{{ route('usermanagementEdit',$user->slug) }}`)" data-popup="tooltip" title="" data-placement="bottom" data-original-title="Edit" class="dropdown-item"><i class="icon-pencil"></i> Edit </a>
-
+                                                  @endif
+                                                  @if(auth()->user()->can('view-users'))
                                                         <a href="{{ route('userView',$user->slug) }}" class="dropdown-item"><i class="icon-eye"></i> View User</a>
                                                     @endif
                                                     @if(auth()->user()->can('active-users'))
@@ -114,9 +142,12 @@
                                     @endforeach
                                 </tbody>
                             </table>
+                            @if(!empty($result['users_active']))
+                                {{ $result['users_active']->links('vendor.pagination.bootstrap-4')}}
+                            @endif
                         </div>
 
-                        <div class="tab-pane fade" id="right-icon-tab2">
+                        <div class="tab-pane fade @if (in_array($route, ['user_block'])) show active @endif" " id="right-icon-tab2">
                             <table class="table datatable-button-print-columns1 table-bordered" id="roletable">
                                 <thead>
                                     <tr>
@@ -129,7 +160,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($block_users as $key => $user)
+                                    @foreach($result['users_inactive'] as $key => $user)
                                         <tr>
                                             <td>{{ ++$key }}</td>
                                             <td>
@@ -187,6 +218,9 @@
                                     @endforeach
                                 </tbody>
                             </table>
+                            @if(!empty($result['users_inactive']))
+                                {{ $result['users_inactive']->links('vendor.pagination.bootstrap-4')}}
+                            @endif
                         </div>
 
                       
@@ -194,64 +228,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-header bg-transparent header-elements-inline">
-                    <span class="card-title font-weight-semibold">User Details</span>
-                    <div class="header-elements">
-                        <div class="list-icons">
-                            <a class="list-icons-item" data-action="collapse"></a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card-body">
-                    <div class="row row-tile no-gutters shadow-0 border">
-                        <div class="col-6">
-                            
-                            <button type="button" class="btn btn-light btn-block btn-float m-0 legitRipple">
-                                <i class=" icon-2x">{{ $activecount }}</i>
-                                <span> Active</span>
-                            </button>
-
-                            <!-- <button type="button" class="btn btn-light btn-block btn-float m-0 legitRipple">
-                                <i class="text-blue-400 icon-2x">{{ $onlinecount }}</i>
-                                <span>Online</span>
-                            </button> -->
-                        </div>
-                        
-                        <div class="col-6">                            
-                            <button type="button" class="btn btn-light btn-block btn-float m-0 legitRipple">
-                                <i class="text-pink-400 icon-2x">{{ $blockcount }}</i>
-                                <span>Blocked</span>
-                            </button>
-
-                            <!-- <button type="button" class="btn btn-light btn-block btn-float m-0 legitRipple">
-                                <i class=" text-success-400 icon-2x">{{ $offlinecount }}</i>
-                                <span>Offline</span>
-                            </button> -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-            <!-- <div class="card">
-                <div class="card-header bg-transparent header-elements-inline">
-                    <span class="card-title font-weight-semibold">Balance changes</span>
-                    <div class="header-elements">
-                        <span><i class="icon-arrow-down22 text-danger"></i> <span class="font-weight-semibold">25%</span></span>
-                    </div>
-                </div>
-
-                <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="canvas" height="280" width="600"></canvas>
-                        
-                    </div>
-                </div>
-            </div> -->
-        </div>
+      
     </div>
 </div>
 <!-- /horizontal form modal -->
@@ -279,13 +256,13 @@
                                 <input type="hidden" name="user_id" id="user_id">
                             </div>
                         </div>
-                        <div class="form-group row required">
+                        <div class="form-group row ">
                             <label class="col-form-label col-sm-3">{{ __('last-name') }}</label>
                             <div class="col-sm-9">
                                 <input type="text" placeholder="{{ __('last-name') }}" id="last_name" class="form-control" name="last_name">
                             </div>
                         </div>
-                        <div class="form-group row required">
+                        <div class="form-group row ">
                             <label class="col-form-label col-sm-3">{{ __('email') }}</label>
                             <div class="col-sm-9">
                                 <input type="email" placeholder="{{ __('email') }}" id="email" class="form-control" name="email">
@@ -298,12 +275,12 @@
                             </div>
                         </div>
 
-                        <div class="form-group row">
+                        <div class="form-group row required">
                             <label class="col-form-label col-sm-3">{{ __('country') }}</label>
                             <div class="col-sm-9">
                                 <select id="country_code" class="form-control" name="country_code">
                                     <option value="">Select Country</option>
-                                    @foreach($country as $key => $value)
+                                    @foreach($result['country'] as $key => $value)
                                         <option value="{!! $value->id !!}">{!! $value->name !!}</option>
                                     @endforeach
 			                    </select>
@@ -311,12 +288,12 @@
                         </div>
 
 
-                        <div class="form-group row">
+                        <div class="form-group row required">
                             <label class="col-form-label col-sm-3">{{ __('language') }}</label>
                             <div class="col-sm-9">
                                 <select id="language" class="form-control" name="language">
                                     <option value="">Select Type</option>
-                                    @foreach($languages as $key => $value)
+                                    @foreach($result['languages'] as $key => $value)
                                         <option value="{!! $value->code !!}">{!! $value->name !!}</option>
                                     @endforeach
 			                    </select>
@@ -490,5 +467,10 @@
     return false;
 }
 </script>
-
+<script>
+function routeCall(url){
+    document.location.href=url;
+}
+</script>
 @endsection
+

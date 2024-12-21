@@ -96,11 +96,11 @@
                                                     <a href="{{ route('dispatchRequestView',$request->id) }}" class="btn bg-purple-400 btn-icon rounded-round legitRipple" data-popup="tooltip" title="" data-placement="bottom" data-original-title="View Trip"> <i class="icon-eye"></i> </a>
                                                 @endif      
                                                 @endif  
-                                                @if(auth()->user()->can('dispatcher-edit'))
+                                                <!-- @if(auth()->user()->can('dispatcher-edit'))
                                                 @if($request->is_driver_started == 0 && $request->is_cancelled == 0)
                                                     <a href="{{ route('dispatcherEdit',$request->id) }}" class="btn bg-success-400 btn-icon rounded-round legitRipple" data-popup="tooltip" title="" data-placement="bottom" data-original-title="Edit Trip"> <i class="icon-pencil5"></i> </a>
                                                 @endif   
-                                                @endif       
+                                                @endif        -->
                                                 @if(auth()->user()->can('dispatcher-delete'))
                                                     @if($request->is_completed == 0 && $request->is_cancelled == 0)
                                                     <a href="#" onclick="Javascript: return deleteAction('$request->id', `{{ route('dispatchTripCancel',$request->id) }}`)" class="btn bg-danger-400 btn-icon rounded-round legitRipple" data-popup="tooltip" title="" data-placement="bottom" data-original-title="Cancel Trip"> <i class="icon-x"></i> </a>
@@ -186,11 +186,11 @@
                                                     <a href="{{ route('dispatchRequestView',$request->id) }}" class="btn bg-purple-400 btn-icon rounded-round legitRipple" data-popup="tooltip" title="" data-placement="bottom" data-original-title="View Trip"> <i class="icon-eye"></i> </a>
                                                 @endif      
                                                 @endif      
-                                                @if(auth()->user()->can('dispatcher-edit'))
+                                                <!-- @if(auth()->user()->can('dispatcher-edit'))
                                                 @if($request->is_driver_started == 0 && $request->is_cancelled == 0)
                                                     <a href="{{ route('dispatcherEdit',$request->id) }}" class="btn bg-success-400 btn-icon rounded-round legitRipple" data-popup="tooltip" title="" data-placement="bottom" data-original-title="Edit Trip"> <i class="icon-pencil5"></i> </a>
                                                 @endif   
-                                                @endif   
+                                                @endif    -->
                                                 @if(auth()->user()->can('dispatcher-delete'))
                                                     @if($request->is_completed == 0 && $request->is_cancelled == 0)
                                                     <a href="#" onclick="Javascript: return deleteAction('$documents->slug', `{{ route('dispatchTripCancel',$request->id) }}`)" class="btn bg-danger-400 btn-icon rounded-round legitRipple" data-popup="tooltip" title="" data-placement="bottom" data-original-title="Cancel Trip"> <i class="icon-x"></i> </a>
@@ -272,11 +272,11 @@
                                                     <a href="{{ route('dispatchRequestView',$request->id) }}" class="btn bg-purple-400 btn-icon rounded-round legitRipple" data-popup="tooltip" title="" data-placement="bottom" data-original-title="View Trip"> <i class="icon-eye"></i> </a>
                                                 @endif      
                                                 @endif      
-                                                @if(auth()->user()->can('dispatcher-edit'))
+                                                <!-- @if(auth()->user()->can('dispatcher-edit'))
                                                 @if($request->is_driver_started == 0 && $request->is_cancelled == 0)
                                                     <a href="{{ route('dispatcherEdit',$request->id) }}" class="btn bg-success-400 btn-icon rounded-round legitRipple" data-popup="tooltip" title="" data-placement="bottom" data-original-title="Edit Trip"> <i class="icon-pencil5"></i> </a>
                                                 @endif   
-                                                @endif   
+                                                @endif    -->
                                                 @if(auth()->user()->can('dispatcher-delete'))
                                                     @if($request->is_completed == 0 && $request->is_cancelled == 0)
                                                     <a href="#" onclick="Javascript: return deleteAction('$documents->slug', `{{ route('dispatchTripCancel',$request->id) }}`)" class="btn bg-danger-400 btn-icon rounded-round legitRipple" data-popup="tooltip" title="" data-placement="bottom" data-original-title="Cancel Trip"> <i class="icon-x"></i> </a>
@@ -360,11 +360,11 @@
                                                     <a href="{{ route('dispatchRequestView',$request->id) }}" class="btn bg-purple-400 btn-icon rounded-round legitRipple" data-popup="tooltip" title="" data-placement="bottom" data-original-title="View Trip"> <i class="icon-eye"></i> </a>
                                                 @endif      
                                                 @endif      
-                                                @if(auth()->user()->can('dispatcher-edit'))
+                                                <!-- @if(auth()->user()->can('dispatcher-edit'))
                                                 @if($request->is_driver_started == 0 && $request->is_cancelled == 0)
                                                     <a href="{{ route('dispatcherEdit',$request->id) }}" class="btn bg-success-400 btn-icon rounded-round legitRipple" data-popup="tooltip" title="" data-placement="bottom" data-original-title="Edit Trip"> <i class="icon-pencil5"></i> </a>
                                                 @endif   
-                                                @endif   
+                                                @endif -->
                                                 @if(auth()->user()->can('dispatcher-delete'))
                                                     @if($request->is_completed == 0 && $request->is_cancelled == 0)
                                                     <a href="#" onclick="Javascript: return deleteAction('$documents->slug', `{{ route('dispatchTripCancel',$request->id) }}`)" class="btn bg-danger-400 btn-icon rounded-round legitRipple" data-popup="tooltip" title="" data-placement="bottom" data-original-title="Cancel Trip"> <i class="icon-x"></i> </a>
@@ -448,11 +448,11 @@
                                                     <a href="{{ route('dispatchRequestView',$request->id) }}" class="btn bg-purple-400 btn-icon rounded-round legitRipple" data-popup="tooltip" title="" data-placement="bottom" data-original-title="View Trip"> <i class="icon-eye"></i> </a>
                                                 @endif      
                                                 @endif      
-                                                @if(auth()->user()->can('dispatcher-edit'))
+                                                <!-- @if(auth()->user()->can('dispatcher-edit'))
                                                 @if($request->is_driver_started == 0 && $request->is_cancelled == 0)
                                                     <a href="{{ route('dispatcherEdit',$request->id) }}" class="btn bg-success-400 btn-icon rounded-round legitRipple" data-popup="tooltip" title="" data-placement="bottom" data-original-title="Edit Trip"> <i class="icon-pencil5"></i> </a>
                                                 @endif   
-                                                @endif   
+                                                @endif    -->
                                                 @if(auth()->user()->can('dispatcher-delete'))
                                                 
                                                     @if($request->is_completed == 0 && $request->is_cancelled == 0)

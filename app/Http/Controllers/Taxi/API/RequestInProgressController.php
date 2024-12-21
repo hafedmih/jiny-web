@@ -60,6 +60,13 @@ class RequestInProgressController extends BaseController
             $data['user']['currency_code'] = $user->getCountry ? $user->getCountry->currency_code : '';
             $data['user']['currency_symbol'] = $user->getCountry ? $user->getCountry->currency_symbol : '';
             $data['user']['search_radius'] = (float)$driver_search_radius;
+            $data['user']['bpay_username'] = env('USERNAME');
+            $data['user']['bpay_password'] = env('PASSWORD');
+            $data['user']['client_id'] = env('CLIENT_ID');
+            $data['user']['bpay_baseUrl'] = env('BASE_URL');
+            $data['user']['bpay_authentication'] = env('BPAY_AUTHENTICATION');
+            $data['user']['bpay_payment'] = env('BPAY_PAYMENT');
+            $data['user']['bpay_check_transaction'] = env('BPAY_CHECK_TRANSACTION');
 
             $request_detail = RequestModel::where('user_id',$user->id)->where('driver_rated',0)->where('is_cancelled',0)->orderBy('trip_start_time','asc')->first();
             if ($request_detail) {
@@ -158,7 +165,14 @@ class RequestInProgressController extends BaseController
             $data['driver']['today_cancelled'] = $today_request_cancelled;
             $data['driver']['wallet_amount'] = $driver_wallet_balance ? $driver_wallet_balance->balance_amount: 0;
             $data['driver']['today_earnings'] = $today_earnings;
-        
+            $data['driver']['bpay_username'] = env('USERNAME');
+            $data['driver']['bpay_password'] = env('PASSWORD');
+            $data['driver']['client_id'] = env('CLIENT_ID');
+            $data['driver']['bpay_baseUrl'] = env('BASE_URL');
+            $data['driver']['bpay_authentication'] = env('BPAY_AUTHENTICATION');
+            $data['driver']['bpay_payment'] = env('BPAY_PAYMENT');
+            $data['driver']['bpay_check_transaction'] = env('BPAY_CHECK_TRANSACTION');
+
 
             $subscription = DriverSubscriptions::where('user_id',$user->id)->where('from_date','<=',NOW())->where('to_date','>=',NOW())->first();
 
@@ -260,8 +274,14 @@ class RequestInProgressController extends BaseController
             }else{
                 
                 $request_detail = RequestModel::where('id',$request->request_id)->first();
+                //dd($request_detail);
+                if(is_null($request_detail)){
+                    $result = fractal($request_detail, new TripRequestTransformer);
+                    $data['driver']['meta']= null;
+                }else {
                 $result = fractal($request_detail, new TripRequestTransformer);
                 $data['driver']['meta']= $result;
+                 }
             }
            
 

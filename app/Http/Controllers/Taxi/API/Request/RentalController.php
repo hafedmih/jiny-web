@@ -252,11 +252,11 @@ class RentalController extends BaseController
             dispatch(
                 new SendPushNotification(
                     $title,
-                    $sub_title,
                     $pushData,
                     $metaDriver->device_info_hash,
                     $metaDriver->mobile_application_type,
-                    1
+                    1,
+                    $sub_title
                 )
             );
 

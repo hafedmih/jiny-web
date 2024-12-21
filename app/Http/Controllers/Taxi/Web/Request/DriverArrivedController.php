@@ -93,7 +93,7 @@ class DriverArrivedController extends BaseController
 
             $push_data = ['notification_enum'=>PushEnum::DRIVER_ARRIVED];
 
-            dispatch(new SendPushNotification($title,$sub_title,$push_data, $userModel->device_info_hash, $userModel->mobile_application_type,0));
+            dispatch(new SendPushNotification($title,$push_data, $userModel->device_info_hash, $userModel->mobile_application_type,0,$sub_title));
 
 
             // Form a socket sturcture using users'id and message with event name
@@ -182,7 +182,7 @@ class DriverArrivedController extends BaseController
     
             // $pushData = ['notification_enum' => PushEnum::DRIVER_ARRIVED, 'result' => (string) $request_result->toJson()];
             $pushData = ['notification_enum' => PushEnum::DRIVER_ARRIVED, 'result' => $request_result];
-            dispatch(new SendPushNotification($title,$sub_title,$pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0));
+            dispatch(new SendPushNotification($title,$pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0,$sub_title));
         }
         
         return $this->sendResponse('Data Found', $request_result, 200);

@@ -30,7 +30,8 @@ use App\Models\taxi\OutstationPriceFixing;
 use App\Models\taxi\OutstationUploadImages;
 use App\Models\User;
 use App\Models\boilerplate\OauthClients;
-
+use App\Models\taxi\Settings;
+use App\Models\taxi\Wallet;
 use Illuminate\Support\Carbon;
 
 class CreateDispatcherRequestController extends BaseController
@@ -235,8 +236,22 @@ class CreateDispatcherRequestController extends BaseController
         ];
         // dd($request_params);
 
+          // @ TODO The trip amount deducted to user wallet.
+          $user_wallet = Wallet::where('user_id',$user->id)->first();
+            
+          if($user_wallet){
+              $user_deduct_amount = Settings::where('name','trip_wallet_deduct_amount')->first();
+              $wallet_deduct_amount = $user_deduct_amount ? $user_deduct_amount->value :50;  // static value 
+              
+              if($request->base_price > $wallet_deduct_amount && $user_wallet->balance_amount >= $wallet_deduct_amount){
+                  $request_params['wallet_deduct_amount'] = $wallet_deduct_amount;
+              }
+          }else{
+              $request_params['wallet_deduct_amount'] = NULL;
+          }
+
         $request_detail = $this->request->create($request_params);
-        // dd($request_detail);
+        dd($request_detail);
         // request place detail params
         $request_place_params = [
             'pick_lat'     => $request->pickup_lat,
@@ -297,7 +312,7 @@ class CreateDispatcherRequestController extends BaseController
             sendSocketData($socketData);
 
             $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
-            dispatch(new SendPushNotification($title, $sub_title,$pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1));
+            dispatch(new SendPushNotification($title,$pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1,$sub_title));
         }
 
         return $this->sendResponse('Request Created Successfully', $request_detail, 200);

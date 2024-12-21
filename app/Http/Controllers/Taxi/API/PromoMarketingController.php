@@ -130,7 +130,7 @@ class PromoMarketingController extends BaseController
                     }
 
                     $pushData = ['notification_enum' => PushEnum::NEW_PROMO_CODE, 'result' => $data];
-                    dispatch(new SendPushNotification($title,$sub_title, $pushData, $promo_user->device_info_hash, $promo_user->mobile_application_type,0));
+                    dispatch(new SendPushNotification($title, $pushData, $promo_user->device_info_hash, $promo_user->mobile_application_type,0,$sub_title));
 
                     return $this->sendResponse('true',$data,200); 
                 }

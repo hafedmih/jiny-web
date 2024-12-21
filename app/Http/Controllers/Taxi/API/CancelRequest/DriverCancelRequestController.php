@@ -154,7 +154,7 @@ class DriverCancelRequestController extends BaseController
         //     $socketData = ['event' => 'request_'.$user->slug,'message' => $socket_data];
         //     sendSocketData($socketData);
 
-        //     dispatch(new SendPushNotification($title,$sub_title, $pushData, $user->device_info_hash, $user->mobile_application_type,0));
+        //     dispatch(new SendPushNotification($title, $pushData, $user->device_info_hash, $user->mobile_application_type,0,$sub_title));
         // }
 
         return $this->sendResponse('Data Found', $request_result, 200);

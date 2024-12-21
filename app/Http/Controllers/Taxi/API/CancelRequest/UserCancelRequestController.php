@@ -169,7 +169,7 @@ class UserCancelRequestController extends BaseController
             $socketData = ['event' => 'request_'.$notifiable_driver->slug,'message' => $socket_data];
             sendSocketData($socketData);
 
-            dispatch(new SendPushNotification($title,$sub_title, $pushData, $notifiable_driver->device_info_hash, $notifiable_driver->mobile_application_type,0));
+            dispatch(new SendPushNotification($title, $pushData, $notifiable_driver->device_info_hash, $notifiable_driver->mobile_application_type,0,$sub_title));
         }
 
         return $this->sendResponse('Data Found', $request_result, 200);

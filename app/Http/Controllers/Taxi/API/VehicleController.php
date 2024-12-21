@@ -129,6 +129,7 @@ class VehicleController extends BaseController
                     'sorting_order' => $value->getType->sorting_order,
                 ];
             if ($request->has('drop_lat')) {
+                $destination_type = $request->destination_type;
                 $drop_zone = $this->getZone($data['drop_lat'],$data['drop_long']);
                 $outofzonefee = 0;
                 if(!$drop_zone){                  
@@ -167,29 +168,91 @@ class VehicleController extends BaseController
                     }
                 }
             }
+            else{
+                $destination_type = $request->destination_type;
+            }
             
                 $totalvalue = [];
                //Ride Now
                 if($data['ride_type'] == "RIDE_NOW"){
+                    $zonePrice->base_price = $value->ridenow_base_price;
+                    $zonePrice->base_distance = $value->ridenow_base_distance;
+
+                    $zonePrice->free_waiting_time = $value->ridenow_free_waiting_time;
+                    $zonePrice->waiting_charge = $value->ridenow_waiting_charge;
+                    $zonePrice->price_per_time = $value->ridenow_price_per_time;
+    
+                    $computedDistance = $distance - $value->ridenow_base_distance;
+                    if($computedDistance >= 0 && $destination_type == 'NORMAL'){
+                        $zonePrice->computed_price = round($value->ridenow_price_per_distance * $computedDistance,2);
+                        $zonePrice->computed_distance = round($computedDistance,2);
+                    }
+                    $zonePrice->price_per_distance = $value->ridenow_price_per_distance;
+                    $zonePrice->booking_base_fare = $value->ridenow_booking_base_fare;
+                    $zonePrice->booking_base_per_kilometer = $value->ridenow_booking_base_per_kilometer;
 
                     if ($request->has('drop_lat')) {
-                        $totalvalue = $this->etaCalculation($distance,$value->ridenow_base_distance,$value->ridenow_base_price,$value->ridenow_price_per_distance,$value->ridenow_booking_base_fare,$value->ridenow_booking_base_per_kilometer,$outofzonefee);
-                    }else{
-                        $outofzonefee=0;
                         $totalvalue = $this->etaCalculation($distance,$value->ridenow_base_distance,$value->ridenow_base_price,$value->ridenow_price_per_distance,$value->ridenow_booking_base_fare,$value->ridenow_booking_base_per_kilometer,$outofzonefee);
                     }
                 }
                 // Ride Later
                 else if($data['ride_type'] == "RIDE_LATER"){
+                    
+                    $zonePrice->base_price = $value->ridelater_base_price;
+                    $zonePrice->base_distance = $value->ridelater_base_distance;
+                    $zonePrice->free_waiting_time = $value->ridelater_free_waiting_time;
+                    $zonePrice->waiting_charge = $value->ridelater_waiting_charge;
+                    $zonePrice->price_per_time = $value->ridelater_price_per_time;
+
+                    $computedDistance = $distance - $value->ridelater_base_distance;
+                    if($computedDistance >= 0 && $destination_type == 'NORMAL'){
+                        $zonePrice->computed_price = round($value->ridelater_price_per_distance * $computedDistance,2);
+                        $zonePrice->computed_distance = round($computedDistance,2);
+                    }
+                    $zonePrice->price_per_distance = $value->ridelater_price_per_distance;
+                    $zonePrice->booking_base_fare = $value->ridelater_booking_base_fare;
+                    $zonePrice->booking_base_per_kilometer = $value->ridelater_booking_base_per_kilometer;
                     if ($request->has('drop_lat')) {
-                        $totalvalue = $this->etaCalculation($distance,$value->ridelater_base_distance,$value->ridelater_base_price,$value->ridelater_price_per_distance,$value->ridelater_booking_base_fare,$value->ridelater_booking_base_per_kilometer,$outofzonefee);
-                    }else {
-                        $outofzonefee=0;
+
                         $totalvalue = $this->etaCalculation($distance,$value->ridelater_base_distance,$value->ridelater_base_price,$value->ridelater_price_per_distance,$value->ridelater_booking_base_fare,$value->ridelater_booking_base_per_kilometer,$outofzonefee);
                     }
                 }
 
+                if($destination_type == 'OPEN'){
+                    $zonePrice->base_price = $value->open_base_price;
+                    $zonePrice->base_distance = $value->open_base_distance;
+                    $zonePrice->free_waiting_time = $value->open_free_waiting_time;
+                    $zonePrice->waiting_charge = $value->open_waiting_charge;
+                    $zonePrice->price_per_time = $value->open_price_per_time;
+                    $computedDistance = $distance - $value->open_base_distance;
+                    $zonePrice->price_per_distance = $value->open_price_per_distance;
+                    $zonePrice->booking_base_fare = 0;
+                    $zonePrice->booking_base_per_kilometer = 0;
+                    $outofzonefee=0;
+                    $totalvalue = $this->etaCalculation($distance,$value->open_base_distance,$value->open_base_price,$value->open_price_per_distance,0,0,$outofzonefee);
+                }
+
                 $total_amount = $totalvalue['sub_total'];
+                // set surge price
+                foreach($value->getSurgePrice as $key1 => $value1){
+                    // dd($value1);
+                    if($value1->start_time <= $data['ride_time'] && $value1->end_time >= $data['ride_time'] && in_array(date("l",strtotime($data['ride_date'])),explode(',',$value1->available_days))){
+                        if($destination_type == 'NORMAL' && $distance > $zonePrice->base_distance){
+                            $zonePrice->computed_price = number_format($value1->surge_distance_price * ($distance - $zonePrice->base_distance),2);
+                            $zonePrice->computed_distance = round($distance - $zonePrice->base_distance,2);
+                            $total_amount = ($value1->surge_distance_price * ($distance - $zonePrice->base_distance)) + $value1->surge_price + $totalvalue['booking_fee'];
+                        }
+                        else{
+                            $total_amount = $value1->surge_price;
+                        }
+                        $zonePrice->base_price = $value1->surge_price;
+                        $final_distance =  $distance - $zonePrice->base_distance;
+                        $zonePrice->price_per_distance = $value1->surge_distance_price;
+                        $zonePrice->distance = $distance;
+                        $zonePrice->total_amount = (float)$total_amount;
+                    }
+                }
+
                 if (request()->has('promo_code')) { 
                     $expired = Promocode::whereStatus(true)->where('promo_code', $request['promo_code'])->first();
                     $total_amount = str_replace(',', '', $total_amount);
@@ -230,39 +293,27 @@ class VehicleController extends BaseController
                         $zonePrice->promo_code = 0;
                     }    
                 }
-                $zonePrice->base_price = $value->ridenow_base_price;
-                $zonePrice->base_distance = $value->ridenow_base_distance;
                 $zonePrice->distance = $distance;
-                $zonePrice->total_amount = $total_amount;
-                $zonePrice->free_waiting_time = $value->ridenow_free_waiting_time;
-                $zonePrice->waiting_charge = $value->ridenow_waiting_charge;
-                $zonePrice->price_per_time = $value->ridenow_price_per_time;
 
-                $computedDistance = $distance - $value->ridenow_base_distance;
-                if($computedDistance >= 0 ){
-                    $zonePrice->computed_price = $value->ridenow_price_per_distance * $computedDistance;
-                    $zonePrice->computed_distance = $computedDistance;
+                $calculated_trip_price = (int) $total_amount;
+                $remainder = fmod($calculated_trip_price, 10);
+                $quotient = $calculated_trip_price - $remainder;
+            
+                $amount_to_add = 0;
+                if ($remainder >= 0 && $remainder < 2.6) {
+                    $amount_to_add = 00;
+                } elseif ($remainder >= 2.6 && $remainder <= 7.5) {
+                    $amount_to_add = 5;
+                } else {
+                    $amount_to_add = 10;
                 }
-                $zonePrice->price_per_distance = $value->ridenow_price_per_distance;
-                $zonePrice->booking_base_fare = $value->ridenow_booking_base_fare;
-                $zonePrice->booking_base_per_kilometer = $value->ridenow_booking_base_per_kilometer;
+                $total_amount= $quotient + $amount_to_add;
+              
+
+                $zonePrice->total_amount = (float)$total_amount;
                 $zonePrice->booking_fees = $totalvalue['booking_fee'];
                 $zonePrice->out_of_zone_price = $totalvalue['outofzonefee'];
-                // set surge price
-                foreach($value->getSurgePrice as $key1 => $value1){
-                    // dd($value1);
-                    if($value1->start_time <= $data['ride_time'] && $value1->end_time >= $data['ride_time'] && in_array(date("l",strtotime($data['ride_date'])),explode(',',$value1->available_days))){
-                        // dd($distance);
-                        // $total_amount = $distance * $value1->surge_price;
-                        $total_amount = ($value1->surge_distance_price * $distance) + $value1->surge_price + $zonePrice->waiting_charge + $zonePrice->booking_fees;
-                        $zonePrice->base_price = $value1->surge_price;
-                        $final_distance =  $distance - $zonePrice->base_distance;
-                        $zonePrice->price_per_distance = $value1->surge_distance_price;
-                        $zonePrice->computed_price = $value1->surge_distance_price * $final_distance;
-                        $zonePrice->distance = $distance;
-                        $zonePrice->total_amount = $total_amount;
-                    }
-                }
+
                 if($totalvalue['outofzonefee'] > 0){
                     if($zonePrice->type_slug != "bajaj-auto"){
                         $count[$key] = $value->getType->sorting_order;

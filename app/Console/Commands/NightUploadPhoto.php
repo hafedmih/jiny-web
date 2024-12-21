@@ -73,7 +73,7 @@ class NightUploadPhoto extends Command
                             $sub_title =  $push_data->description;
                         }
                         $pushData = ['notification_enum' => PushEnum::PASSENGER_UPLOAD_IMAGES];
-                        dispatch(new SendPushNotification($title,$sub_title,$pushData,$user->device_info_hash,$user->mobile_application_type,0));
+                        dispatch(new SendPushNotification($title,$pushData,$user->device_info_hash,$user->mobile_application_type,0,$sub_title));
                     }
                 }
                 $PassengerUploadImages = PassengerUploadImages::where('request_id',$value->id)->where('upload','USER')->first();
@@ -94,7 +94,7 @@ class NightUploadPhoto extends Command
                             $sub_title =  $push_data->description;
                         }
                         $pushData = ['notification_enum' => PushEnum::PASSENGER_UPLOAD_IMAGES];
-                        dispatch(new SendPushNotification($title,$sub_title,$pushData,$user->device_info_hash,$user->mobile_application_type,0));
+                        dispatch(new SendPushNotification($title,$pushData,$user->device_info_hash,$user->mobile_application_type,0,$sub_title));
                     }
                 }
             }

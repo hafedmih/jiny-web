@@ -183,7 +183,7 @@ class RentalController extends BaseController
             // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$result->toJson()];
 
             // dd($metaDriver->mobile_application_type);
-            dispatch(new SendPushNotification($title,$sub_title,$pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1));
+            dispatch(new SendPushNotification($title,$pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1,$sub_title));
 
             // dd($selected_drivers);
             foreach ($selected_drivers as $key => $selected_driver) {

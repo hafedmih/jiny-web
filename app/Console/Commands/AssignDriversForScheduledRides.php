@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
 use Log;
 use App\Models\taxi\DriverLogs;
 use App\Models\taxi\Wallet;
+use App\Models\taxi\Requests\RequestDedicatedDrivers;
 
 
 class AssignDriversForScheduledRides extends Command
@@ -124,8 +125,16 @@ class AssignDriversForScheduledRides extends Command
                             $selected_drivers[$key]["created_at"] = date('Y-m-d H:i:s');
                             $selected_drivers[$key]["updated_at"] = date('Y-m-d H:i:s');
                         }
+                        RequestDedicatedDrivers::create([
+                            'request_id' => $request_detail->id,
+                            'user_id' => $request_detail->user_id,
+                            'driver_id' => $driverdet->id,
+                            'assign_method' => 1,
+                            'is_later' => 1,
+                            'active' => 1
+                        ]);
                     }
-                    // dd($selected_drivers);
+                    // dd($selected_drivers); 
                     // if(count($selected_drivers) == 0){
                     //     return $this->sendError('No Driver Found',[],404);  
                     // }
@@ -163,7 +172,7 @@ class AssignDriversForScheduledRides extends Command
 
                             $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
 
-                            // dispatch(new SendPushNotification($title, $sub_title, $pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,0));
+                            // dispatch(new SendPushNotification($title, $pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,0, $sub_title));
                             sendPush($title, $sub_title, $pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,0);
                             $request_meta = $request_detail->requestMeta()->create($selected_driver);
                         }
@@ -220,7 +229,7 @@ class AssignDriversForScheduledRides extends Command
             sendSocketData($socketData);
 
             $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
-            dispatch(new SendPushNotification($title, $sub_title, $pushData, $metaDriver->device_info_hash,$metaDriver->mobile_application_type,0));
+            dispatch(new SendPushNotification($title, $pushData, $metaDriver->device_info_hash,$metaDriver->mobile_application_type,0,$sub_title));
             // dd($pushData);
         }
 
@@ -269,7 +278,7 @@ class AssignDriversForScheduledRides extends Command
                     $socketData = ['event' => 'request_'.$notifiable_driver->slug,'message' => $socket_data];
                     sendSocketData($socketData);
 
-                    dispatch(new SendPushNotification($title, $sub_title, $sub_title, $pushData, $notifiable_driver->device_info_hash, $notifiable_driver->mobile_application_type,0));
+                    dispatch(new SendPushNotification($title, $pushData, $notifiable_driver->device_info_hash, $notifiable_driver->mobile_application_type,0, $sub_title));
                 }
 
                 if ($user) {
@@ -302,7 +311,7 @@ class AssignDriversForScheduledRides extends Command
                     $socketData = ['event' => 'request_'.$notifiable_driver->slug,'message' => $socket_data];
                     sendSocketData($socketData);
 
-                    dispatch(new SendPushNotification($title,$sub_title,$pushData, $notifiable_driver->device_info_hash, $notifiable_driver->mobile_application_type,0));
+                    dispatch(new SendPushNotification($title,$pushData, $notifiable_driver->device_info_hash, $notifiable_driver->mobile_application_type,0,$sub_title));
                 }
             }
         }
@@ -354,7 +363,7 @@ class AssignDriversForScheduledRides extends Command
                     $socketData = ['event' => 'request_'.$notifiable_driver->slug,'message' => $socket_data];
                     sendSocketData($socketData);
 
-                    dispatch(new SendPushNotification($title,$sub_title, $pushData, $notifiable_driver->device_info_hash, $notifiable_driver->mobile_application_type,0));
+                    dispatch(new SendPushNotification($title, $pushData, $notifiable_driver->device_info_hash, $notifiable_driver->mobile_application_type,0,$sub_title));
                 }
             }
         }
@@ -400,7 +409,7 @@ class AssignDriversForScheduledRides extends Command
                             $sub_title =  $push_data->description;
                         }   
                         $pushData = ['notification_enum' => PushEnum::SILENT_PUSH];
-                        dispatch(new SendPushNotification($title, $sub_title, $pushData, $driverdet->device_info_hash, $driverdet->mobile_application_type,0));
+                        dispatch(new SendPushNotification($title, $pushData, $driverdet->device_info_hash, $driverdet->mobile_application_type,0,$sub_title));
                     }
                 }
             }
@@ -446,7 +455,7 @@ class AssignDriversForScheduledRides extends Command
                             $sub_title =  $push_data->description;
                         }   
                         $pushData = ['notification_enum' => PushEnum::LOGOUT_PUSH];
-                        dispatch(new SendPushNotification($title, $sub_title, $pushData, $driverdet->device_info_hash, $driverdet->mobile_application_type,0));
+                        dispatch(new SendPushNotification($title, $pushData, $driverdet->device_info_hash, $driverdet->mobile_application_type,0,$sub_title));
                     }
                 }
             }

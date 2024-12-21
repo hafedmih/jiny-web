@@ -262,9 +262,9 @@
 					@if(auth()->user()->can('promotion-email'))
 						<li class="nav-item"><a href="{{ route('email')}}" class="nav-link"><i class="icon-bubble-notification"></i>{{ __('Email') }}</a></li>
 					@endif	
-					@if(auth()->user()->can('promotion-sms'))
-						<li class="nav-item"><a href="{{ route('sms')}}" class="nav-link"><i class="icon-bubble-notification"></i>{{ __('sms') }}</a></li>
-					@endif
+					{{-- @if(auth()->user()->can('promotion-sms')) --}}
+						<!-- <li class="nav-item"><a href="{{ route('sms')}}" class="nav-link"><i class="icon-bubble-notification"></i>{{ __('sms') }}</a></li> -->
+					{{-- @endif --}}
 				</ul>
 			</li>
 			@endif

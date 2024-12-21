@@ -79,8 +79,12 @@ class RequestRatingController extends BaseController
                 if($user->hasRole('user'))
                 {
                     $RequestUserRating = RequestModel::where('id',$request['request_id'])->first();
-                    $RequestUserRating['driver_rated'] = $request['rating'];
-                    $RequestUserRating->update();
+                           if($request['rating'] == 0.0){
+                      $RequestUserRating['driver_rated'] = 1;
+                    }else {
+                      $RequestUserRating['driver_rated'] = $request['rating'];
+                    }
+                   $RequestUserRating->update();
 
                     $request_question = json_decode($request->question_id,true);
 
@@ -115,7 +119,11 @@ class RequestRatingController extends BaseController
                 else if($user->hasRole('driver')) 
                 {
                     $RequestDriverRating = RequestModel::where('id',$request['request_id'])->first();
-                    $RequestDriverRating['user_rated'] = $request['rating'];
+                     if($request['rating'] == 0.0){
+                      $RequestDriverRating['user_rated'] = 1;
+                    }else {
+                      $RequestDriverRating['user_rated'] = $request['rating'];
+                    }
                     $RequestDriverRating->update();
 
                 }

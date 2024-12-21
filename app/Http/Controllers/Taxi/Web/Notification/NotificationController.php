@@ -89,13 +89,14 @@ class NotificationController extends Controller
 
         foreach ($users as $key => $value) {
            $user = User::where('id',$value)->first();
-           dispatch(new SendPushNotification($data['title'],$data['sub_title'],['message' => $data['message'],'image' => $insert->images1],$user->device_info_hash,$user->mobile_application_type,0));
+           dispatch(new SendPushNotification($data['title'],['message' => $data['message'],'image' => $insert->images1],$user->device_info_hash,$user->mobile_application_type,0,$data['sub_title']));
         }
         foreach ($drivers as $key => $value) {
             $driver = User::where('id',$value)->first();
              if($driver->device_info_hash != Null && $driver->device_info_hash != 'ABCD' && $driver->device_info_hash != 'abcd')
              {
-                dispatch(new SendPushNotification($data['title'],$data['sub_title'],['message' => $data['message'],'image' => $insert->images1],$driver->device_info_hash,$driver->mobile_application_type,0));
+                $push_data = ['message' => $data['message'],'image' => $insert->images1];
+                sendPush($data['title'],$data['sub_title'], $push_data, $driver->device_info_hash, $driver->mobile_application_type,0);
              }
         }
 

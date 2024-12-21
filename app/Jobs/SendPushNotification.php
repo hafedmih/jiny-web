@@ -60,7 +60,7 @@ class SendPushNotification implements ShouldQueue
     public $notification_type;
 
 
-    public function __construct(string $title,$sub_title = null,array $body,$token,string $login,$sound = null,$notification_type = null)
+    public function __construct(string $title,array $body,$token,string $login,$sub_title = null,$sound = null,$notification_type = null)
     {
         $this->title = $title;
         $this->sub_title = $sub_title;
@@ -135,9 +135,7 @@ class SendPushNotification implements ShouldQueue
                     ]
                 ];
             }
-
-          
-       
+            
 
             $RESPONSE = json_encode($data);
         

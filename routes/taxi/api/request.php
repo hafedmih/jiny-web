@@ -9,6 +9,8 @@ use App\Http\Controllers\Taxi\API\Request\ChangeLocationController;
 use App\Http\Controllers\Taxi\API\Request\CreateRideLaterController;
 use App\Http\Controllers\Taxi\API\Request\PassengerUploadImagesController;
 use App\Http\Controllers\Taxi\API\Request\SingleTripHistoryController;
+use App\Http\Controllers\Taxi\API\Request\RequestDedicatedDriversController;
+use App\Http\Controllers\Taxi\API\Request\DispatcherEndRequestController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -39,5 +41,10 @@ Route::group(['prefix' => 'request', 'as'=>'request.'], function () {
 
     Route::post('retake-image', [PassengerUploadImagesController::class,'retakeImage'])->name('retakeImage');
 
+    Route::post('cash-paid', [CreateRequestController::class,'cashPaid'])->name('cashPaid');
+
+    Route::post('dedicated-drivers', [RequestDedicatedDriversController::class,'RequestDedicated'])->name('RequestDedicated');
+    
+    Route::post('dispatcher/end', [DispatcherEndRequestController::class,'endRequest'])->name('dispatcherendTrips');
 
 });

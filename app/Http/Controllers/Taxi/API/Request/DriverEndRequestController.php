@@ -39,8 +39,7 @@ class DriverEndRequestController extends BaseController
     use CommanFunctions;
     public function endRequest(DriverEndRequest $request)
     {
-
-        // dd("knkn");
+    
         $clientlogin = $this::getCurrentClient(request());
         
         if(is_null($clientlogin)) return $this->sendError('Token Expired',[],401);
@@ -166,9 +165,130 @@ class DriverEndRequestController extends BaseController
          
         $duration = $this->calculateDurationOfTrip($request_detail->trip_start_time);
         
-        if($request_detail->payment_opt=="CASH"){
+        if($request_detail->payment_opt=="Cash"){
 
             $paid_status = 1;
+
+             $user_wallet = Wallet::where('user_id',$request_detail->user_id)->first();
+
+            if($user_wallet){
+                $driver_wallet = Wallet::where('user_id',$request_detail->driver_id)->first();
+               
+               
+               if($request_detail->wallet_deduct_amount != null){
+                    if($user_wallet->balance_amount >= $request_detail->wallet_deduct_amount){
+                        /** User Wallet */
+                        $user_wallet->amount_spent += $request_detail->wallet_deduct_amount;
+                        $user_wallet->balance_amount -= $request_detail->wallet_deduct_amount;
+                        $user_wallet->save();
+
+                        $wallet_transaction = WalletTransaction::create([
+                            'wallet_id' => $user_wallet->id,
+                            'amount' =>  $request_detail->wallet_deduct_amount,
+                            'purpose' => 'Trip amount transfer successfully',
+                            'type' => 'SPENT',
+                            'user_id' => $request_detail->user_id,
+                            'request_id' => $request_detail->id
+                        ]);
+                        $rider = User::where('id',$request_detail->user_id)->first();
+                        if ($rider) {
+                            $title = Null;
+                            $body = '';
+                            $lang = $rider->language;
+                            $push_data = $this->pushlanguage($lang,'driver-trip-amount');
+                            if(is_null($push_data)){
+                                $title     = $request_detail->requested_currency_symbol . ' ' . $request_detail->wallet_deduct_amount . " has been debited from your account.";
+                                $body      = $request_detail->requested_currency_symbol . ' ' . $request_detail->wallet_deduct_amount . " has been debited from your account.";
+                                $sub_title = $request_detail->requested_currency_symbol . ' ' . $request_detail->wallet_deduct_amount . " has been debited from your account.";
+
+                            }else{
+                                $title     =  $push_data->title;
+                                $body      =  $push_data->description;
+                                $sub_title =  $push_data->description;
+            
+                            }   
+                            
+                        // @ TODO Driver get push and socket
+            
+                            // Form a socket structure using users'id and message with event name
+                            $socket_data = new \stdClass();
+                            $socket_data->success = true;
+                            $socket_data->success_message  = PushEnum::TRIP_AMOUNT_DEBIT;
+                            $socket_data->trip_wallet_amount  = $request_detail->wallet_deduct_amount;
+                            $socket_data->currency_symbol  = $request_detail->requested_currency_symbol;
+
+                            $socketData = ['event' => 'user_trip_wallet_amount_'.$rider->slug,'message' => $socket_data];
+                            sendSocketData($socketData);
+                        
+                            $pushData = ['notification_enum' => PushEnum::TRIP_AMOUNT_DEBIT];
+                            // dispatch(new SendPushNotification($title,$pushData, $rider->device_info_hash, $rider->mobile_application_type,0,$sub_title));
+                            sendPush($title,$sub_title, $pushData, $rider->device_info_hash, $rider->mobile_application_type,0);
+                        }
+
+                        /** Driver wallet */
+                        if(is_null($driver_wallet)){
+                            $driver_wallet = new Wallet();
+                            $driver_wallet->user_id = $request_detail->driver_id;
+                            $driver_wallet->earned_amount = $request_detail->wallet_deduct_amount;
+                            $driver_wallet->balance_amount = $request_detail->wallet_deduct_amount;
+                            $driver_wallet->save();
+                        }else{
+                            $driver_wallet->earned_amount	+= $request_detail->wallet_deduct_amount;
+                            $driver_wallet->balance_amount += $request_detail->wallet_deduct_amount;
+                            $driver_wallet->save();
+                        }
+                        
+
+                        $wallet_transaction = WalletTransaction::create([
+                            'wallet_id' => $user_wallet->id,
+                            'amount' =>  $request_detail->wallet_deduct_amount,
+                            'purpose' => 'Trip amount credited successfully',
+                            'type' => 'EARNED',
+                            'user_id' => $request_detail->driver_id,
+                            'request_id' => $request_detail->id
+                        ]);
+                        $trip_driver = User::where('id',$request_detail->driver_id)->first();
+                    
+                        if ($trip_driver) {
+                            $title = Null;
+                            $body = '';
+                            $lang = $trip_driver->language;
+                            $push_data = $this->pushlanguage($lang,'driver-trip-amount');
+                            if(is_null($push_data)){
+                                $title     = "Your account has been credited with ". $request_detail->requested_currency_symbol . ' ' . $request_detail->wallet_deduct_amount ;
+                                $body      = "Your account has been credited with ". $request_detail->requested_currency_symbol . ' ' . $request_detail->wallet_deduct_amount ;
+                                $sub_title = "Your account has been credited with ". $request_detail->requested_currency_symbol . ' ' . $request_detail->wallet_deduct_amount ;
+                            }else{
+                                $title     =  $push_data->title;
+                                $body      =  $push_data->description;
+                                $sub_title =  $push_data->description;
+            
+                            }   
+                        
+                        // @ TODO Driver get push and socket
+            
+                            // Form a socket structure using users'id and message with event name
+                            $socket_data = new \stdClass();
+                            $socket_data->success = true;
+                            $socket_data->success_message  = PushEnum::TRIP_AMOUNT_CREDIT;
+                            $socket_data->trip_wallet_amount  = $request_detail->wallet_deduct_amount;
+                            $socket_data->currency_symbol  = $request_detail->requested_currency_symbol;
+
+                            $socketData = ['event' => 'driver_trip_wallet_amount_'.$trip_driver->slug,'message' => $socket_data];
+                            sendSocketData($socketData);
+            
+                            $pushData = ['notification_enum' => PushEnum::TRIP_AMOUNT_CREDIT];
+                        
+                            dispatch(new SendPushNotification($title,$pushData, $trip_driver->device_info_hash, $trip_driver->mobile_application_type,0,$sub_title));
+                            
+                        }
+                    
+                        $request_detail->save();
+                    }else{
+                        return $this->sendError('insufficient balance.',[],403);
+                    }
+                }
+            }
 
         }else {
 
@@ -213,10 +333,10 @@ class DriverEndRequestController extends BaseController
        
            
         
-        $calculated_bill =  $this->calculateRideFares($distance, $duration, $waitingTime, $request_detail, $promo_detail,$request->drop_lat,$request->drop_lng);
+        $calculated_bill =  $this->calculateRideFares($distance, $duration, $waitingTime, $request_detail, $promo_detail,$request->drop_lat,$request->drop_lng,$request->close_trip);
 
-    //    dd($calculated_bill);
-        // @TODO need to take admin commision from driver wallet
+        //    dd($calculated_bill);
+        // @TODO need to take admin commission from driver wallet
         if ($request_detail->payment_opt == 'Cash') {
             //Detect the Admin commission 
             $this->walletTransaction($calculated_bill['admin_commision'],$request_detail->driver_id,'SPENT','Admin Commission',$request_detail->id);
@@ -230,6 +350,29 @@ class DriverEndRequestController extends BaseController
         $calculated_bill['request_id'] = $request_detail->id;
         $calculated_bill['requested_currency_code'] = $request_detail->requested_currency_code;
         $calculated_bill['requested_currency_symbol'] = $request_detail->requested_currency_symbol;
+        if($request_detail->destination_type == "NORMAL"){
+            $calculated_bill['base_price'] = $request_detail->base_price;
+            $calculated_bill['distance_price'] = $request_detail->distance_cost;
+            $calculated_bill['total_amount'] = $request_detail->amount;
+            $calculated_bill['driver_commision'] = $request_detail->amount - $calculated_bill['admin_commision'];
+            if(!is_null($request_detail->wallet_deduct_amount)){
+                $calculated_bill['cash_on_hand'] = $request_detail->amount - $request_detail->wallet_deduct_amount;
+                $calculated_bill['wallet_credit_amount'] = $request_detail->wallet_deduct_amount;
+            }else{
+                $calculated_bill['cash_on_hand'] = $request_detail->amount;
+            }
+        }else{
+            // $calculated_bill['base_price'] = $request_detail->base_price;
+            // $calculated_bill['total_amount'] = $request_detail->amount;
+            // $calculated_bill['driver_commision'] = $calculated_bill['total_amount'] - $calculated_bill['admin_commision'];
+            if(!is_null($request_detail->wallet_deduct_amount)){
+                $calculated_bill['cash_on_hand'] = $calculated_bill['total_amount'] - $request_detail->wallet_deduct_amount;
+                $calculated_bill['wallet_credit_amount'] = $request_detail->wallet_deduct_amount;
+            }else{
+                $calculated_bill['cash_on_hand'] = $calculated_bill['total_amount'];
+            }
+        }
+       
         $request_bill = RequestBill::where('request_id',$request_detail->id)->delete();
         $request_bill = RequestBill::create($calculated_bill);
         // dd($request_bill);
@@ -272,10 +415,12 @@ class DriverEndRequestController extends BaseController
 
                 $socketData = ['event' => 'request_'.$userModel->slug,'message' => $socket_data];
                 sendSocketData($socketData);
-        
+       
                 // $pushData = ['notification_enum' => PushEnum::DRIVER_END_THE_TRIP, 'result' => (string) $request_result->toJson()];
                 $pushData = ['notification_enum' => PushEnum::DRIVER_END_THE_TRIP];
-                dispatch(new SendPushNotification($title,$sub_title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0));
+                // dispatch(new SendPushNotification($title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0,$sub_title));
+
+                sendPush($title,$sub_title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0);
             }
         }else{
             $userModel = User::find($request_detail->user_id);
@@ -366,7 +511,7 @@ class DriverEndRequestController extends BaseController
      * Calculare ride fares
      * 
     */
-    public function calculateRideFares($distance, $duration, $waitingTime, $request_detail, $promo_detail,$drop_lat,$drop_lng)
+    public function calculateRideFares($distance, $duration, $waitingTime, $request_detail, $promo_detail,$drop_lat,$drop_lng,$close_trip)
     {
         // dd($request_detail->trip_type);
         if($request_detail->trip_type == 'OUTSTATION'){
@@ -756,8 +901,8 @@ class DriverEndRequestController extends BaseController
             ];
 
         }
-        elseif($request_detail->trip_type == 'LOCAL'){
-            
+        elseif($request_detail->trip_type == 'LOCAL'){ 
+           
             $price = ZonePrice::whereId($request_detail->zone_type_id)->first();
         
             if ($request_detail->ride_type == RideType::RIDENOW) {
@@ -778,6 +923,17 @@ class DriverEndRequestController extends BaseController
                 $waitingCharge = $price->ridelater_waiting_charge;
                 $bookingBase_fee = $price->ridelater_booking_base_fare;
                 $bookingDistancefee = $price->ridelater_booking_base_per_kilometer;
+            }
+
+            if($request_detail->destination_type == "OPEN"){
+                $basePrice     = $price->open_base_price;
+                $distancePrice = $price->open_price_per_distance;
+                $timePrice     = $price->open_price_per_time;
+                $baseDistance  = (double)$price->open_base_distance;
+                $freeWaiting   = $price->open_free_waiting_time;
+                $waitingCharge = $price->open_waiting_charge;
+                $bookingBase_fee = $price->open_booking_base_fare;
+                $bookingDistancefee = $price->open_booking_base_per_kilometer;
             }
 
             $givendistance = $distance;
@@ -804,6 +960,15 @@ class DriverEndRequestController extends BaseController
                 if($distance > $baseDistance){
                     $balance_distance = $distance - $baseDistance;
                     $booking_km_amount = $balance_distance * $price->ridelater_booking_base_per_kilometer;
+                }
+            }
+            
+            if($request_detail->destination_type == "OPEN"){
+                if($price->open_booking_base_fare != 0){
+                    if($distance > $baseDistance){
+                        $balance_distance = $distance - $baseDistance;
+                        $booking_km_amount = $balance_distance * $price->open_booking_base_per_kilometer;
+                    }
                 }
             }
             
@@ -851,23 +1016,11 @@ class DriverEndRequestController extends BaseController
             //     $subTotal = $subTotal+$bookingDistancePrices;
             // }
             $total_booking_price = $price->ridenow_booking_base_fare + $booking_km_amount;
-        
-            
-
-            $adminCommission = $request_detail->is_later == "1" ? $price->ridelater_admin_commission : $price->ridenow_admin_commission;
-
-            $adminCommissionType = $request_detail->is_later == "1" ? $price->ridelater_admin_commission_type : $price->ridenow_admin_commission_type;
-            
-            if ($adminCommissionType == AdminCommissionType::PERCENTAGE) {
-                $adminServiceFee = ($subTotal * ($adminCommission / 100));
-            
-            } else {
-                $adminServiceFee = $adminCommission;
-            }
             
             $driver_details = Driver::where('user_id',$request_detail->driver_id)->first();
             $subscription = DriverSubscriptions::where('user_id',$request_detail->driver_id)->where('from_date','<=',NOW())->where('to_date','>=',NOW())->first();
 
+            $adminServiceFee = 0;
             if($driver_details && $driver_details->subscription_type == 'SUBSCRIPTION'){
                 $adminServiceFee = 0;
             }
@@ -972,7 +1125,28 @@ class DriverEndRequestController extends BaseController
                     $request_detail->save();
                 }
             }
+
+            $adminCommission = $request_detail->is_later == "1" ? $price->ridelater_admin_commission : $price->ridenow_admin_commission;
+
+            $adminCommissionType = $request_detail->is_later == "1" ? $price->ridelater_admin_commission_type : $price->ridenow_admin_commission_type;
             
+            if($request_detail->destination_type == "OPEN"){
+                $adminCommission = $price->open_admin_commission;
+
+                $adminCommissionType = $price->open_admin_commission_type;
+            }
+            
+            if ($adminCommissionType == AdminCommissionType::PERCENTAGE) {
+                if($request_detail->destination_type == 'NORMAL'){
+                    $adminServiceFee = ($request_detail->amount * ($adminCommission / 100));
+                }
+                else{
+                    $adminServiceFee = ($subTotal * ($adminCommission / 100));
+                }
+            
+            } else {
+                $adminServiceFee = $adminCommission;
+            }
             
             $servicetaxamount = ($total * (float)$servicetax) / 100;
             $driverCommission = ($subTotal - $adminServiceFee -$servicetaxamount) > 0 ? $subTotal - $adminServiceFee - $servicetaxamount: 0;
@@ -1004,29 +1178,94 @@ class DriverEndRequestController extends BaseController
                 $out_of_zone_price = 0;
                 $total_booking_price = 0;
             }
+
+
+            // $amount = number_format($subTotal,2);
+            // $num =   explode('.', $subTotal);
+            // if(count($num) > 1){
+
+            //     if ($num[1] < 10) {
+            //         $num[1] = $num[1] . '0';
+            //     }
+            //     $num[1] = intval($num[1]);
+
+            //     if ($num[1] >= 0 && $num[1] < 26) {
+            //         $num[1] = 00;
+            //     } elseif ($num[1] >= 26 && $num[1] <= 75) {
+            //         $num[1] = 50;
+            //     } else {
+            //         $num[0] = $num[0] + 1;
+            //         $num[1] = 0;
+            //     }
+            //    $subTotal =  $num[0] . '.' . $num[1];
+            // }
+
+            $calculated_trip_price = (int) $subTotal;
+            $remainder = fmod($calculated_trip_price, 10);
+            $quotient = $calculated_trip_price - $remainder;
+        
+            $amount_to_add = 0;
+            if ($remainder >= 0 && $remainder < 2.6) {
+                $amount_to_add = 00;
+            } elseif ($remainder >= 2.6 && $remainder <= 7.5) {
+                $amount_to_add = 5;
+            } else {
+                $amount_to_add = 10;
+            }
+            $subTotal = $quotient + $amount_to_add;
+
+
+            if($close_trip == 1 && $request_detail->destination_type == "OPEN")
+            {
+                return [
+                    'base_price'                => $request_detail->closed_trip_amount,
+                    'base_distance'             => 0,
+                    'price_per_distance'        => 0,
+                    'distance_price'            => 0,
+                    'price_per_time'            => 0,
+                    'time_price'                => 0,
+                    'promo_discount'            => 0,
+                    'waiting_charge'            => 0,
+                    'admin_commision'           => $adminServiceFee,
+                    'driver_commision'          => $request_detail->closed_trip_amount - $adminServiceFee,
+                    'total_amount'              => $request_detail->closed_trip_amount,
+                    'sub_total'                 => 0,
+                    'total_distance'            => $givendistance,
+                    'service_tax'               => $servicetaxamount,
+                    'service_tax_percentage'    => $servicetax,
+                    'total_time'                => 0,
+                    'requested_currency_code'   => $request_detail->requested_currency_code,
+                    'requested_currency_symbol' => $request_detail->requested_currency_symbol,
+                    'out_of_zone_price'         => $out_of_zone_price,
+                    'booking_fees'              => 0
+                ];
             
-            return [
-                'base_price'                => $basePrice,
-                'base_distance'             => $baseDistance,
-                'price_per_distance'        => $distancePrice,
-                'distance_price'            => $totalDistancePrice,
-                'price_per_time'            => $timePrice,
-                'time_price'                => $totalTimePrice,
-                'promo_discount'            => $discount_amount,
-                'waiting_charge'            => $finalWaitingPrice,
-                'admin_commision'           => $adminServiceFee,
-                'driver_commision'          => $driverCommission,
-                'total_amount'              => $subTotal,
-                'sub_total'                 => $total,
-                'total_distance'            => $givendistance,
-                'service_tax'               => $servicetaxamount,
-                'service_tax_percentage'    => $servicetax,
-                'total_time'                => $totalTripTime,
-                'requested_currency_code'   => $request_detail->requested_currency_code,
-                'requested_currency_symbol' => $request_detail->requested_currency_symbol,
-                'out_of_zone_price'         => $out_of_zone_price,
-                'booking_fees'              => $total_booking_price
-            ];
+            }else {
+
+                return [
+                    'base_price'                => $basePrice,
+                    'base_distance'             => $baseDistance,
+                    'price_per_distance'        => $distancePrice,
+                    'distance_price'            => $totalDistancePrice,
+                    'price_per_time'            => $timePrice,
+                    'time_price'                => $totalTimePrice,
+                    'promo_discount'            => $discount_amount,
+                    'waiting_charge'            => $finalWaitingPrice,
+                    'admin_commision'           => $adminServiceFee,
+                    'driver_commision'          => $driverCommission,
+                    'total_amount'              => (float)$subTotal,
+                    'sub_total'                 => $total,
+                    'total_distance'            => $givendistance,
+                    'service_tax'               => $servicetaxamount,
+                    'service_tax_percentage'    => $servicetax,
+                    'total_time'                => $totalTripTime,
+                    'requested_currency_code'   => $request_detail->requested_currency_code,
+                    'requested_currency_symbol' => $request_detail->requested_currency_symbol,
+                    'out_of_zone_price'         => $out_of_zone_price,
+                    'booking_fees'              => $total_booking_price
+                ];
+            }
+            
         }
     }
 }

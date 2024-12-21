@@ -8,6 +8,7 @@ use App\Http\Requests\Taxi\Web\VehicleSaveRequest;
 use App\Models\taxi\VehicleModel;
 use App\Models\taxi\Vehicle;
 use App\Models\taxi\Category;
+use App\Models\taxi\ZonePrice;
 
 use Validator;
 use Redirect;
@@ -103,8 +104,9 @@ class VehicleController extends Controller
     {
         $vehicle = Vehicle::where('slug',$id)->first();
         $vehiclemap = VehicleModel::where('vehicle_id',$vehicle->id)->get();
+        $chkZoneContainsVehicle = ZonePrice::where('type_id',$vehicle->id)->get();
         $data = ['cannot delete'];  
-        if(count($vehiclemap)>0){
+        if(count($vehiclemap)>0 || count($chkZoneContainsVehicle)>0){
             session()->flash('message','Cannot delete the vehicle');
             session()->flash('status',false);
              return back();       

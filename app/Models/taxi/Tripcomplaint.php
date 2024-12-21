@@ -15,7 +15,7 @@ class Tripcomplaint extends Model
 
     protected $fillable = [
         'title',
-        // 'category',
+        'category',
         'type',
         'status',
         'slug',

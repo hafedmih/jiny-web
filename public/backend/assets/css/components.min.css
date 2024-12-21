@@ -15438,11 +15438,24 @@ a.fc-more:hover {
 .datatable-scroll-sm {
 	min-height: .01%
 }
+ 
+.summarytable .datatable-scroll-wrap {
+	width: 100% !important;
+    height: 500px !important;
+    overflow: auto !important;
+}
 
 .datatable-scroll-wrap {
 	width: 100%;
 	min-height: .01%;
 	overflow-x: auto
+}
+
+
+.reportdatatable-scroll-wrap{
+	width: 100% !important;
+    height: 500px !important;
+    overflow: auto !important;
 }
 
 @media (max-width:767.98px) {

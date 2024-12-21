@@ -23,19 +23,20 @@ class CategorySaveRequest extends FormRequest
      * @return array
      */
     public function rules(res $res)
-    {
+    {       
         $data = $res->all();
         $category_id = [];
         $category_image = [];
-        if($data['category_id'] != ""){
+        
+        if($data['category_id'] != ""){            
             $category_id = ['required'];
             $category_image = [];
         }
-        else{
-            $category_image = ['required'];
+        else{          
+            $category_image = ['required','image','mimes:jpeg,png,jpg,gif'];
             $category_id = [];
-        }
-        return [
+        }  
+        return  [
             'category_name' =>  ['required','regex:/^[\w-]*$/','max:55'],
             'category_image' => $category_image,
             'category_id' => $category_id

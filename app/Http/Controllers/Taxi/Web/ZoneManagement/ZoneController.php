@@ -115,6 +115,16 @@ class ZoneController extends Controller
            // 'ridenow_booking_base_per_kilometer' => 'required',
            // 'ridelater_booking_base_fare' => 'required',
            // 'ridelater_booking_base_per_kilometer' => 'required',
+            'open_base_price' => 'required',
+            'open_base_distance' => 'required',
+            'open_price_per_time' => 'required',
+            'open_price_per_distance' => 'required',
+            'open_free_waiting_time' => 'required',
+            'open_free_waiting_time_after_start' => 'required',
+            'open_waiting_charge' => 'required',
+            'open_cancellation_fee' => 'required',
+            'open_admin_commission_type' => 'required',
+            'open_admin_commission' => 'required'
         ]);
         if ($validator->fails()) {
             return redirect('zone/add')
@@ -216,6 +226,16 @@ class ZoneController extends Controller
                     $data['ridelater_admin_commission_type'][$i],
                 'ridelater_admin_commission' =>
                     $data['ridelater_admin_commission'][$i],
+                'open_base_price' => $data['open_base_price'][$i],
+                'open_base_distance' => $data['open_base_distance'][$i],
+                'open_price_per_time' => $data['open_price_per_time'][$i],
+                'open_price_per_distance' => $data['open_price_per_distance'][$i],
+                'open_free_waiting_time' => $data['open_free_waiting_time'][$i],
+                'open_free_waiting_time_after_start' => $data['open_free_waiting_time_after_start'][$i],
+                'open_waiting_charge' => $data['open_waiting_charge'][$i],
+                'open_cancellation_fee' => $data['open_cancellation_fee'][$i],
+                'open_admin_commission_type' => $data['open_admin_commission_type'][$i],
+                'open_admin_commission' => $data['open_admin_commission'][$i],
                 // 'ridelater_booking_base_fare' =>
                 //     $data['ridelater_booking_base_fare'][$i],
                 // 'ridelater_booking_base_per_kilometer' =>
@@ -408,6 +428,16 @@ class ZoneController extends Controller
             'ridenow_admin_commission' => 'required',
             'ridelater_admin_commission_type' => 'required',
             'ridelater_admin_commission' => 'required',
+            'open_base_price' => 'required',
+            'open_base_distance' => 'required',
+            'open_price_per_time' => 'required',
+            'open_price_per_distance' => 'required',
+            'open_free_waiting_time' => 'required',
+            'open_free_waiting_time_after_start' => 'required',
+            'open_waiting_charge' => 'required',
+            'open_cancellation_fee' => 'required',
+            'open_admin_commission_type' => 'required',
+            'open_admin_commission' => 'required'
             // 'ridenow_booking_base_fare' => 'required',
             // 'ridenow_booking_base_per_kilometer' => 'required',
             // 'ridelater_booking_base_fare' => 'required',
@@ -628,6 +658,16 @@ class ZoneController extends Controller
                 )
                     ? $data['ridelater_admin_commission'][$i]
                     : '';
+                $zone_price->open_base_price = array_key_exists($i,$data['open_base_price'])? $data['open_base_price'][$i] : '';
+                $zone_price->open_base_distance = array_key_exists($i,$data['open_base_distance'])? $data['open_base_distance'][$i] : '';
+                $zone_price->open_price_per_time = array_key_exists($i,$data['open_price_per_time'])? $data['open_price_per_time'][$i] : '';
+                $zone_price->open_price_per_distance = array_key_exists($i,$data['open_price_per_distance'])? $data['open_price_per_distance'][$i] : '';
+                $zone_price->open_free_waiting_time = array_key_exists($i,$data['open_free_waiting_time'])? $data['open_free_waiting_time'][$i] : '';
+                $zone_price->open_free_waiting_time_after_start = array_key_exists($i,$data['open_free_waiting_time_after_start'])? $data['open_free_waiting_time_after_start'][$i] : '';
+                $zone_price->open_waiting_charge = array_key_exists($i,$data['open_waiting_charge'])? $data['open_waiting_charge'][$i] : '';
+                $zone_price->open_cancellation_fee = array_key_exists($i,$data['open_cancellation_fee'])? $data['open_cancellation_fee'][$i] : '';
+                $zone_price->open_admin_commission_type = array_key_exists($i,$data['open_admin_commission_type'])? $data['open_admin_commission_type'][$i] : '';
+                $zone_price->open_admin_commission = array_key_exists($i,$data['open_admin_commission'])? $data['open_admin_commission'][$i] : '';
                 // $zone_price->ridelater_booking_base_fare = array_key_exists(
                 //     $i,
                 //     $data['ridelater_booking_base_fare']
@@ -782,6 +822,17 @@ class ZoneController extends Controller
                         )
                             ? $data['ridelater_admin_commission'][$i]
                             : '',
+                            
+                        'open_base_price' => array_key_exists($i,$data['open_base_price']) ? $data['open_base_price'][$i] : '',
+                        'open_base_distance' => array_key_exists($i,$data['open_base_distance']) ? $data['open_base_distance'][$i] : '',
+                        'open_price_per_time' => array_key_exists($i,$data['open_price_per_time']) ? $data['open_price_per_time'][$i] : '',
+                        'open_price_per_distance' => array_key_exists($i,$data['open_price_per_distance']) ? $data['open_price_per_distance'][$i] : '',
+                        'open_free_waiting_time' => array_key_exists($i,$data['open_free_waiting_time']) ? $data['open_free_waiting_time'][$i] : '',
+                        'open_free_waiting_time_after_start' => array_key_exists($i,$data['open_free_waiting_time_after_start']) ? $data['open_free_waiting_time_after_start'][$i] : '',
+                        'open_waiting_charge' => array_key_exists($i,$data['open_waiting_charge']) ? $data['open_waiting_charge'][$i] : '',
+                        'open_cancellation_fee' => array_key_exists($i,$data['open_cancellation_fee']) ? $data['open_cancellation_fee'][$i] : '',
+                        'open_admin_commission_type' => array_key_exists($i,$data['open_admin_commission_type']) ? $data['open_admin_commission_type'][$i] : '',
+                        'open_admin_commission' => array_key_exists($i,$data['open_admin_commission']) ? $data['open_admin_commission'][$i] : '',
                         // 'ridelater_booking_base_fare' => array_key_exists(
                         //     $i,
                         //     $data['ridelater_booking_base_fare']

@@ -99,7 +99,7 @@ if (!function_exists('fetchDrivers'))
     function fetchDrivers($lat = 11.01511066262459, $lng = 76.98246916575717, $type = 1,$ride_type = 'LOCAL')
     {
         try {
-            // dd($ride_type);
+        // dd($ride_type);
             $radius = 4;
            
             $search_radius = Settings::where('name','driver_search_radius')->first();
@@ -117,16 +117,25 @@ if (!function_exists('fetchDrivers'))
             $client = new Client([
                 'base_uri' => env('NODE_GEOFIRE_URL','http://localhost') .':'. env('NODE_GEOFIRE_PORT',4000)
             ]);
+
+           // dd($client);
     
             $url = "/{$lat}/{$lng}/{$type}/{$ride_type}/{$radius}";
+
+           // dd($url);
 
             $result = $client->get($url,[
                 'timeout' => 15,
                 'connect_timeout' => 5
             ]);
+
+           //dd($result);
             
             if ($result->getStatusCode() == 200) {
+
                 $data = json_decode($result->getBody()->getContents());
+
+                //dd($data);
               
                 if (!$data->data) {
                     return response()->json(['success' => false,'data' => 'No driver found']);
@@ -516,6 +525,19 @@ if(!function_exists('distanceBetweenTwoPoints')){
     }
 }
 
+function calculateDistance($lat1, $lon1, $lat2, $lon2, $unit = 'km') {
+    $earthRadius = ($unit === 'km') ? 6371 : 3959; // Radius of the earth in km or miles
+
+    $latDelta = deg2rad($lat2 - $lat1);
+    $lonDelta = deg2rad($lon2 - $lon1);
+
+    $a = sin($latDelta / 2) * sin($latDelta / 2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($lonDelta / 2) * sin($lonDelta / 2);
+    $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+    $distance = $earthRadius * $c; // Distance in specified unit
+
+    return $distance;
+}
 
 /**
  * Get setting table value
@@ -535,7 +557,7 @@ if(!function_exists('settingValue')){
 }
 
 if(!function_exists('sendPush')){
-    function sendPush($title = null,$sub_title = null,$body,$device_info_hash = null,$mobile_application_type = null,$sound = null,$notification_type = null)
+    function sendPush($title,$sub_title,$body,$device_info_hash = null,$mobile_application_type = null,$sound = null,$notification_type = null)
     {
         $fcmKey = Settings::where('name','fcm_key')->first();
 

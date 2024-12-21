@@ -8,6 +8,7 @@ use App\Http\Requests\Taxi\Web\VehicleModelRequest;
 
 use App\Models\taxi\VehicleModel;
 use App\Models\taxi\Vehicle;
+use App\Models\taxi\Driver;
 
 use Validator;
 use Redirect;
@@ -97,10 +98,22 @@ class VehicleModelController extends Controller
     public function vehicleModelDelete($id)
     {
         $vehicle = VehicleModel::where('slug',$id)->first();
+
+        $chkDriver = Driver::where('type',$vehicle->vehicle_id)->get();
         
-        // unlink(\Storage::path('public/images/vehiclesmodel/'.$vehicle->image));
-        $vehicle = VehicleModel::where('slug',$id)->delete();
-        return back();
+        if($chkDriver)
+        {
+            session()->flash('message','Cannot delete the vehicle Model');
+            session()->flash('status',false);
+            return back();  
+        }
+        else
+        {
+            // unlink(\Storage::path('public/images/vehiclesmodel/'.$vehicle->image));
+            $vehicle = VehicleModel::where('slug',$id)->delete();
+            return back();
+        }
+        
     }
 
     public function vehicleModelStatusChange($id)

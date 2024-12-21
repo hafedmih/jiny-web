@@ -73,7 +73,7 @@ class SendRequestToNextDriverJob implements ShouldQueue
                 sendSocketData($socketData);
 
                 $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
-                dispatch(new SendPushNotification($title,$sub_title, $pushData, $user->token, $user->mobile_application_type,0));
+                dispatch(new SendPushNotification($title, $pushData, $user->token, $user->mobile_application_type,0,$sub_title));
             }
         }
     }

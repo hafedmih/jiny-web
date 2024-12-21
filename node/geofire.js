@@ -14,7 +14,7 @@ app.use(bodyParser.urlencoded({
 
 Firebase.initializeApp({
     //development 
-     databaseURL: "https://taxi-379310-default-rtdb.firebaseio.com",
+    databaseURL: "https://taxi-379310-default-rtdb.firebaseio.com",
     //databaseURL: "https://roda-a8392-default-rtdb.firebaseio.com",
     serviceAccount: '../public/firebase.json', //this file is downloaded from Firebase Console
 });
@@ -37,63 +37,63 @@ function queryGeoLocation(req, res) {
         const lat = parseFloat(req.params.lat);
         const long = parseFloat(req.params.lng);
         const vehicle_type = req.params.vehicle_type;
-       // const service_type = req.params.service_type;
-        const radius =  parseInt(req.params.radius);
-        //  console.log("------------------------------------");
-        //  console.log(lat);
-        //  console.log(long);
-        //  console.log("------------------------------------");
+        // const service_type = req.params.service_type;
+        const radius = parseInt(req.params.radius);
+         // console.log("------------------------------------");
+         // console.log(lat);
+         // console.log(long);
+         // console.log("------------------------------------");
         var fire_drivers = [];
-        
+
         let geoQuery = geoFire.query({ center: [lat, long], radius: radius });
 
-        getGeoData = function(geoQuery) {
-            
-            return new Promise(function(resolve, reject) {
+        getGeoData = function (geoQuery) {
+
+            return new Promise(function (resolve, reject) {
                 // console.log("sdsd");
-                geoQuery.on("key_entered", function(key, location, distance) {
-                    
-                    driversRef.child(key).on('value', function(snap) {
+                geoQuery.on("key_entered", function (key, location, distance) {
+
+                    driversRef.child(key).on('value', function (snap) {
                         let driver = snap.val();
                         let date = new Date();
                         let timestamp = date.getTime();
                         let conditional_timestamp = timestamp - (5 * 60 * 1000);
-                       //console.log(driver);
-                        
+                  //       console.log(driver);
+
                         if (conditional_timestamp < driver.updated_at) {
                             // var servi = driver.service_category;
                             // console.log("-----------------------------------");
                             // console.log(servi);
                             // console.log("-----------------------------------");
-                            
+
                             // var splited_service = servi.split(',');
-                            
-                           if (driver.is_active == 1 & driver.is_available == 1 & driver.type == vehicle_type) {
-                        //    if (driver.is_active == 1 & driver.is_available == 1) {
-                              
-                            //   splited_service.forEach(singleservice => {
+
+                            if (driver.is_active == 1 & driver.is_available == 1 & driver.type == vehicle_type) {
+                                //    if (driver.is_active == 1 & driver.is_available == 1) {
+
+                                //   splited_service.forEach(singleservice => {
                                 //   console.log("--------------------------------");
                                 //   console.log(singleservice);
                                 //   console.log(service_type);
                                 //   console.log("--------------------------------");
                                 //   if(singleservice == service_type){
-                                    driver.distance = distance;
-                                    fire_drivers.push(driver);
-                                    // console.log(driver);
+                                driver.distance = distance;
+                                fire_drivers.push(driver);
+                                 console.log(driver);
                                 //   }
-                            //   });
-                             console.log(driver);
-                          }
+                                //   });
+                               // console.log(driver);
+                            }
                         }
 
                         resolve(fire_drivers);
                     });
                 });
-                
+
             });
         };
 
-        getGeoData(geoQuery).then(function(data) {
+        getGeoData(geoQuery).then(function (data) {
             res.send({ success: true, message: 'success', data: data });
         }).catch((err) => {
             res.status(500).send("Error: " + err);
@@ -107,13 +107,13 @@ function queryGetDriversNotUpdated(req, res) {
     try {
         const lat = parseFloat(req.params.lat);
         const long = parseFloat(req.params.lng);
-        const radius =  parseInt(req.params.radius);
+        const radius = parseInt(req.params.radius);
         var fire_drivers = [];
         let geoQuery = geoFire.query({ center: [lat, long], radius: radius });
-        getGeoData = function(geoQuery) {
-            return new Promise(function(resolve, reject) {
-                geoQuery.on("key_entered", function(key, location, distance) {
-                    driversRef.child(key).on('value', function(snap) {
+        getGeoData = function (geoQuery) {
+            return new Promise(function (resolve, reject) {
+                geoQuery.on("key_entered", function (key, location, distance) {
+                    driversRef.child(key).on('value', function (snap) {
                         let driver = snap.val();
                         let date = new Date();
                         let timestamp = date.getTime();
@@ -127,11 +127,11 @@ function queryGetDriversNotUpdated(req, res) {
                         resolve(fire_drivers);
                     });
                 });
-                
+
             });
         };
 
-        getGeoData(geoQuery).then(function(data) {
+        getGeoData(geoQuery).then(function (data) {
             res.send({ success: true, message: 'success', data: data });
         }).catch((err) => {
             res.status(500).send("Error: " + err);
@@ -145,13 +145,13 @@ function queryGetDriversLogout(req, res) {
     try {
         const lat = parseFloat(req.params.lat);
         const long = parseFloat(req.params.lng);
-        const radius =  parseInt(req.params.radius);
+        const radius = parseInt(req.params.radius);
         var fire_drivers = [];
         let geoQuery = geoFire.query({ center: [lat, long], radius: radius });
-        getGeoData = function(geoQuery) {
-            return new Promise(function(resolve, reject) {
-                geoQuery.on("key_entered", function(key, location, distance) {
-                    driversRef.child(key).on('value', function(snap) {
+        getGeoData = function (geoQuery) {
+            return new Promise(function (resolve, reject) {
+                geoQuery.on("key_entered", function (key, location, distance) {
+                    driversRef.child(key).on('value', function (snap) {
                         let driver = snap.val();
                         let date = new Date();
                         let timestamp = date.getTime();
@@ -165,11 +165,11 @@ function queryGetDriversLogout(req, res) {
                         resolve(fire_drivers);
                     });
                 });
-                
+
             });
         };
 
-        getGeoData(geoQuery).then(function(data) {
+        getGeoData(geoQuery).then(function (data) {
             res.send({ success: true, message: 'success', data: data });
         }).catch((err) => {
             res.status(500).send("Error: " + err);
@@ -182,35 +182,77 @@ function queryGetDriversLogout(req, res) {
 
 function queryDriverLocation(req, res) {
     try {
-        // const slug = req.params.slug;
+        const requestId = req.params.requestId;
+
+        var fire_drivers = [];
+        
+        var tripRef = Firebase.database().ref('requests');
+        
+        
+        tripRef.once('value')
+          .then(snapshot => {
+         const requestData = snapshot.val();
+        
+        if (requestData) {
+      // Iterate through each request
+      Object.keys(requestData).forEach(requestId => {
+        const requestDetails = requestData[requestId];
+        
+        // Extract details for each request
+        const {
+          bearing,
+          distancee,
+          id,
+          lat,
+          lng,
+          request_id,
+          user_id,
+          waiting_time
+        } = requestDetails;
+        
+       if(requestId == req.params.requestId) {
+      
+           res.send({ success: true, message: 'success', data: requestDetails });
        
-       
+       }
+      });
+    } else {
+      console.log('No requests found.');
+    }
+    
+    
+      })
+	  .catch(error => {
+	    console.error('Error fetching data:', error);
+	  });
+
     } catch (err) {
         res.status(500).send("Error: " + err);
     }
 }
+
 function queryGetDrivers(req, res) {
     try {
-        
+
         var fire_drivers = [];
 
         let geoQuery = geoFire.query({});
 
-        getGeoData = function(geoQuery) {
-            return new Promise(function(resolve, reject) {
-                geoQuery.on("key_entered", function(key, location, distance) {
-                    driversRef.child(key).on('value', function(snap) {
+        getGeoData = function (geoQuery) {
+            return new Promise(function (resolve, reject) {
+                geoQuery.on("key_entered", function (key, location, distance) {
+                    driversRef.child(key).on('value', function (snap) {
                         let driver = snap.val();
-                        
+
                         let date = new Date();
                         let timestamp = date.getTime();
                         let conditional_timestamp = timestamp - (30 * 60 * 1000);
-            
+
                         if (conditional_timestamp < driver.updated_at) {
-                          if (driver.is_active == 1 & driver.is_available == 1) {
-                              driver.distance = distance;
-                              fire_drivers.push(driver);
-                          }
+                            if (driver.is_active == 1 & driver.is_available == 1) {
+                                driver.distance = distance;
+                                fire_drivers.push(driver);
+                            }
                         }
 
                         resolve(fire_drivers);
@@ -219,7 +261,7 @@ function queryGetDrivers(req, res) {
             });
         };
 
-        getGeoData(geoQuery).then(function(data) {
+        getGeoData(geoQuery).then(function (data) {
             res.send({ success: true, message: 'success', data: data });
         }).catch((err) => {
             res.status(500).send("Error: " + err);
@@ -231,32 +273,32 @@ function queryGetDrivers(req, res) {
 }
 
 // default route
-app.get('/', function(req, res) {
+app.get('/', function (req, res) {
     return res.send({ success: true, message: 'hello' })
 });
 
-app.get('/:lat/:lng/:vehicle_type/:service_type/:radius', function(req, res) {
+app.get('/:lat/:lng/:vehicle_type/:service_type/:radius', function (req, res) {
     return queryGeoLocation(req, res);
 });
 
-app.get('/driver/:slug', function(req, res) {
+app.get('/request/:requestId', function (req, res) {
     return queryDriverLocation(req, res);
 });
 
-app.get('/get-drivers', function(req, res) {
+app.get('/get-drivers', function (req, res) {
     return queryGetDrivers(req, res);
 });
 
-app.get('/drivers-logout/:lat/:lng/:radius', function(req, res) {
+app.get('/drivers-logout/:lat/:lng/:radius', function (req, res) {
     return queryGetDriversLogout(req, res);
 });
 
-app.get('/get-drivers-not-updated/:lat/:lng/:radius', function(req, res) {
+app.get('/get-drivers-not-updated/:lat/:lng/:radius', function (req, res) {
     return queryGetDriversNotUpdated(req, res);
 });
 
 
 
-app.listen(port, function() {
+app.listen(port, function () {
     console.log('Node app is running on port ' + port);
 });

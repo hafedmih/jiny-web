@@ -82,7 +82,7 @@ label .select2-container--default {
                                     <a href="{{ route('editZone',$value->slug) }}" class="dropdown-item"><i class="icon-pencil"></i> Edit Zone</a>
                                 @endif
                                 @if(auth()->user()->can('zone-surge-price'))
-                                    <a href="#" onclick="Javascript: return editAction(`{{$value->slug}}`,`{{ route('getZoneSrugePrice',$value->slug) }}`)" class="dropdown-item"><i class="icon-cash4"></i> Surge Price</a>
+                                   <!-- <a href="#" onclick="Javascript: return editAction(`{{$value->slug}}`,`{{ route('getZoneSrugePrice',$value->slug) }}`)" class="dropdown-item"><i class="icon-cash4"></i> Surge Price</a> -->
                                 @endif
                                 @if(auth()->user()->can('view-map-zone'))
                                     <a href="{{ route('viewMapZone',$value->slug) }}" class="dropdown-item"><i class="icon-map4"></i> View Map</a>

@@ -88,9 +88,9 @@ return [
     */
 
     // 'timezone' => settingValue('time_zone'),
-   //'timezone' => 'UTC',
+   'timezone' => 'GMT',
 
-      'timezone' => 'Africa/Nouakchott',
+     // 'timezone' => 'Africa/Nouakchott',
 
 
     /*

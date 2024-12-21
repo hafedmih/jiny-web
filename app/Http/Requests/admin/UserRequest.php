@@ -26,14 +26,18 @@ class UserRequest extends FormRequest
     public function rules(res $res)
     {
         $data = $res->all();
+        
         if(array_key_exists('user_id', $data) && $data['user_id'] != ''){
+            
             return [
-                'first_name' => ['required','max:55'],
-                'last_name' => ['required','max:55'],
-                'email' => ['required', 'string', 'email','unique:users,email,'.$data['user_id'].',slug,deleted_at,NULL'],
+                'first_name' => ['required','regex:/^[\pL\s]+$/u','max:55'],
+                'last_name' => ['nullable','regex:/^[\pL\s]+$/u'],
+                'email' => ['nullable','string', 'email','unique:users,email,'.$data['user_id'].',slug,deleted_at,NULL'],
+                'phone_number' => ['required','regex:/^([0-9\s\-\+\(\)]*)$/','min:10','unique:users,phone_number,'.$data['user_id'].',slug,deleted_at,NULL'],
             ];
         }
         elseif(array_key_exists('user_slug', $data) && $data['user_slug'] != ''){
+            
             return [
                 'password' => [
                     'required',
@@ -48,12 +52,13 @@ class UserRequest extends FormRequest
             ];
         }
         else{
+            
             return [
-                'first_name' => ['required','max:55'],
-                'last_name' => ['required','max:55'],
-                'email' => ['required', 'string', 'email','unique:users'],
+                'first_name' => ['required','regex:/^[\pL\s]+$/u','max:55'],
+                'last_name' => ['nullable','regex:/^[\pL\s]+$/u'],
+                'email' => ['nullable','string', 'email','unique:users'],
                 'role' => ['required', 'string'],
-                'phone_number' => ['required','regex:/^([0-9\s\-\+\(\)]*)$/','min:10'],
+                'phone_number' => ['required','regex:/^([0-9\s\-\+\(\)]*)$/','min:10','unique:users,phone_number'],
                 'password' => [
                     'required',
                     'string',

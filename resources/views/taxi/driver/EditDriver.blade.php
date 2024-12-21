@@ -39,10 +39,10 @@
                             @csrf
                             <input type="hidden" name="slug" id="slug" value="{{$driver->slug}}" />
                             <legend class="text-uppercase font-size-sm font-weight-bold">{{ __('edit-driver') }}</legend>
-                            <!-- <div class="alert alert-danger alert-dismissible" id="errorbox"> -->
+                            <div class="alert alert-danger alert-dismissible" id="errorbox">
                                 <!-- <button type="button" class="close" data-dismiss="alert"><span>×</span></button> -->
-                                <!-- <span id="errorContent"></span> -->
-                            <!-- </div> -->
+                                <span id="errorContent"></span>
+                            </div>
                             <div class="row">
                                 
                                 <div class="form-group row col-md-6 form-group row required "> 
@@ -155,6 +155,18 @@
                                         <input type="text" name="car_colour" id="car_colour" class="form-control" placeholder="{{ __('car-colour') }}" value="{{$driver->driver ? $driver->driver->car_colour : ''}}">
                                     </div>
                                 </div> -->
+
+                                <div class="form-group row col-md-6 form-group row required">
+                                    <label class="col-form-label col-lg-3 font-weight-bold">{{ __('service_location') }}</label>
+                                    <div class="col-lg-9">
+                                        <select class="form-control" name="service_location" id="service_location">
+                                            <option value="">{{ __('service_location') }}</option>
+                                            @foreach($zone as $value)
+                                                <option value="{{$value->id}}" @if($driver->driver && $driver->driver->service_location == $value->id) selected @endif>{{$value->zone_name}}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
                                 <div class="form-group row required col-md-6">
                                     <label class="col-form-label col-lg-3">{{ __('address') }}</label>
                                     <div class="col-lg-9">
@@ -293,8 +305,8 @@
                                         </figure>
 
                                     </td>
-                                    <td> 
-                                    @if($docum->document_status)                                 
+                                    <td>
+                                    @if($docum->document_status != '')                                 
                                         @if($docum->document_status == 2)
                                             <span class="badge badge-primary">{{ __('approved') }}</span>
                                         @elseif($docum->document_status == 0)
@@ -401,7 +413,7 @@
                                 <label class="col-form-label">{{ __('image1') }}</label>
                                 <input type="file" id="document_image" class="form-control" name="document_image">
 
-                                <img src="{{$docum->document_image}}"   id="view_image_2"  width="100" height="100" alt="">
+                                <img src="" id="view_image_2" width="100" height="100" alt="">
 
                             </div>
                             <div class="form-group col-md-6 dated">
@@ -465,6 +477,7 @@
         formData.append('email',$('#email').val());
         formData.append('phone_number',$('#phone_number').val());
         formData.append('country',$('#country').val());
+        formData.append('service_location',$('#service_location').val());
         formData.append('gender',$('#gender').val());
         formData.append('city',$('#city').val());
         formData.append('state',$('#state').val());
@@ -568,6 +581,7 @@
                 $('#title').val(data.data.document_name);
                 $('#expiry_date').val(data.data.expiry_dated);
                 $('#view_image_2').attr("src",data.data.document_image);
+                $('#date_required').val(data.data.expiry_date);
                 //console.log(data.data);
                 // if(data.data.document_image != ""){
                 //     getUrlByFileName(data.data.document_image, mimes.jpeg).then(function(data) {

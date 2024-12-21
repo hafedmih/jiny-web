@@ -76,7 +76,7 @@ class NoDriverFoundNotifyJob implements ShouldQueue
                 } 
 
                 $pushData = ['notification_enum'=>PushEnum::NO_DRIVER_FOUND,'result'=>(string)$request_result->toJson()];
-                dispatch(new SendPushNotification($title,$sub_title, $pushData, $user->token, $user->mobile_application_type,0));
+                dispatch(new SendPushNotification($title, $pushData, $user->token, $user->mobile_application_type,0,$sub_title));
                 
                 // Form a socket sturcture using users'id and message with event name
                 $socket_data = new \stdClass();

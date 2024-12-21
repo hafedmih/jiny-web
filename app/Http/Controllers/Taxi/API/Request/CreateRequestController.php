@@ -14,15 +14,17 @@ use App\Models\User;
 use App\Traits\CommanFunctions;
 use App\Transformers\Request\TripRequestTransformer;
 use App\Models\taxi\Vehicle;
-use App\Models\taxi\Wallet;
 use App\Models\taxi\UserInstantTrip;
-
 use App\Models\taxi\Promocode;
 use DB;
+use Validator;
 // use Kreait\Firebase\Database;
 use App\Traits\RandomHelper;
 use App\Models\boilerplate\OauthClients;
-
+use App\Models\taxi\RiderAddress;
+use App\Models\taxi\Requests\RequestDedicatedDrivers;
+use App\Models\taxi\Settings;
+use App\Models\taxi\Wallet;
 class CreateRequestController extends BaseController
 {
     use CommanFunctions, RandomHelper;
@@ -36,8 +38,6 @@ class CreateRequestController extends BaseController
 
     public function createRequest(CreateTripRequest $request)
     {
-        // dd($request->trip_way_type);
-
         try {
             $clientlogin = $this::getCurrentClient(request());
 
@@ -46,6 +46,7 @@ class CreateRequestController extends BaseController
             }
 
             $user = User::find($clientlogin->user_id);
+            
             if (is_null($user)) {
                 return $this->sendError('Unauthorized', [], 401);
             }
@@ -86,7 +87,6 @@ class CreateRequestController extends BaseController
             if (is_null($type)) {
                 return $this->sendError('wrong Vechile Type', [], 403);
             }
-
             $zone = $this->getZone($request->pick_lat, $request->pick_lng);
             //  dd($zone);
 
@@ -138,6 +138,34 @@ class CreateRequestController extends BaseController
                     $zone_type_id
                 );
             }
+
+            if ($request->has('pick_lat')) {
+
+                $check_rider_address = RiderAddress::where('title',$request->pick_address)->get();
+                if(count($check_rider_address) == 0){
+                    RiderAddress::create([
+                        'title' => $request->pick_address,
+                        'latitude' => $request->pick_lat,
+                        'longitude' => $request->pick_lng,
+                        'riderId' => 1,
+                    ]);
+                }
+            }
+
+            if ($request->has('drop_lat')) {
+
+                $check_rider_address = RiderAddress::where('title',$request->drop_address)->get();
+                if(count($check_rider_address) == 0){
+                    RiderAddress::create([
+                        'title' => $request->drop_address,
+                        'latitude' => $request->drop_lat,
+                        'longitude' => $request->drop_lng,
+                        'riderId' => 1,
+                    ]);
+                }
+            }
+            
+
 
             if ($request->has('is_instant')) {
                 $requestNumber = generateRequestNumber();
@@ -289,11 +317,11 @@ class CreateRequestController extends BaseController
                     dispatch(
                         new SendPushNotification(
                             $title,
-                            $sub_title,
                             $pushData,
                             $userModel->device_info_hash,
                             $userModel->mobile_application_type,
-                            0
+                            0,
+                            $sub_title
                         )
                     );
                 }
@@ -345,6 +373,8 @@ class CreateRequestController extends BaseController
             //Booking for by deena
             $booking_for = $request->booking_for;
             // dd($booking_for);
+
+          
             $request_params = [
                 'request_number' => $requestNumber,
                 'request_otp' => $request_otp, //rand(1111, 9999),
@@ -362,9 +392,38 @@ class CreateRequestController extends BaseController
                 'booking_for' => $booking_for,
                 'trip_start_time' => NOW(),
                 'destination_type' => $request->has('drop_address') && $request->has('drop_lat') && $request->has('drop_lng') ? 'NORMAL' : 'OPEN',
-                'amount' => $request->trip_amount
+                'base_price' =>  $request->has('base_price') ? $request->base_price : 0,
+                'amount' => $request->trip_amount,
+                'distance_cost' => $request->computed_price,
+                'vehicle_type' => $request->vehicle_type,
             ];
-            //    dd($request_params);
+
+
+             // @ TODO The trip amount deducted to user wallet.
+            $user_wallet = Wallet::where('user_id',$user->id)->first();
+            $request_params['wallet_deduct_amount'] = NULL;
+
+            if($request->has('drop_address') && $request->has('drop_lat') && $request->has('drop_lng')){
+                $tripAmount = $request->base_price;
+            }else{
+                $tripAmount = $request->trip_amount;
+            }
+
+            if($user_wallet){
+                if($user_wallet->balance_amount > 0){
+                    $user_deduct_amount = Settings::where('name','trip_wallet_deduct_amount')->first();
+                    $wallet_deduct_amount = $user_deduct_amount ? $user_deduct_amount->value :50;  // static value 
+
+                    if($tripAmount > $wallet_deduct_amount && $user_wallet->balance_amount >= $wallet_deduct_amount ){
+                        $request_params['wallet_deduct_amount'] = $wallet_deduct_amount;
+                    }elseif($user_wallet->balance_amount <= $wallet_deduct_amount){
+                        $request_params['wallet_deduct_amount'] = $user_wallet->balance_amount;  
+                    }elseif($tripAmount < $user_wallet->balance_amount ){
+                        $request_params['wallet_deduct_amount'] = $tripAmount;
+                    }
+                }
+            }
+               
             $request_detail = $this->request->create($request_params);
 
             $other_user = '';
@@ -564,9 +623,27 @@ class CreateRequestController extends BaseController
                             );
                             $noval++;
                         }
+                        if($request_detail->is_later == 1){
+                            $is_late = 1;
+                        }else{
+                            $is_late = 0;
+                        }
+                        RequestDedicatedDrivers::create([
+                            'request_id' => $request_detail->id,
+                            'user_id' => $user->id,
+                            'driver_id' => $driver->id,
+                            'assign_method' => 1,
+                            'is_later' => $is_late,
+                            'active' => 1
+                        ]);
+                        
                     }
                 }
             } else {
+                $request_detail->cancelled_at = NOW();
+                $request_detail->is_cancelled = 1;
+                $request_detail->cancel_method = 'Automatic';
+                $request_detail->save();
                 return $this->sendError(
                     'No Driver Found',
                     ['request_id' => $request_detail->id, 'error_code' => 2001],
@@ -574,6 +651,11 @@ class CreateRequestController extends BaseController
                 );
             }
             if (count($selected_drivers) == 0) {
+                $request_detail->cancelled_at = NOW();
+                $request_detail->is_cancelled = 1;
+                $request_detail->cancel_method = 'Automatic';
+                $request_detail->save();
+                
                 return $this->sendError(
                     'No Driver Found',
                     ['request_id' => $request_detail->id, 'error_code' => 2001],
@@ -631,11 +713,11 @@ class CreateRequestController extends BaseController
                     // dispatch(
                     //     new SendPushNotification(
                     //         $title,
-                    //         $sub_title,
                     //         $pushData,
                     //         $metaDriver->device_info_hash,
                     //         $metaDriver->mobile_application_type,
-                    //         1
+                    //         1,
+                    //         $sub_title
                     //     )
                     // );
                     sendPush(
@@ -647,9 +729,10 @@ class CreateRequestController extends BaseController
                         1
                     );
 
-                    $request_meta = $request_detail
-                        ->requestMeta()
-                        ->create($selected_driver);
+                    $request_meta = $request_detail->requestMeta()->create($selected_driver);
+
+                    $request_meta = $request_detail->requestDedicatedDrivers()->create($selected_driver);
+
                 }
             }
             if($request_detail->requestMeta()->count() == 0){
@@ -731,5 +814,102 @@ class CreateRequestController extends BaseController
     public function checkWallet()
     {
         // @TODO
+    }
+
+    public function cashPaid(Request $request)
+    {
+        try {
+            $clientlogin = $this::getCurrentClient(request());
+
+            if (is_null($clientlogin)) {
+                return $this->sendError('Token Expired', [], 401);
+            }
+
+            $user = User::find($clientlogin->user_id);
+            if (is_null($user)) {
+                return $this->sendError('Unauthorized', [], 401);
+            }
+
+            if ($user->active == false) {
+                return $this->sendError(
+                    'User is blocked so please contact admin',
+                    [],
+                    403
+                );
+            }
+
+            $validator = Validator::make($request->all(),
+            [
+                'request_id' => 'required',       
+            ]);
+            if($validator->fails()){
+                return response()->json(['data' => $validator->errors(),'error'=>'true'], 412);
+            }
+
+            $req = RequestModel::where('user_id','=',$user->id)->where('id',$request['request_id'])->first();
+
+            if(!$req) return $this->sendError('No Data Found',[],404); 
+
+            $request_result = fractal($req,new TripRequestTransformer());
+
+            if($req->is_paid) return $this->sendResponse('Trip Already Amount paid',$request_result,200);
+
+            $req->payment_opt = 'Cash';
+            $req->is_paid = 1;
+            $req->save();
+
+            $request_result = fractal($req,new TripRequestTransformer());
+
+            if ($user) {
+                $title = Null;
+                $body = '';
+                $lang = $user->language;
+                $push_data = $this->pushlanguage($lang,'user-change-payment');
+                if(is_null($push_data)){
+                    $title     = "Payment option changed";
+                    $body      = "Payment option changed";
+                    $sub_title = "Payment option changed";
+                }else{
+                    $title     =  $push_data->title;
+                    $body      =  $push_data->description;
+                    $sub_title =  $push_data->description;
+
+                }   
+                
+               // @ TODO User get push and socket
+
+                // Form a socket sturcture using users'id and message with event name
+                $socket_data = new \stdClass();
+                $socket_data->success = true;
+                $socket_data->success_message  = PushEnum::USER_PAYMENT_CHANGE;
+               
+                $socketData = ['event' => 'payment_changed_'.$user->slug,'message' => $socket_data];
+                sendSocketData($socketData);
+
+                $pushData = ['notification_enum' => PushEnum::USER_PAYMENT_CHANGE];
+                dispatch(new SendPushNotification($title,$pushData, $user->device_info_hash, $user->mobile_application_type,0,$sub_title));
+
+                // @ TODO Driver push and socket
+
+                // Form a socket sturcture using users'id and message with event name
+                $socket_data = new \stdClass();
+                $socket_data->success = true;
+                $socket_data->success_message  = PushEnum::USER_PAYMENT_CHANGE;
+
+                $socketData = ['event' => 'payment_changed_'.$req->driverDetail->slug,'message' => $socket_data];
+                sendSocketData($socketData);
+
+                $pushData = ['notification_enum' => PushEnum::USER_PAYMENT_CHANGE];
+                // dispatch(new SendPushNotification($title,$pushData, $req->driverDetail->device_info_hash, $req->driverDetail->mobile_application_type,0,$sub_title));
+                sendPush($title, $sub_title,$pushData, $req->driverDetail->device_info_hash, $req->driverDetail->mobile_application_type,0);
+            }
+
+            return $this->sendResponse('Payment Paid Successfully', $request_result, 200);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError('Catch error', 'failure.' . $e, 400);
+        }
+
     }
 }

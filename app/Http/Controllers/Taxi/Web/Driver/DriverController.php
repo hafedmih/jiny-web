@@ -37,6 +37,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\taxi\DocumentsGroup;
 use App\Models\taxi\GoHome;
 use App\Models\taxi\Requests\Request as RequestModel;
+use App\Models\taxi\Zone;
 
 
 
@@ -119,8 +120,10 @@ class DriverController extends Controller
             $drivers_active[$key]->rating = (int)$rating;
 
             $docum = Documents::where('requried',1)->pluck('id')->toArray();
+           //dd(count($docum));
             $driverdocum = DriverDocument::whereIn('document_id',$docum)->where('user_id',$value->id)->where('document_status','>=',1)->count();
             $driverdocum_approved = DriverDocument::whereIn('document_id',$docum)->where('user_id',$value->id)->where('document_status',2)->count();
+            //dd($driverdocum_approved);
             $message = 'NO';
             if(count($docum) > $driverdocum){
                 $message = "NO";
@@ -132,8 +135,13 @@ class DriverController extends Controller
             if(count($docum) <= $driverdocum_approved){
                 $message = "YES";
             }
-            $drivers_active[$key]->documents = $message;
 
+            if($driverdocum_approved >= 1 )
+            {
+                $message = "YES";
+            }
+            $drivers_active[$key]->documents = $message;
+//dd($drivers_active);
             $wallet = Wallet::where('user_id',$value->id)->first();
             if(is_null($wallet))
                 $drivers_active[$key]->wallet_balance = 0;
@@ -145,8 +153,10 @@ class DriverController extends Controller
             $rating = RequestRating::where('user_id',$value->id)->avg('rating');
             $drivers_incative[$key]->rating = (int)$rating;
             $docum = Documents::where('requried',1)->pluck('id')->toArray();
+            //dd($value->id);
             $driverdocum = DriverDocument::whereIn('document_id',$docum)->where('user_id',$value->id)->where('document_status','>=',1)->count();
             $driverdocum_approved = DriverDocument::whereIn('document_id',$docum)->where('user_id',$value->id)->where('document_status',2)->count();
+            //dd($driverdocum_approved);
             $message = 'NO';
             if(count($docum) > $driverdocum){
                 $message = "NO";
@@ -158,9 +168,20 @@ class DriverController extends Controller
             if(count($docum) <= $driverdocum_approved){
                 $message = "YES";
             }
+
             $drivers_incative[$key]->documents = $message; 
         }
-        
+        foreach($drivers_block as $key => $value)
+        {
+            $docum = Documents::where('requried',1)->pluck('id')->toArray();
+            $driverdocum_blocked = DriverDocument::whereIn('document_id',$docum)->where('user_id',$value->id)->where('document_status','=',0)->count();
+
+            if($driverdocum_blocked >= 1)
+            {
+                $drivers_block[$key]->block_reson = "Document uploaded and denied by the admin";
+            }
+        }
+       // dd($drivers_block);
         return view('taxi.driver.DriverList',['drivers_active' => $drivers_active,'drivers_incative' => $drivers_incative,'drivers_block' => $drivers_block,'activecount' => $drivers_active->count(),'blockcount'=>$drivers_incative->count(),'onlinecount'=>$onlinecount,'offlinecount' => $offlinecount,'count'=>$count,'active_count' => $active_count ,'types'=>$types,'driverdocum'=>$driverdocum,'block_count'=>$block_count]);
     }
 
@@ -169,16 +190,17 @@ class DriverController extends Controller
         $types = Vehicle::where('status',1)->get();
         $country = Country::where('status',1)->get();
         $company = User::role('Company')->where('active',1)->get();
+        $zone = Zone::where('status', 1)->get();
         $userauth = Auth::user();
         $companylogin  = User::role('Company')->where('email',$userauth->email)->where('active',1)->get();
 
-        return view('taxi.driver.AddDriver',['types' => $types,'country' => $country,'company' => $company,'companylogin' => $companylogin]);
+        return view('taxi.driver.AddDriver',['types' => $types,'country' => $country,'company' => $company,'companylogin' => $companylogin,'zone'=> $zone]);
     }
 
-    public function driverSave(DriverSaveRequest $request  )
+    public function driverSave(DriverSaveRequest $request)
     {
+
         $driver = $request->all();
-        
         $company = "";
 
         $userPh = User::where('phone_number',$request->phone_number)->role('driver')->first();
@@ -202,14 +224,14 @@ class DriverController extends Controller
             'lastname' => $driver['last_name'],
             'email' => $driver['email'],
             'phone_number' => $driver['phone_number'],
-            'country' => $driver['country'],
             'country_code' => $driver['country'],
+            'country' => $driver['country'],            
             'gender' => $driver['gender'],
             'address' => $driver['address'],
             'active' => 0,
             'block_reson' => 'Admin Blocked'
         ]);
-
+//dd($user->country_code);
         if($driver['company'] == "1"){
             $dumbcompany = DumpCompany::create([
                 'company_name' => $driver['company_name'],
@@ -265,7 +287,8 @@ class DriverController extends Controller
             'pincode' => $driver['pincode'],
             'user_id' => $user->id,
             'company_id' => $company ? $company->id : null,
-           // 'service_category' => $driver['service_type'],
+            'service_category' => "LOCAL",
+            'service_location' => $driver['service_location'],
             'login_method' => $driver['category'],
             'notes' => $driver['notes'],
             // 'approved_by' => auth()->user()->id,
@@ -319,7 +342,7 @@ class DriverController extends Controller
 
             $pushData = ['notification_enum' => PushEnum::DRIVER_BLOCKED];
 
-            dispatch(new SendPushNotification($title,$sub_title,$pushData,$user->device_info_hash,$user->mobile_application_type,0));
+            dispatch(new SendPushNotification($title,$pushData,$user->device_info_hash,$user->mobile_application_type,0,$sub_title));
 
             // dispatch(new SendPushNotification($title, $push_data, $user->device_info_hash, $user->mobile_application_type,1));
 
@@ -351,7 +374,7 @@ class DriverController extends Controller
 
             $pushData = ['notification_enum' => PushEnum::DRIVER_APPROVED];
 
-            dispatch(new SendPushNotification($title,$sub_title,$pushData,$user->device_info_hash,$user->mobile_application_type,0));
+            dispatch(new SendPushNotification($title,$pushData,$user->device_info_hash,$user->mobile_application_type,0,$sub_title));
 
             
             // dispatch(new SendPushNotification("Driver Your Account Is Unblocked",['message' => "Your account is unblocked for admin.",'image' => '','notification_enum' => PushEnum::DRIVER_APPROVED],$user->device_info_hash,$user->mobile_application_type,1));
@@ -368,9 +391,9 @@ class DriverController extends Controller
         $country = Country::where('status',1)->get();
         $company = User::role('Company')->where('active',1)->get();
         $subscription = Submaster::get();
-
+        $zone = Zone::where('status', 1)->get();
         $user = User::where('slug',$slug)->first();
-
+//dd($user->id);
         $models = VehicleModel::where('vehicle_id',$user->driver->type)->get();
 
         $model = VehicleModel::where('vehicle_id',$user->driver->type)->where('model_name',$user->driver->car_model)->first();
@@ -443,7 +466,7 @@ class DriverController extends Controller
         if(!$user)
             return redirect()->route('driver');
 // // dd($data_array);
-        return view('taxi.driver.EditDriver',['type' => $type,'types' => $types,'country' => $country, 'user' => $user,'driver' => $user,'document' => $document,'subscription' => $subscription,'company' => $company,'models' => $models,'selected' => $selected]);
+        return view('taxi.driver.EditDriver',['type' => $type,'types' => $types,'country' => $country, 'user' => $user,'driver' => $user,'document' => $document,'subscription' => $subscription,'company' => $company,'models' => $models,'selected' => $selected,'zone' => $zone]);
     }
 
     public function driverUpdate(DriverSaveRequest $request)
@@ -536,7 +559,8 @@ class DriverController extends Controller
                 'state' => $driver['state'],
                 'pincode' => $driver['pincode'],
                 'company_id' => $company ? $company->id : null,
-                //'service_category' => $driver['service_type'],
+                'service_category' => "LOCAL",
+                'service_location' => $driver['service_location'],
                 'login_method' => $driver['category'],
                 'notes' => $driver['notes'],    
                 // 'approved_by' => auth()->user()->id,            
@@ -554,7 +578,8 @@ class DriverController extends Controller
                 'state' => $driver['state'],
                 'company_id' => $company ? $company->id : null,
                 'pincode' => $driver['pincode'],
-               // 'service_category' => $driver['service_type'],
+                'service_category' => "LOCAL",
+                'service_location' => $driver['service_location'],
                 'login_method' => $driver['category'],
                 // 'notes' => $driver['notes'],     
                 'approved_by' => auth()->user()->id,           
@@ -672,8 +697,28 @@ class DriverController extends Controller
         $document = Documents::where('slug',$data['document_id'])->first();
 
         $driverDocument = DriverDocument::where('user_id',$users->id)->where('document_id',$document->id)->first();
+        if($driverDocument)
+        {
+            if($driverDocument->document_image == '')
+            {
+                $request->validate(['document_image' => 'required|file|mimes:jpeg,jpg,png,gif']);
 
-        $filename =  uploadImage('images/document',$request->file('document_image'));
+                $filename =  uploadImage('images/document',$request->file('document_image'));
+                
+            }
+            else
+            {
+                $filename =  $driverDocument->document_image;
+            }
+        }
+        else
+        {
+            $request->validate(['document_image' => 'required|file|mimes:jpeg,jpg,png,gif']);
+
+            $filename =  uploadImage('images/document',$request->file('document_image'));
+        }
+        
+        
 
         // $filename = time().'.'.$request->document_image->extension(); 
         // $path = Storage::disk('s3')->put('images/document', $request->document_image);
@@ -727,7 +772,8 @@ class DriverController extends Controller
         ]);
         $driverDocument = DriverDocument::where('user_id',$users->id)->whereIn('document_id',$denaited)->update([
             'document_status' => 0,
-            'exprience_reson' => "This document is denaited"
+            'exprience_reson' => "This document is denaited",
+            'document_image' => NULL
         ]);
 
         $old_subscription = DriverSubscriptions::where('user_id',$users->id)->where('to_date','>=',NOW())->count();
@@ -742,7 +788,9 @@ class DriverController extends Controller
         $documents = Documents::where('requried',1)->where('status',1)->pluck('id')->toArray();
 
         $myDocuments = DriverDocument::where('user_id',$users->id)->where('document_status',2)->whereIn('document_id',$documents)->count();
+        
         $myDeniteDocuments = DriverDocument::where('user_id',$users->id)->where('document_status',0)->count();
+        //dd($myDeniteDocuments);
         $driver_documents = DriverDocument::where('user_id',$users->id)->whereIn('document_id',$documents)->count();
         if(count($documents) <= $myDocuments){
             Driver::where('user_id',$users->id)->update(['document_upload_status' => 4]);
@@ -752,21 +800,11 @@ class DriverController extends Controller
 
            
 
-           dispatch(new SendPushNotification("Driver Your Account Is Unblocked","Driver Your Account Is Unblocked",['message' => "Your account is unblocked for admin.",'image' => '','notification_enum' => PushEnum::DRIVER_APPROVED],$users->device_info_hash,$users->mobile_application_type,0));
+           dispatch(new SendPushNotification("Driver Your Account Is Unblocked",['message' => "Your account is unblocked for admin.",'image' => '','notification_enum' => PushEnum::DRIVER_APPROVED],$users->device_info_hash,$users->mobile_application_type,0,"Driver Your Account Is Unblocked"));
         }
         else{
-            
-                $documents = Documents::where('requried',1)->where('status',1)->pluck('id')->toArray();
-                $myDocuments = DriverDocument::where('user_id',$users->id)->where('document_status',2)->whereIn('document_id',$documents)->get();
-                dd($myDocuments);
-                if(count($documents) > $myDocuments){
-                    session()->flash('message','Driver Document not uploaded and approved!...');
-                    // return redirect()->route('driverDocumentEdit');
-                    return response()->json(['message' =>'Driver Document not uploaded and approved!...'], 200);
-                    
-                }
             $users->active = 0;
-            $users->block_reson = "Driver Document not Uploaded and Approved";
+            $users->block_reson = "Driver Document Uploaded and Approved";
         
             $users->save();
             $title = Null;
@@ -780,13 +818,19 @@ class DriverController extends Controller
                 $title = $push_data->title;
                 $body =  $push_data->description;
             }
-            dispatch(new SendPushNotification("Driver Your Account Is Blocked","Driver Your Account Is Blocked",['message' => "Your account is blocked for admin. Please, contact admin.",'image' => '','notification_enum' => PushEnum::DRIVER_BLOCKED],$users->device_info_hash,$users->mobile_application_type,0));
+            dispatch(new SendPushNotification("Driver Your Account Is Blocked",['message' => "Your account is blocked for admin. Please, contact admin.",'image' => '','notification_enum' => PushEnum::DRIVER_BLOCKED],$users->device_info_hash,$users->mobile_application_type,0,"Driver Your Account Is Blocked"));
         }
+        //dd($users->active);
         if(count($documents) <= $myDocuments){
             Driver::where('user_id',$users->id)->update(['document_upload_status' => 0]);
         }
         elseif($myDeniteDocuments){
             Driver::where('user_id',$users->id)->update(['document_upload_status' => 1]);
+        }
+        if(count($documents) > $myDocuments){
+            session()->flash('message','Driver Document not uploaded and approved!...');
+            // return redirect()->route('driverDocumentEdit');
+            return response()->json(['message' =>'Driver Document not uploaded and approved!...'], 200);        
         }
 
         return response()->json(['message' =>'success'], 200);

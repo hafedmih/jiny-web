@@ -78,7 +78,7 @@ class DocumentExpiry extends Command
                                         $sub_title = 'Your documents is expired soon';
                                     }
                                     $pushData = ['notification_enum' => PushEnum::DRIVER_EXPIRY];
-                                    dispatch(new SendPushNotification($title,$sub_title,$pushData,$user->device_info_hash,$user->mobile_application_type,0));
+                                    dispatch(new SendPushNotification($title,$pushData,$user->device_info_hash,$user->mobile_application_type,0,$sub_title));
                                 }
                 }        
 

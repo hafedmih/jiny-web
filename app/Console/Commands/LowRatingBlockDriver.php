@@ -81,7 +81,7 @@ class LowRatingBlockDriver extends Command
 
         //         $pushData = ['notification_enum' => PushEnum::DRIVER_BLOCKED];
 
-        //         dispatch(new SendPushNotification($title,$sub_title,$pushData,$user->device_info_hash,$user->mobile_application_type,1));
+        //         dispatch(new SendPushNotification($title,$pushData,$user->device_info_hash,$user->mobile_application_type,1,$sub_title));
 
         //         // dispatch(new SendPushNotification("Driver Your Account Is Blocked",['message' => "Your request rating is low. So, your account is blocked. Please, contact admin.",'image' => ''],$user->device_info_hash,$user->mobile_application_type,1));
         //     //}
@@ -122,7 +122,7 @@ class LowRatingBlockDriver extends Command
 
                 $pushData = ['notification_enum' => PushEnum::DRIVER_BLOCKED];
 
-                dispatch(new SendPushNotification($title,$sub_title,$pushData,$user->device_info_hash,$user->mobile_application_type,0));
+                dispatch(new SendPushNotification($title,$pushData,$user->device_info_hash,$user->mobile_application_type,0,$sub_title));
 
                 // dispatch(new SendPushNotification("Driver Your Account Is Blocked",['message' => "Your wallet balance is very low. So, your account is blocked. Please, recharge immediately.",'image' => ''],$user->device_info_hash,$user->mobile_application_type,1));
             }

@@ -34,6 +34,7 @@
                     <th>{{ __('request_number') }}</th>
                     <th>{{ __('Customer Name') }}</th>
                     <th>{{ __('driver_name')}}</th>
+                    <th>{{ __('reason')}}</th>
                     <th>{{ __('action')}}</th>
                     
                 </tr>
@@ -45,7 +46,8 @@
                         <td>{{ $lists->request_number }}</td>
                         <td>{{ $lists->userDetail ? $lists->userDetail->firstname : '' }} {{ $lists->userDetail ? $lists->userDetail->lastname : '' }}</td>
                         <td>{{ $lists->driverDetail ? $lists->driverDetail->firstname : '' }} {{ $lists->driverDetail ? $lists->driverDetail->lastname : '' }}</td>
-                        <td><a href="{{ route('driverTripCancelSave',$lists->id) }}" class="btn btn-danger" ><i class="icon-trash"></i></a></td>
+                        <td>{{ $lists?->cancellationRequest?->resonDetails?->reason  }}</td>
+                        <td><a href="{{ route('driverTripCancelSave',$lists->id) }}" class="btn btn-success" ><i class="icon-check"></i></a><a href="{{ route('driverTripReject',$lists->id) }}" class="btn btn-danger" ><i class="icon-trash"></i></a></td>
                     </tr>
                 @endforeach
             </tbody>

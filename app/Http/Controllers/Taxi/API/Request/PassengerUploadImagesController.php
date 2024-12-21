@@ -138,7 +138,7 @@ class PassengerUploadImagesController extends BaseController
                 $socketData = ['event' => 'photo_upload_'.$slug,'message' => $socket_data];
                 sendSocketData($socketData);
 
-                dispatch(new SendPushNotification($title,$sub_title, $pushData, $info_hash, $mobile_application_type,0));
+                dispatch(new SendPushNotification($title, $pushData, $info_hash, $mobile_application_type,0,$sub_title));
 
 
                 $dd1 = PassengerUploadImages::where('request_id',$requests->id)->where('upload','DRIVER')->first();
@@ -306,7 +306,7 @@ class PassengerUploadImagesController extends BaseController
 
             $socketData = ['event' => 'photo_upload_'.$slug,'message' => $socket_data];
             sendSocketData($socketData);
-            dispatch(new SendPushNotification($title,$sub_title, $pushData, $info_hash, $mobile_application_type,0));
+            dispatch(new SendPushNotification($title, $pushData, $info_hash, $mobile_application_type,0,$sub_title));
 
             DB::commit();
             return $this->sendResponse('Please retake image',[],200);  

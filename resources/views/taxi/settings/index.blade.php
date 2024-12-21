@@ -171,6 +171,13 @@
                                                 </div>
 
                                                 <div class="form-group row">
+                                                    <label class="col-form-label col-sm-3"><b>{{ __('trip_wallet_deduct_amount') }}</b></label>
+                                                    <div class="col-sm-9">
+                                                    <input id="trip_wallet_deduct_amount" name="trip_wallet_deduct_amount" placeholder="{{ __('trip_wallet_deduct_amount') }}" type="text" class="form-control" value="{{array_key_exists('trip_wallet_deduct_amount', $settings) ? $settings['trip_wallet_deduct_amount'] : ''}}" required>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="form-group row">
                                                     <label class="col-form-label col-sm-3"><b>{{ __('trip_otp_active') }}</b></label>
                                                     <div class="col-sm-9">
                                                         <div class="form-check form-check-inline">

@@ -117,14 +117,10 @@ class UserController extends BaseController
 
             if( $request->hasFile('profile_pic') ) 
             {
-                //    $filename =  uploadImage('images/profile',$request->file('profile_pic'),$user->getRawOriginal('profile_pic'));
-
-            $filename = time().'.'.$request->profile_pic->extension(); 
-            $path = Storage::disk('s3')->put('images/profile', $request->profile_pic);
-            $paths = Storage::disk('s3')->put('', $request->profile_pic);
+              $filename =  uploadImage('images/profile',$request->file('profile_pic'),$user->getRawOriginal('profile_pic'));
             
                $user->update([
-                    'profile_pic'  => $paths,
+                    'profile_pic'  => $filename,
                 ]); 
             }
             else 
@@ -189,8 +185,6 @@ class UserController extends BaseController
     }
 
     public function userlanguage(Request $request)
-   
-
     {  
         try{
             $validator = Validator::make($request->all(), [
@@ -230,8 +224,105 @@ class UserController extends BaseController
         }
     }
     
+    public function userList($type,$query = null)
+    {
+        try
+        {
+            $clientlogin = $this::getCurrentClient(request());
+            if(is_null($clientlogin)) 
+                return $this->sendError('Token Expired',[],401);
+         
+            $user = User::find($clientlogin->user_id);
+        
+            if(is_null($user))
+                return $this->sendError('Unauthorized',[],401);
+            
+            if($user->active == false)
+                return $this->sendError('User is blocked so please contact admin',[],403);
 
-   
+            if($type == 'all')
+            {
+                $get_user_details = User::role('user')->paginate(10);
+                return $this->sendResponse('User details found!...',$get_user_details,200);
+            }
+            else if($type == 'active')
+            {
+                $get_user_details = User::where('active',1)
+                                    ->role('user')
+                                    ->search($query)
+                                    ->paginate(10);
+                return $this->sendResponse('User details found!...',$get_user_details,200);
+            }
+            else if($type == 'inactive')
+            {
+                $get_user_details = User::where('active',0)
+                                    ->role('user')
+                                    ->search($query)
+                                    ->paginate(10);
+                return $this->sendResponse('User details found!...',$get_user_details,200);
+            }
+            else
+            {
+                return $this->sendError('Invalid type',[],403);
+            }
+
+        }
+        catch (\Exception $e) 
+        {
+            DB::rollback(); 
+            return $this->sendError('Catch error','failure.'.$e,400);  
+        }
+        
+    }
+
+    public function statusUpdate(Request $request)
+    {
+        try
+        {
+
+            $clientlogin = $this::getCurrentClient(request());
+            if(is_null($clientlogin)) 
+                return $this->sendError('Token Expired',[],401);
+         
+            $user = User::find($clientlogin->user_id);
+        
+            if(is_null($user))
+                return $this->sendError('Unauthorized',[],401);
+            
+
+            $validator = Validator::make($request->all(), [
+                'slug' => 'required',
+                'status' => 'required'
+            ]);
+
+            if($validator->fails()){
+                return $this->sendError('Validation Error',$validator->errors(),412);       
+            }
+
+            $get_user = User::where('slug',$request->slug)->first();
+
+            if(($get_user->active == $request->status))
+            {
+                if($request->status == 1)
+                    return $this->sendError('User is already in active state',[],403);
+                else
+                    return $this->sendError('User is already in Inactive state',[],403);
+            }
+            else
+            {
+                $get_user->update([
+                    'active' => $request->status
+                ]);
+                return $this->sendResponse('User Status Updated Successfully!...',$get_user,200);
+            }
+        }
+        catch (\Exception $e) 
+        {
+            DB::rollback(); 
+            return $this->sendError('Catch error','failure.'.$e,400);  
+        }
+        
+    }
 }
 
    

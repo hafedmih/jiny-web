@@ -105,7 +105,7 @@ class UpdatedPaymentStatusController extends BaseController
                     sendSocketData($socketData);
 
                     $pushData = ['notification_enum' => PushEnum::USER_PAYMENT_DONE];
-                    dispatch(new SendPushNotification($title, $sub_title,$pushData, $user->device_info_hash, $user->mobile_application_type,0));
+                    dispatch(new SendPushNotification($title,$pushData, $user->device_info_hash, $user->mobile_application_type,0,$sub_title));
 
 
                     // @ TODO Driver push and socket
@@ -123,7 +123,7 @@ class UpdatedPaymentStatusController extends BaseController
                      sendSocketData($socketData);
  
                      $pushData = ['notification_enum' => PushEnum::PAYMENT_CHANGE];
-                     dispatch(new SendPushNotification($title, $sub_title,$pushData, $get_driverrequest->userDetail->device_info_hash, $get_driverrequest->userDetail->mobile_application_type,0));
+                     dispatch(new SendPushNotification($title,$pushData, $get_driverrequest->userDetail->device_info_hash, $get_driverrequest->userDetail->mobile_application_type,0,$sub_title));
 
 
 

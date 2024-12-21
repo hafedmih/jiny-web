@@ -25,13 +25,17 @@ class DriverSaveRequest extends FormRequest
     public function rules(res $res)
     {
         $data = $res->all();
-        if($res->has('slug') && $data['slug'] != ""){
-            $email = 'email|unique:users,email,'.$data['slug'].',slug,deleted_at,NULL';
+        //dd($data);
+        if($res->has('slug') && $data['slug'] != "undefined"){
+            
+            $email = 'nullable|email|unique:users,email,'.$data['slug'].',slug,deleted_at,NULL';
             $phone = 'required|numeric|regex:/^([0-9\s\-\+\(\)]*)$/|min:10';
             // $phone = 'required|numeric|regex:/^([0-9\s\-\+\(\)]*)$/|min:10';
+            
         }
         else{
-            $email = 'email|unique:users';
+            
+            $email = 'nullable|email|unique:users,email';
             $phone = 'required|numeric|regex:/^([0-9\s\-\+\(\)]*)$/|min:10';
                     
         }
@@ -46,7 +50,7 @@ class DriverSaveRequest extends FormRequest
         return [
             'first_name' => 'required',
             // 'last_name' => 'required',
-            // 'email' => $email,
+             'email' => $email,
             'phone_number' => $phone,
             'country' => 'required|exists:country,id',
             'type' => 'required|exists:vehicle,id',

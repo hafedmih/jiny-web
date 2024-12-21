@@ -23,25 +23,42 @@ use App\Traits\RandomHelper;
 use Carbon;
 use DB;
 use App\Models\taxi\Requests\Request as RequestModel;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
+
 class UserManagementController extends Controller
 {
     use RandomHelper,CommanFunctions;
     public function userManage(Request $request)
     {
 
-        $users = User::role('user')->with(['getCountry'])->where('active',1)->latest()->get();
+        $users_active = User::role('user')->with(['getCountry'])->orderBy('created_at','desc')->where('active',1);
+        
+         if($request->has('search') && $request->search != ""){
+            if (is_numeric($request->search)) {
+                $users_active = $users_active->where('phone_number', 'like', '%' . $request->search . '%')->paginate(10);
+            } else {
+                $users_active = $users_active->where('firstname', 'like', '%' . $request->search . '%')->paginate(10); 
+            }
+        }else{
+           
+           $users_active = $users_active->paginate(10);
+        }
+        
+        
         $block_users = User::role('user')->with(['getCountry'])->where('active',0)->latest()->get();
 
         $onlinecount = User::role('user')->where('active',1)->where('online_by',1)->get()->count();
         $offlinecount = User::role('user')->where('active',1)->where('online_by',0)->get()->count();
         
-        foreach ($users as $key => $value) {
+        foreach ($users_active as $key => $value) {
             
             $wallet = Wallet::where('user_id',$value->id)->first();
             if(is_null($wallet))
-                $users[$key]->wallet_balance = 0;
+                $users_active[$key]->wallet_balance = 0;
             else
-                $users[$key]->wallet_balance = $wallet->balance_amount;
+                $users_active[$key]->wallet_balance = $wallet->balance_amount;
         }
         
         
@@ -50,7 +67,51 @@ class UserManagementController extends Controller
 
         $country = Country::where('status',1)->get();
 
-        return view('taxi.user-management.userlist',['users' => $users,'block_users' => $block_users,'activecount' => $users->count(),'blockcount'=>$block_users->count(),'onlinecount'=>$onlinecount,'offlinecount' => $offlinecount,'languages' => $languages,'country' => $country]);
+        $result=[
+            'users_active' => $users_active,
+            'users_inactive' =>[],
+            'languages' => $languages,
+            'country' => $country,
+            'request' => $request,
+        ];
+
+        return view('taxi.user-management.userlist',['result' => $result]);
+    }
+
+    public function blockedUsers(Request $request)
+    {
+    	$users_inactive = User::role('user')
+            ->with(['getCountry'])->orderBy('created_at','desc')->where('active', 0);
+        $languages = Languages::where('status', 1)->get();
+
+        if($request->has('search') && $request->search != ""){
+            if (is_numeric($request->search)) {
+                $users_inactive = $users_inactive->where('phone_number', 'like', '%' . $request->search . '%')->paginate(10);
+            } else {
+                $users_inactive = $users_inactive->where('firstname', 'like', '%' . $request->search . '%')->paginate(10); 
+            }
+        }else{
+            $users_inactive = $users_inactive->paginate(10); 
+        }
+
+        foreach ($users_inactive as $key => $value) {
+            $wallet = Wallet::where('user_id', $value->id)->first();
+            if (is_null($wallet)) {
+                $users_inactive[$key]->wallet_balance = 0;
+            } else {
+                $users_inactive[$key]->wallet_balance = $wallet->balance_amount;
+            }
+        }
+        $country = Country::where('status', 1)->get();
+        $result=[
+            'users_active' => [],
+            'users_inactive' =>$users_inactive,
+            'languages' => $languages,
+            'country' => $country,
+            'request' => $request,
+        ];
+
+            return view('taxi.user-management.userlist',['result' => $result]);
     }
 
   
@@ -214,7 +275,7 @@ class UserManagementController extends Controller
 
                 $pushData = ['notification_enum' => PushEnum::DRIVER_APPROVED];
 
-                dispatch(new SendPushNotification($title,$sub_title,$pushData,$user->device_info_hash,$user->mobile_application_type,0));
+                dispatch(new SendPushNotification($title,$pushData,$user->device_info_hash,$user->mobile_application_type,0,$sub_title));
 
         }
 
@@ -276,6 +337,12 @@ class UserManagementController extends Controller
 
     public function usermanagementSave(Request $request)
     {
+        $request->validate([
+            'first_name' => 'required|regex:/^[\pL\s]+$/u',
+            'last_name' => 'nullable|regex:/^[\pL\s]+$/u',
+            'email' => 'nullable|email|unique:users,email',
+            'phone_number' => 'required|numeric|regex:/^([0-9\s\-\+\(\)]*)$/|min:10|unique:users,phone_number'
+        ]);
         $data = $request->all();
 
         $user = User::create([
@@ -360,6 +427,11 @@ class UserManagementController extends Controller
 
         return response()->json(['message' =>'success'], 200);
     }
+    
+    
+     
+    
+    
 
 
 }

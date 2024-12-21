@@ -150,7 +150,7 @@ class ChangeLocationController extends BaseController
 
             $pushData = ['notification_enum' => "trip_location_changed", 'result' => $result];
 
-            dispatch(new SendPushNotification($title,$sub_title,$pushData, $oldrequest->driverDetail->device_info_hash, $oldrequest->driverDetail->mobile_application_type,0));
+            dispatch(new SendPushNotification($title,$pushData, $oldrequest->driverDetail->device_info_hash, $oldrequest->driverDetail->mobile_application_type,0,$sub_title));
 
            
             DB::commit();
@@ -278,7 +278,7 @@ class ChangeLocationController extends BaseController
 
             $pushData = ['notification_enum' => "trip_location_changed", 'result' => $result];
 
-            dispatch(new SendPushNotification('trip_location_changed','trip_location_changed',$pushData, $oldrequest->userDetail->device_info_hash, $oldrequest->userDetail->mobile_application_type));
+            dispatch(new SendPushNotification('trip_location_changed',$pushData, $oldrequest->userDetail->device_info_hash, $oldrequest->userDetail->mobile_application_type,'trip_location_changed'));
 
             return $this->sendResponse('Data Found', $socket_data, 200);
 
@@ -326,7 +326,7 @@ class ChangeLocationController extends BaseController
 
             $pushData = ['notification_enum' => "drive_not_approved", 'result' => $result];
 
-            dispatch(new SendPushNotification('drive_not_approved','drive_not_approved',$pushData, $oldrequest->userDetail->device_info_hash, $oldrequest->userDetail->mobile_application_type));
+            dispatch(new SendPushNotification('drive_not_approved',$pushData, $oldrequest->userDetail->device_info_hash, $oldrequest->userDetail->mobile_application_type,'drive_not_approved'));
 
             return $this->sendResponse('Data Found', $socket_data, 200);
         }        

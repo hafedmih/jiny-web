@@ -16,7 +16,10 @@ use DB;
 use App\Models\taxi\Vehicle;
 use App\Models\taxi\PackageMaster;
 use App\Models\taxi\PackageItem;
+use App\Models\taxi\Promocode;
 use App\Http\Controllers\API\BaseController as BaseController;
+use App\Models\taxi\Wallet;
+use App\Models\taxi\Settings;
 
 class CreateRideLaterController extends BaseController
 {
@@ -65,8 +68,8 @@ class CreateRideLaterController extends BaseController
                 if($promo_all_count >= $promocode->promo_use_count)
                     return $this->sendError('Sorry! promo code exit',[],403);
 
-                if(!in_array($type->id,$promocode->types))
-                    return $this->sendError('Sorry! promo code exit',[],403);
+                // if(!in_array($type->id,$promocode->types))
+                //     return $this->sendError('Sorry! promo code exit',[],403);
             }
 
         $request_params = [
@@ -86,10 +89,35 @@ class CreateRideLaterController extends BaseController
             'ride_type'               =>  "Ride Later",
             'trip_type'               => $request->ride_type,
             'destination_type' => $request->has('drop_address') && $request->has('drop_lat') && $request->has('drop_lng') ? 'NORMAL' : 'OPEN',
-            'amount' => $request->trip_amount
-
+            'base_price' => $request->has('base_price') ? $request->base_price : 0,
+            'amount' => $request->trip_amount,
+            'distance_cost' => $request->computed_price,
+            'vehicle_tye'  => $request->vehicle_type,
         ];
         // dd("hai");
+
+          // @ TODO The trip amount deducted to user wallet.
+          $user_wallet = Wallet::where('user_id',$user->id)->first();
+          $request_params['wallet_deduct_amount'] = NULL;
+          if($request->has('drop_address') && $request->has('drop_lat') && $request->has('drop_lng')){
+            $tripAmount = $request->base_price;
+            }else{
+                $tripAmount = $request->trip_amount;
+            }
+
+          if($user_wallet){
+              $user_deduct_amount = Settings::where('name','trip_wallet_deduct_amount')->first();
+              $wallet_deduct_amount = $user_deduct_amount ? $user_deduct_amount->value :50;  // static value 
+              
+            if($tripAmount > $wallet_deduct_amount && $user_wallet->balance_amount >= $wallet_deduct_amount ){
+                $request_params['wallet_deduct_amount'] = $wallet_deduct_amount;
+            }elseif($user_wallet->balance_amount <= $wallet_deduct_amount){
+                $request_params['wallet_deduct_amount'] = $user_wallet->balance_amount;  
+            }elseif($tripAmount < $user_wallet->balance_amount ){
+                $request_params['wallet_deduct_amount'] = $tripAmount;
+            }
+          }
+
         $request_detail = RequestModel::create($request_params);
 
         // request place detail params

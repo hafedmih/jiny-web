@@ -86,9 +86,9 @@ class expriedUserBlock extends Command
                         }
                         $pushData = ['notification_enum' => PushEnum::DRIVER_BLOCKED];
 
-                        dispatch(new SendPushNotification($title,$sub_title,$pushData,$user->device_info_hash,$user->mobile_application_type,0));
+                        dispatch(new SendPushNotification($title,$pushData,$user->device_info_hash,$user->mobile_application_type,0,$sub_title));
 
-                        // dispatch(new SendPushNotification("Driver Your Account Is Blocked","Your documents expired. So, your account is blocked.",$pushData,['message' => "Your documents expired. So, your account is blocked. Please, upload new documents.",'image' => ''],$user->device_info_hash,$user->mobile_application_type,1));
+                        // dispatch(new SendPushNotification("Driver Your Account Is Blocked",$pushData,['message' => "Your documents expired. So, your account is blocked. Please, upload new documents.",'image' => ''],$user->device_info_hash,$user->mobile_application_type,1,"Your documents expired. So, your account is blocked."));
                     }
                 }
             }

@@ -128,7 +128,7 @@ class RequestAcceptRejectController extends BaseController
                     $socketData = ['event' => 'request_'.$userModel->slug,'message' => $socket_data];
                     sendSocketData($socketData);
 
-                    dispatch(new SendPushNotification($title,$sub_title, $push_data, $userModel->device_info_hash, $userModel->mobile_application_type,0));
+                    dispatch(new SendPushNotification($title, $push_data, $userModel->device_info_hash, $userModel->mobile_application_type,0,$sub_title));
 
             
                     // $pushData = ['notification_enum' => PushEnum::TRIP_ACCEPTED_BY_DRIVER, 'result' => (string) $request_result->toJson()];
@@ -230,7 +230,7 @@ class RequestAcceptRejectController extends BaseController
                     $socketData = ['event' => 'request_'.$notifiable_driver->slug,'message' => $socket_data];
                     sendSocketData($socketData);
 
-                    dispatch(new SendPushNotification($title,$sub_title, $pushData, $notifiable_driver->device_info_hash, $notifiable_driver->mobile_application_type,0));
+                    dispatch(new SendPushNotification($title, $pushData, $notifiable_driver->device_info_hash, $notifiable_driver->mobile_application_type,0,$sub_title));
 
                 } else {
                     $request_result =  fractal($request_detail, new TripRequestTransformer);
@@ -270,7 +270,7 @@ class RequestAcceptRejectController extends BaseController
                             // $pushData = ['notification_enum'=>PushEnum::NO_DRIVER_FOUND,'result'=>(string)$request_result->toJson()];
                             $pushData = ['notification_enum'=>PushEnum::NO_DRIVER_FOUND,'result'=>$request_result];
                             
-                            dispatch(new SendPushNotification($title,$sub_title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0));
+                            dispatch(new SendPushNotification($title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0,$sub_title));
                             
                             // Form a socket sturcture using users'id and message with event name
                             $socket_data = new \stdClass();

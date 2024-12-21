@@ -30,14 +30,14 @@ class VehicleSaveRequest extends FormRequest
         $highlightimages = [];
         if($data['vehicle_id'] != ""){
             $sos_id = ['required'];
-            $images = [];
-            $highlightimages = [];
+            $images = ['image','mimes:jpeg,png,jpg,gif'];
+            $highlightimages = ['image','mimes:jpeg,png,jpg,gif'];
 
         }
         else{
             $sos_id = [];
-            $images = ['required'];
-            $highlightimages = ['required'];
+            $images = ['required','image','mimes:jpeg,png,jpg,gif'];
+            $highlightimages = ['required','image','mimes:jpeg,png,jpg,gif'];
 
         }
         return [

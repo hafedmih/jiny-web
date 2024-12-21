@@ -49,6 +49,7 @@ class DocumentController extends BaseController
                     $document[$key]->document_expiry = $driverDocument->exprienc_status;
                     $document[$key]->is_uploaded = 1;
                     $document[$key]->identifier_value = $driverDocument->identifier;
+                    $document[$key]->denaited_status = $driverDocument->document_status == 0 ? true : false;
                     
                 }
                 else{
@@ -56,6 +57,7 @@ class DocumentController extends BaseController
                     $document[$key]->expiry_date = 0;
                     $document[$key]->issue_date = 0;
                     $document[$key]->is_uploaded = 0;
+                    $document[$key]->denaited_status = false;
                     
                 }
             }
@@ -92,7 +94,7 @@ class DocumentController extends BaseController
             //     return $this->sendError('User is blocked so please contact admin',[],403);
             
             $documents = DocumentsGroup::where('status',1)->get();
-            // dd($user);
+            
             $data_array = [];
             $all_count = 0;
             $uplod_all_count = 0;
@@ -125,6 +127,7 @@ class DocumentController extends BaseController
                         $value->getDocument[$key1]->exprience_status = $DriverDocuments->exprienc_status;
                         // $value->getDocument[$key1]->exprience_reson = $DriverDocuments->exprience_reson;
                         $value->getDocument[$key1]->identifier_document = $DriverDocuments->identifier;
+                        $value->getDocument[$key1]->denaited_status = $DriverDocuments->document_status == 0 ? true : false;
                         if($value1->requried){
                             $upload_count++;
                             $uplod_all_count++;
@@ -136,6 +139,7 @@ class DocumentController extends BaseController
                         $value->getDocument[$key1]->expiry_dated = 0;
                         $value->getDocument[$key1]->issue_date = 0;
                         $value->getDocument[$key1]->is_uploaded = 0;
+                        $value->getDocument[$key1]->denaited_status = false;
 
                         if ($value->getDocument->has('requried')){
                             if($value->getDocument[$key1]->requried == 0){
@@ -182,7 +186,7 @@ class DocumentController extends BaseController
                 
 
 
-                $documents[$key]->get_document = $value->getDocument;
+                $documents[$key]->get_document = [];
                 if(count($value->getDocument) > 0){
                     array_push($data_array, $documents[$key]);
                 }

@@ -11,5 +11,7 @@ Route::group(['prefix' => 'driver', 'as'=>'driver.','middleware' => ['api']], fu
     Route::post('check/phonenumber', [DriverController::class,'CheckPhoneNumber']);
     Route::post('/document-upload', [DriverController::class,'updateDriverDocument']);
     Route::get('/online-update', [DriverController::class,'updateDriverOnline']);
+    Route::get('/driver-list/{type}/{query?}', [DriverController::class,'driverlist']);
+    Route::Post('/driver-status', [DriverController::class,'driverstatus']);
 });
 

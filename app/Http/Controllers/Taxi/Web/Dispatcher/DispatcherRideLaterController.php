@@ -20,6 +20,8 @@ use App\Models\taxi\OutstationPriceFixing;
 use App\Constants\PushEnum;
 use App\Jobs\SendPushNotification;
 use DB;
+use App\Models\taxi\Wallet;
+use App\Models\taxi\Settings;
 use App\Http\Controllers\API\BaseController as BaseController;
 
 class DispatcherRideLaterController extends BaseController
@@ -45,12 +47,12 @@ class DispatcherRideLaterController extends BaseController
                 if($promocode->select_offer_option == 1 && $promo_count >= $promocode->new_user_count){
                     return $this->sendError('Sorry! You already '.$promocode->new_user_count.' times used this promo code',[],404);
                 }
-                if($promocode->select_offer_option == 5 && $user->id != $promocode->user_id){
+                if($promocode->select_offer_option == 5 && !in_array($user->id,explode(',',$promocode->user_id))){
                     return $this->sendError('Invalid Prome code',[],404);
                 }
-                if(!in_array($type->id,$promocode->types)){
-                    return $this->sendError('Invalid Prome code',[],404);
-                }
+                // if(!in_array($type->id,$promocode->types)){
+                //     return $this->sendError('Invalid Prome code',[],404);
+                // }
                 $promo_all_count = RequestModel::where('promo_id',$promocode_id)->where('is_completed',1)->count();
                 if($promo_all_count > $promocode->promo_use_count)
                     return $this->sendError('Sorry! promo code exit',[],403);
@@ -80,10 +82,37 @@ class DispatcherRideLaterController extends BaseController
                 'driver_notes'            => $request->driver_notes,
                 'manual_trip'             => $request->manual_trip,
                 'created_by'              => $create_id,
-                'destination_type' => $request->has('drop') && $request->has('drop_lat') && $request->has('drop_lng') ? 'NORMAL' : 'OPEN',
-                'amount' => $request->trip_amount
+                'destination_type' => $request->has('drop') && $request->drop != '' && $request->has('drop_lat') && $request->drop_lat != '' && $request->has('drop_lng') ? 'NORMAL' : 'OPEN',
+                'base_price' => $request->has('base_price') ? $request->base_price : 0,
+                'amount' => $request->trip_amount,
+                'distance_cost' => $request->computed_price
             ];
+
+            // @ TODO The trip amount deducted to user wallet.
+          $user_wallet = Wallet::where('user_id',$user->id)->first();
+          $request_params['wallet_deduct_amount'] = NULL;
+          if($request->has('drop') && $request->drop != '' && $request->has('drop_lat') && $request->drop_lat != ''){
+           
+            $tripAmount = $request->base_price;
+            }else{
+                $tripAmount = $request->trip_amount;
+            }
             
+          if($user_wallet){
+              $user_deduct_amount = Settings::where('name','trip_wallet_deduct_amount')->first();
+              $wallet_deduct_amount = $user_deduct_amount ? $user_deduct_amount->value :50;  // static value 
+              
+                if($tripAmount > $wallet_deduct_amount && $user_wallet->balance_amount >= $wallet_deduct_amount ){
+                    $request_params['wallet_deduct_amount'] = $wallet_deduct_amount;
+                }elseif($user_wallet->balance_amount <= $wallet_deduct_amount){
+                    $request_params['wallet_deduct_amount'] = $user_wallet->balance_amount;  
+                }elseif($tripAmount < $user_wallet->balance_amount ){
+                    $request_params['wallet_deduct_amount'] = $tripAmount;
+                }
+          }else{
+              $request_params['wallet_deduct_amount'] = NULL;
+          }
+            // dd($request_params);
             $request_detail = RequestModel::create($request_params);
 
             // request place detail params
@@ -353,6 +382,21 @@ class DispatcherRideLaterController extends BaseController
                 'requested_currency_symbol'=> $package->getCountry->currency_symbol,
                 'created_by'              => $create_id,
             ];
+
+            // @ TODO The trip amount deducted to user wallet.
+          $user_wallet = Wallet::where('user_id',$user->id)->first();
+            
+          if($user_wallet){
+              $user_deduct_amount = Settings::where('name','trip_wallet_deduct_amount')->first();
+              $wallet_deduct_amount = $user_deduct_amount ? $user_deduct_amount->value :50;  // static value 
+              
+              if($request->base_price > $wallet_deduct_amount && $user_wallet->balance_amount >= $wallet_deduct_amount){
+                  $request_params['wallet_deduct_amount'] = $wallet_deduct_amount;
+              }
+          }else{
+              $request_params['wallet_deduct_amount'] = NULL;
+          }
+
             
             $request_detail = RequestModel::create($request_params);
 
@@ -488,7 +532,7 @@ class DispatcherRideLaterController extends BaseController
             // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$result->toJson()];
             $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
 
-            dispatch(new SendPushNotification($title,$sub_title, $pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1));
+            dispatch(new SendPushNotification($title, $pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1,$sub_title));
 
             // dd($selected_drivers);
             foreach ($selected_drivers as $key => $selected_driver) {
@@ -702,7 +746,7 @@ class DispatcherRideLaterController extends BaseController
             // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$result->toJson()];
             $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED];
 
-            dispatch(new SendPushNotification($title,$sub_title, $pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1));
+            dispatch(new SendPushNotification($title, $pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1,$sub_title));
 
             // dd($selected_drivers);
             foreach ($selected_drivers as $key => $selected_driver) {
@@ -786,6 +830,20 @@ class DispatcherRideLaterController extends BaseController
                 'created_by'              => $create_id,
             ];
             
+            // @ TODO The trip amount deducted to user wallet.
+          $user_wallet = Wallet::where('user_id',$user->id)->first();
+            
+          if($user_wallet){
+              $user_deduct_amount = Settings::where('name','trip_wallet_deduct_amount')->first();
+              $wallet_deduct_amount = $user_deduct_amount ? $user_deduct_amount->value :50;  // static value 
+              
+              if($request->base_price > $wallet_deduct_amount && $user_wallet->balance_amount >= $wallet_deduct_amount){
+                  $request_params['wallet_deduct_amount'] = $wallet_deduct_amount;
+              }
+          }else{
+              $request_params['wallet_deduct_amount'] = NULL;
+          }
+
             $request_detail = RequestModel::create($request_params);
 
             $request_place_params = [

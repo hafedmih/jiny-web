@@ -14,7 +14,7 @@ class RiderAddress extends Model
     protected $table = "rider_address";
 
     protected $fillable = [
-        'location', 'title', 'address', 'riderId'
+        'latitude','longitude','title','address','riderId'
     ];
 
     

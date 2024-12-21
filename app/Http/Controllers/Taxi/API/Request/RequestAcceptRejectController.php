@@ -20,7 +20,7 @@ use App\Traits\CommanFunctions;
 use phpseclib3\Crypt\EC\Formats\Keys\Common;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
-
+use App\Models\taxi\Requests\RequestDedicatedDrivers;
 class RequestAcceptRejectController extends BaseController
 {
     use CommanFunctions;
@@ -63,6 +63,8 @@ class RequestAcceptRejectController extends BaseController
 
             $totalAccepted = $driver->total_accept;
             $totalRejected = $driver->total_reject;
+
+            $created_user =$request_detail->createdDetail;
 
             if ($request->is_accept == 1) {
                 $message = 'trip_accepted';
@@ -108,7 +110,7 @@ class RequestAcceptRejectController extends BaseController
                         $lang = $driverModel->language;
                         $push_data = $this->pushlanguage($lang,'trip-accept');
                         if(is_null($push_data)){
-                            $title = 'Already driver accepted trip';
+                            $title = 'This trip taken by another driver';
                             $body = 'The Driver is already accepted this trip';
                             $sub_title = 'The Driver is already accepted this trip';
                         }else{
@@ -124,7 +126,7 @@ class RequestAcceptRejectController extends BaseController
                         $socket_data->result = $request_result;
                         $socketData = ['event' => 'already_driver_accept_trip_'.$driverModel->slug,'message' => $socket_data];
                         sendSocketData($socketData);
-                        // dispatch(new SendPushNotification($title,$sub_title, $push_data, $driverModel->device_info_hash, $driverModel->mobile_application_type,0));
+                        // dispatch(new SendPushNotification($title, $push_data, $driverModel->device_info_hash, $driverModel->mobile_application_type,0,$sub_title));
                         sendPush($title,$sub_title, $push_data, $driverModel->device_info_hash, $driverModel->mobile_application_type,0);
                     }
                 }
@@ -136,6 +138,7 @@ class RequestAcceptRejectController extends BaseController
                     $push_request_detail = $request_result->toJson();
                     $userModel = User::find($request_detail->user_id);
                     $driverModel = User::find($request_detail->driver_id);
+                    $dispatcher = User::find($request_detail->created_by);
 
                     $car_details = Driver::where('user_id',$user->id)->first();
                     // dd($car_details)s;
@@ -173,12 +176,43 @@ class RequestAcceptRejectController extends BaseController
                     sendSocketData($socketData);
 
                     sendPush($title,$sub_title, $push_data, $userModel->device_info_hash, $userModel->mobile_application_type,0);
-                    // dispatch(new SendPushNotification($title,$sub_title, $push_data, $userModel->device_info_hash, $userModel->mobile_application_type,0));
-
+                    // dispatch(new SendPushNotification($title, $push_data, $userModel->device_info_hash, $userModel->mobile_application_type,0,$sub_title));
+                   
+                  //  $socketData = ['event' => 'request_'.$dispatcher->slug,'message' => $socket_data];
+                    sendSocketData($socketData);
             
                     // $pushData = ['notification_enum' => PushEnum::TRIP_ACCEPTED_BY_DRIVER, 'result' => (string) $request_result->toJson()];
                     // $pushData = ['notification_enum' => PushEnum::TRIP_ACCEPTED_BY_DRIVER, 'result' => $request_result];
                     // dispatch(new SendPushNotification($title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,1));
+                    $count = RequestDedicatedDrivers::where('request_id',$request_detail->id)->where('user_id',$request_detail->user_id)->where('driver_id',$user->id)->count();
+                    if($count == 0) {
+                        if($request_detail->is_later == 1){
+                            $is_later = 1;
+                        }else{
+                            $is_later = 0;
+                        }
+                        RequestDedicatedDrivers::create([
+                            'request_id' => $request_detail->id,
+                            'user_id' => $request_detail->user_id,
+                            'driver_id' => $user->id,
+                            'assign_method' => 1,
+                            'is_later' => $is_later,
+                            'active' => 1
+                        ]);
+                       
+                    }
+                   
+                }
+
+                if($created_user){
+                    $socket_data = new \stdClass();
+                    $socket_data->success = true;
+                    $socket_data->success_message  = PushEnum::TRIP_ACCEPTED_BY_DRIVER;
+                    //$socket_data->result = $request_result;
+
+                    $socketData = ['event' => 'request_'.$created_user->slug,'message' => $socket_data];
+                     // dd($socketData);
+                    sendSocketData($socketData);
                 }
 
                 return $this->sendResponse('Data Found', $request_result, 200);
@@ -211,6 +245,16 @@ class RequestAcceptRejectController extends BaseController
                     $request_detail->hold_status = 0;
                     $request_detail->driver_id = NULL;
                     $request_detail->save();
+
+                    if($created_user){
+                        $socket_data = new \stdClass();
+                        $socket_data->success = true;
+                        $socket_data->success_message  = PushEnum::NO_DRIVER_FOUND;
+                       // $socket_data->result = $request_result;
+
+                        $socketData = ['event' => 'request_'.$created_user->slug,'message' => $socket_data];
+                        sendSocketData($socketData);
+                    }
 
                     return $this->sendResponse('Data Found', $request_detail, 200);
                 }
@@ -275,10 +319,9 @@ class RequestAcceptRejectController extends BaseController
                     // $socketData = ['event' => 'request_'.$notifiable_driver->slug,'message' => $socket_data];
                     // sendSocketData($socketData);
 
-                    // dispatch(new SendPushNotification($title,$sub_title, $pushData, $notifiable_driver->device_info_hash, $notifiable_driver->mobile_application_type,1));
+                    // dispatch(new SendPushNotification($title, $pushData, $notifiable_driver->device_info_hash, $notifiable_driver->mobile_application_type,1,$sub_title));
 
                 } else {
-                    $request_result =  fractal($request_detail, new TripRequestTransformer);
 
                     // Cancell the request as automatic cancel state
                     if($request_detail->is_later == 0 && !$request_detail->driver_id && $request_detail->is_cancelled == 0){
@@ -287,7 +330,7 @@ class RequestAcceptRejectController extends BaseController
                             'cancel_method'=>CancelMethod::AUTOMATIC_TEXT,
                             'cancelled_at'=>date('Y-m-d H:i:s')
                         ]);
-
+                        $request_result =  fractal($request_detail, new TripRequestTransformer);
 
                         if ($request_detail->user_id != null) {
                             // Send push notification as no-driver-found to the user
@@ -315,7 +358,7 @@ class RequestAcceptRejectController extends BaseController
                             // $pushData = ['notification_enum'=>PushEnum::NO_DRIVER_FOUND,'result'=>(string)$request_result->toJson()];
                             $pushData = ['notification_enum'=>PushEnum::NO_DRIVER_FOUND,'result'=>$request_result];
                             
-                            dispatch(new SendPushNotification($title,$sub_title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0));
+                            dispatch(new SendPushNotification($title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0,$sub_title));
                             
                             // Form a socket sturcture using users'id and message with event name
                             $socket_data = new \stdClass();
@@ -324,6 +367,16 @@ class RequestAcceptRejectController extends BaseController
                             $socket_data->result = $request_result;
                             
                             $socketData = ['event' => 'request_'.$userModel->slug,'message' => $socket_data];
+                            sendSocketData($socketData);
+                        }
+
+                        if($created_user){
+                            $socket_data = new \stdClass();
+                            $socket_data->success = true;
+                            $socket_data->success_message  = PushEnum::NO_DRIVER_FOUND;
+                           // $socket_data->result = $request_result;
+
+                            $socketData = ['event' => 'request_'.$created_user->slug,'message' => $socket_data];
                             sendSocketData($socketData);
                         }
                     }

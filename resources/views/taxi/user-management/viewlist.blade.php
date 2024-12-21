@@ -21,7 +21,7 @@
                 <div class="card-body">
                     <div class="media">
                         <div class="media-body">
-                            <h3 class="mb-0">{{$requests->requested_currency_symbol}} {{$user->wallet ? $user->wallet->balance_amount : '0'}}</h3>
+                            <h3 class="mb-0">{{$user?->getCountry?->currency_symbol}} {{$user->wallet ? $user->wallet->balance_amount : '0'}}</h3>
                             <span class="text-uppercase font-size-xs">{{ __('wallet') }}</span>
                         </div>
                         <div class="ml-3 align-self-center">

@@ -542,13 +542,16 @@ class ReportsController extends Controller
 
     public function driverTripCancel(Request $request)
     {
-        $list = RequestModel::where('trip_driver_cancel',1)->get();
+        $list = RequestModel::where('trip_driver_cancel',1)->where('is_trip_start',0)->get();
         return view('taxi.reports.DriverCancelTrip',['list' => $list]);
     }
 
     public function driverTripCancelSave($id)
     {
-        $requestModel = RequestModel::where('trip_driver_cancel',1)->where('id',$id)->first();
+        $requestModel = RequestModel::where('trip_driver_cancel',1)->where('is_trip_start',0)->where('id',$id)->first();
+        if(is_null($requestModel)){
+            return redirect()->route('driverTripCancel');
+        }
         $requestModel->is_cancelled = 1;
         $requestModel->cancelled_at = NOW();
         $requestModel->trip_driver_cancel = 0;
@@ -624,7 +627,7 @@ class ReportsController extends Controller
             $socket_data->result = $request_result;
             $socketData = ['event' => 'request_'.$user->slug,'message' => $socket_data];
             sendSocketData($socketData);
-            dispatch(new SendPushNotification($title,$sub_title, $pushData, $user->device_info_hash, $user->mobile_application_type,0));
+            dispatch(new SendPushNotification($title, $pushData, $user->device_info_hash, $user->mobile_application_type,0,$sub_title));
         }
 
         $driver = $requestModel->driverDetail;
@@ -635,9 +638,9 @@ class ReportsController extends Controller
             $lang = $driver->language;
             $push_data = $this->pushlanguage($lang,'admin-accepted-trip-cancelled');
             if(is_null($push_data)){
-                $title = 'Admin Accepted Trip Cancelled';
-                $body = 'Admin Accepted Trip Cancelled';
-                $sub_title = 'Admin Accepted Trip Cancelled';
+                $title = 'Your cancellation request is accepted by admin, Trip Cancelled';
+                $body = 'Your cancellation request is accepted by admin, Trip Cancelled';
+                $sub_title = 'Your cancellation request is accepted by admin, Trip Cancelled';
             }else{
                 $title = $push_data->title;
                 $body =  $push_data->description;
@@ -651,7 +654,53 @@ class ReportsController extends Controller
             $socket_data->result = $request_result;
             $socketData = ['event' => 'request_'.$driver->slug,'message' => $socket_data];
             sendSocketData($socketData);
-            // dispatch(new SendPushNotification($title,$sub_title, $pushData, $driver->device_info_hash, $driver->mobile_application_type,0));
+            // dispatch(new SendPushNotification($title, $pushData, $driver->device_info_hash, $driver->mobile_application_type,0,$sub_title));
+            sendPush($title,$sub_title, $pushData, $driver->device_info_hash, $driver->mobile_application_type,0);
+        }
+
+        return redirect()->route('driverTripCancel');
+    }
+
+    public function driverTripReject($id)
+    {
+        $requestModel = RequestModel::where('trip_driver_cancel',1)->where('id',$id)->first();
+        $requestModel->reason = NULL;
+        $requestModel->custom_reason = NULL;
+        $requestModel->cancel_method = NULL;
+        $requestModel->trip_driver_cancel = 0;
+        $requestModel->save();
+
+        $requestModel->cancellationRequest()->delete();
+
+        RequestDriverLog::where('request_id',$requestModel->id)->delete();
+
+        $request_result =  fractal($requestModel, new TripRequestTransformer);
+
+        $driver = $requestModel->driverDetail;
+
+        if ($driver) {
+            $title = Null;
+            $body = '';
+            $lang = $driver->language;
+            $push_data = $this->pushlanguage($lang,'admin-accepted-trip-cancelled-rejected');
+            if(is_null($push_data)){
+                $title = 'Sorry! You are not cancel this Trip';
+                $body = 'Sorry! You are not cancel this Trip';
+                $sub_title = 'Sorry! You are not cancel this Trip';
+            }else{
+                $title = $push_data->title;
+                $body =  $push_data->description;
+                $sub_title =  $push_data->description;
+            } 
+            // $pushData = ['notification_enum' => PushEnum::REQUEST_CANCELLED_BY_DRIVER, 'result' => (string)$request_result->toJson()];
+            $pushData = ['notification_enum' => PushEnum::REQUEST_CANCELLED_BY_DRIVER_REJECTED];
+            $socket_data = new \stdClass();
+            $socket_data->success = true;
+            $socket_data->success_message  = PushEnum::REQUEST_CANCELLED_BY_DRIVER_REJECTED;
+            $socket_data->result = $request_result;
+            $socketData = ['event' => 'request_'.$driver->slug,'message' => $socket_data];
+            sendSocketData($socketData);
+            // dispatch(new SendPushNotification($title, $pushData, $driver->device_info_hash, $driver->mobile_application_type,0,$sub_title));
             sendPush($title,$sub_title, $pushData, $driver->device_info_hash, $driver->mobile_application_type,0);
         }
 

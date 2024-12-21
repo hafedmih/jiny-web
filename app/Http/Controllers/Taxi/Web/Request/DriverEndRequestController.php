@@ -201,7 +201,7 @@ class DriverEndRequestController extends BaseController
         
                 // $pushData = ['notification_enum' => PushEnum::DRIVER_END_THE_TRIP, 'result' => (string) $request_result->toJson()];
                 $pushData = ['notification_enum' => PushEnum::DRIVER_END_THE_TRIP];
-                dispatch(new SendPushNotification($title,$sub_title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0));
+                dispatch(new SendPushNotification($title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0,$sub_title));
             }
         }else{
             $userModel = User::find($request_detail->user_id);

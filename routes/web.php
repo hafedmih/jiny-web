@@ -8,6 +8,10 @@ use App\Models\taxi\Requests\Request as RequestModel;
 
 use App\Http\Controllers\Taxi\Web\Request\ShareTripController;
 use App\Http\Controllers\Taxi\Web\ErrorLog\LogViewerController;
+use App\Http\Controllers\Taxi\Web\Delete\DeleteController;
+
+//use App\Models\taxi\Settings;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -19,10 +23,95 @@ use App\Http\Controllers\Taxi\Web\ErrorLog\LogViewerController;
 | contains the "web" middleware group. Now create something great!
 |
 */
+Route::get('/test1', function () {
+    $pickup_lat = '18.099533';
+    $pickup_long = '-16.013473';
+    $drop_lat = '18.150872';
+    $drop_long = '-15.932945';
+    $settings_distance = Settings::where('name', 'distance_matrix')->first();
 
+    $url =
+        'https://maps.googleapis.com/maps/api/directions/json?origin=' .
+        $pickup_lat .
+        ',' .
+        $pickup_long .
+        '&destination=' .
+        $drop_lat .
+        ',' .
+        $drop_long .
+        '&mode=driving&language=pl-PL&key=' .
+        $settings_distance->value .
+        '&alternatives=true';
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_PROXYPORT, 3128);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+    $response = curl_exec($ch);
+    curl_close($ch);
+    $response_a = json_decode($response, true);
+//return $response_a;
+    $shortestdistance = 0;
+    if (count($response_a['routes']) != 1) {
+        foreach ($response_a['routes'] as $routes) {
+            $distwithkm = $routes['legs'][0]['distance']['text'];
+            $aa = explode(' ', $distwithkm);
+            if ($aa[1] == 'm') {
+                $newdist = 0;
+            } else {
+                $newdist = (float) substr($distwithkm, 0, 4);
+            }
+            $shortestdistance = $newdist;
+            if ($shortestdistance > $newdist) {
+                $shortestdistance = $newdist;
+            }
+        }
+        return $shortestdistance;
+    } else {
+        $distwithkm = $response_a['routes'][0]['legs'][0]['distance']['text'];
+        $aa = explode(' ', $distwithkm);
+        if ($aa[1] == 'm') {
+            $newdist = 0;
+        } else {
+            $newdist = (float) substr($distwithkm, 0, 4);
+        }
+        return $newdist;
+    }
+});
 Route::get('/', function () {
     // dispatch(new SendPushNotification('Title 😀',['message' => 'Test body 😀'],'token','android'));
     return redirect('/login');
+});
+Route::get('/show-duplicate-requests', function () {
+    // Execute the ShowDuplicateRequests command
+    $output = Artisan::output('show:duplicate-requests');
+
+    // Return the output to a view
+    return view('show-duplicate-requests', ['output' => $output]);
+});
+Route::get('/delete-duplicate-requests', function () {
+    // Execute the DeleteDuplicateRequests command
+    $output = Artisan::call('delete:duplicate-requests');
+
+    // Return a message indicating the success or failure of the command
+    return "Duplicate requests affected to drivers deleted successfully.";
+});
+
+Route::get('/get-pincode/{phone}', function ($phone) {
+    // Execute the query to retrieve the pincode based on the provided phone number
+    $pincode = DB::table('drivers')
+                ->join('users', 'drivers.user_id', '=', 'users.id')
+                ->where('users.phone_number', $phone)
+                ->select('drivers.pincode')
+                ->first();
+
+    // Check if pincode exists
+    if ($pincode) {
+        return response()->json(['pincode' => $pincode->pincode]);
+    } else {
+        return response()->json(['error' => 'Pincode not found for the provided phone number.'], 404);
+    }
 });
 
 // Route::get('pdf-generate', function () {
@@ -88,6 +177,8 @@ require __DIR__.'/taxi/web/driversummary.php';
 
 Route::get('logs', [LogViewerController::class, 'index'])->name('loglist');
 Route::get('share-view/{id}', [ShareTripController::class,'requestView']);
+Route::get('delete-account', [DeleteController::class, 'index'])->name('userslist');
+Route::post('delete-accounts', [DeleteController::class, 'destroy'])->name('users.destroy');
 
 // use Salman\Mqtt\MqttClass\Mqtt;
 

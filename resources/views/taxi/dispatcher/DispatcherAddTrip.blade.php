@@ -251,7 +251,7 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label>Passenger Number: <span class="text-danger">*</span></label>
-                                    <input type="number" name="customer_number" onkeyup="myFunction()" id="customer_number" placeholder="Passenger Number" class="form-control required" onKeyPress="if(this.value.length==10) return false;">
+                                    <input type="number" name="customer_number" onkeyup="myFunction()" id="customer_number" placeholder="Passenger Number" class="form-control required" onKeyPress="if(this.value.length==16) return false;">
                                     
                                     <input type="hidden" name="customer_slug" id="customer_slug" class="form-control">
                                 </div>
@@ -295,13 +295,13 @@
                                 <div class="form-group">
                                     <div class="form-check form-check-inline">
                                         <label class="form-check-label">
-                                            <input type="radio" name="destination_type" class="form-input-styled change-type required" data-fouc value="Normal" checked>
+                                            <input type="radio" name="destination_type" class="form-input-styled change-type required" data-fouc value="NORMAL" checked>
                                             Normal
                                         </label>
                                     </div>
                                     <div class="form-check form-check-inline">
                                         <label class="form-check-label">
-                                            <input type="radio" name="destination_type" class="form-input-styled change-type required" data-fouc value="Open">
+                                            <input type="radio" name="destination_type" class="form-input-styled change-type required" data-fouc value="OPEN">
                                             Open
                                         </label>
                                     </div>
@@ -381,7 +381,7 @@
                                     </div>
                                 </div><br>
                             </div>
-                            <div class="col-md-12">
+                            <div class="col-md-12 manual_trips">
                                 <div class="form-group">
                                     <div class="form-check form-check-inline">
                                         <label class="form-check-label">
@@ -391,7 +391,7 @@
                                     </div>
                                     <div class="form-check form-check-inline">
                                         <label class="form-check-label">
-                                            <input type="radio" name="manual_trip" class="form-input-styled required" data-fouc value="AUTOMATIC">
+                                            <input type="radio" name="manual_trip" class="form-input-styled required" data-fouc value="AUTOMATIC" id="AUTOMATIC">
                                             Automatic
                                         </label>
                                     </div>
@@ -435,7 +435,9 @@
                     </fieldset>
                     <h6>Vehicles</h6>
                     <fieldset class="fieldset">
-                        <input type="hidden" id="trip_amount" name="trip_amount" >
+                        <input type="hidden" id="trip_amount" name="trip_amount" value="0.00">
+                        <input type="hidden" id="base_price" name="base_price" value="0.00">
+                        <input type="hidden" id="computed_price" name="computed_price" value="0.00">
                         <div class="row" id="types_list"></div>
                     </fieldset>
                     <button type="reset" class="resets"></button>
@@ -913,7 +915,7 @@
 
     function myFunction() {
         var value = $("#customer_number").val();
-        var phoneno = /^\d{10}$/;
+        var phoneno = /^\d{4,16}$/;
         if(!value.match(phoneno)){
             $("#customer_number").next("samp").remove();
             $("#customer_number").after("<samp class='text-danger'>invalid Phone number</samp>");
@@ -1342,6 +1344,7 @@
         formData.append('pickup_address',$('#pickup_point').val());
         formData.append('drop_address',$('#drop_point').val());
         formData.append('ride_type',$('input[type=radio][name=trip_type]:checked').val());
+        formData.append('destination_type',$('input[type=radio][name=destination_type]:checked').val());
         formData.append('ride_date',$('#datetime_local').val());
         formData.append('ride_time',$('#datetime_local').val());
         formData.append('promo_code',$('#coupen').val());
@@ -1357,6 +1360,13 @@
             ];
             formData.append('stops',JSON.stringify(stops));
         }
+        if($('input[type=radio][name=trip_type]:checked').val() == 'RIDE_LATER'){
+            $(".manual_trips").hide();
+            $("#AUTOMATIC").prop("checked", true);
+        }
+        else{
+            $(".manual_trips").show();
+        }
         $(".bg-danger").hide();
         $.ajax({
             data: formData,
@@ -1370,7 +1380,7 @@
                 if(data.zone_type_price.length > 0){
                     $(".bg-danger").hide();
                     data.zone_type_price.forEach(element => {
-                        texts += '<div class="col-xl-12 col-md-12"><div class="card card-body" for="'+element.type_slug+'" data-value="'+data.currency_symble+' '+element.promo_total_amount+'"><div class="media"><div class="mr-3"><img src="'+element.type_image+'" class="rounded-circle" width="38" height="38" alt=""></div><div class="media-body"><input type="radio" name="type" class="required clickCheck" value="'+element.type_slug+'" id="'+element.type_slug+'"><label class="media-title text-capitalize font-weight-semibold">'+element.type_name+'</label><br><span class="">'+data.currency_symble+' '+element.promo_total_amount+'</span><p class="text-danger">'+element.promo_msg+'</p></div><div class="ml-3 align-self-center"><div class="list-icons"><div class="dropdown position-static"><a href="#" class="list-icons-item" data-toggle="dropdown" aria-expanded="false"><i class="icon-menu7"></i></a><div class="dropdown-menu dropdown-menu-right" style=""><ul class="list-group"><li class="list-group-item">Base Price <span class="ml-auto">'+data.currency_symble+' '+element.base_price+'</span></li><li class="list-group-item">Rate Per Km <span class="ml-auto">'+data.currency_symble+' '+element.price_per_distance+'</span></li><li class="list-group-item">Waiting Charge <span class="ml-auto">'+data.currency_symble+' '+element.waiting_charge+'</span></li>';
+                        texts += '<div class="col-xl-12 col-md-12"><div class="card card-body" for="'+element.type_slug+'" data-value="'+element.promo_total_amount+'" data-computed-price="'+element.computed_price+'" data-base-price="'+element.base_price+'"><div class="media"><div class="mr-3"><img src="'+element.type_image+'" class="rounded-circle" width="38" height="38" alt=""></div><div class="media-body"><input type="radio" name="type" class="required clickCheck" value="'+element.type_slug+'" id="'+element.type_slug+'"><label class="media-title text-capitalize font-weight-semibold">'+element.type_name+'</label><br><span class="">'+data.currency_symble+' '+element.promo_total_amount+'</span><p class="text-danger">'+element.promo_msg+'</p></div><div class="ml-3 align-self-center"><div class="list-icons"><div class="dropdown position-static"><a href="#" class="list-icons-item" data-toggle="dropdown" aria-expanded="false"><i class="icon-menu7"></i></a><div class="dropdown-menu dropdown-menu-right" style=""><ul class="list-group"><li class="list-group-item">Base Price <br>('+element.base_distance+' KM)<span class="ml-auto">'+data.currency_symble+' '+element.base_price+'</span></li><li class="list-group-item">Rate Per Km <br>('+element.price_per_distance+' * '+element.computed_distance+' KM)<span class="ml-auto">'+data.currency_symble+' '+element.computed_price+'</span></li><li class="list-group-item">Waiting Charge <span class="ml-auto">'+data.currency_symble+' '+element.waiting_charge+'</span></li>';
                         if(element.booking_fees > 0){
                             texts += '<li class="list-group-item">Booking fees <span class="ml-auto">'+data.currency_symble+' '+element.booking_fees+'</span></li>';
                         }
@@ -1403,6 +1413,8 @@
         var valu = $(this).attr("for");
         var amount = $(this).attr("data-value");
         $("#trip_amount").val(amount);
+        $("#computed_price").val($(this).attr("data-computed-price"));
+        $("#base_price").val($(this).attr("data-base-price"));
         $("#"+valu).prop('checked',true);
         $(".clickCheck").parents(".card-body").removeClass('bg-success');
         $(this).addClass('bg-success');
@@ -1494,7 +1506,7 @@
                                 text: data.message,
                                 icon: "success",
                             }).then((value) => {        
-                                window.location.href = "dispatcher/edit/"+data.data.id;
+                                window.location.href = "dispatch-request-view/"+data.data.id;
                             });
                         }
                         else{
@@ -1504,7 +1516,7 @@
                                     text: data.message,
                                     icon: "success",
                                 }).then((value) => {        
-                                    window.location.href = "dispatcher/edit/"+data.data.id;
+                                    window.location.href = "dispatch-request-view/"+data.data.id;
                                 });
                             }
                             // $(".bg-warning").show();
@@ -2419,6 +2431,10 @@
                     name = "Eeco";
                     icons['available'].icon = iconBase + '/eeco.png';
                 }
+                else if(val.type == "toyota-avensis"){
+                    name = "Economy";
+                    icons['available'].icon = iconBase + '/auto.png';
+                }
                 // console.log(val);
             var service_category = val.service_category;
             // console.log(service_category);
@@ -2588,6 +2604,10 @@
             else if(key == "eeco"){
                 name = "Eeco";
                 color = "#b31373";
+            }
+            else if(key == "toyota-avensis"){
+                name = "Economy";
+                color = "#000";
             }
             div1.innerHTML = `<div class="count_list" style="color:`+color+`"><b>${name}</b> : <b>${value}</b><div>`;
             type_count.appendChild(div1);

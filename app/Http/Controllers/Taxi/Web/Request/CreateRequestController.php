@@ -198,7 +198,7 @@ class CreateRequestController extends BaseController
             
                     // $pushData = ['notification_enum' => PushEnum::DRIVER_STARTED_THE_TRIP, 'result' => (string) $request_result->toJson()];
                     $pushData = ['notification_enum' => PushEnum::DRIVER_STARTED_THE_TRIP, 'result' => $request_result];
-                    dispatch(new SendPushNotification($title, $sub_title,$pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0));
+                    dispatch(new SendPushNotification($title,$pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0,$sub_title));
                 }
                 
                 return $this->sendResponse('Data Found', $request_result, 200);
@@ -421,7 +421,7 @@ class CreateRequestController extends BaseController
             // $pushData = ['notification_enum' => PushEnum::REQUEST_CREATED, 'result' => (string)$result->toJson()];
 
             // dd($metaDriver->mobile_application_type);
-            dispatch(new SendPushNotification($title,$sub_title, $pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1));
+            dispatch(new SendPushNotification($title, $pushData, $metaDriver->device_info_hash, $metaDriver->mobile_application_type,1,$sub_title));
 
             // dd($selected_drivers);
             foreach ($selected_drivers as $key => $selected_driver) {

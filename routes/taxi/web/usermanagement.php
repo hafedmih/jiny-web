@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(['middleware' => ['auth']], function () {
     Route::get('user-management', [UserManagementController::class,'userManage'])->name('userManage');
+    Route::get('blocked_users', [UserManagementController::class,'blockedUsers',])->name('user_block');
     Route::get('usermanagement-edit/{slug}', [UserManagementController::class,'usermanagementEdit'])->name('usermanagementEdit');
     Route::get('usermanagement-delete/{slug}', [UserManagementController::class,'usermanagementDelete'])->name('usermanagementDelete');
     Route::get('usermanagement-active/{slug}', [UserManagementController::class,'usermanagementActive'])->name('usermanagementActive');

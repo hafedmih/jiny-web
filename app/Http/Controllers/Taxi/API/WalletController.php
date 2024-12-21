@@ -8,6 +8,7 @@ use App\Http\Controllers\API\BaseController as BaseController;
 use App\Models\taxi\Wallet;
 use App\Models\taxi\WalletTransaction;
 use App\Models\boilerplate\Country;
+use App\Models\taxi\Transaction;
 use DB;
 use App\Models\User;
 use File;
@@ -79,7 +80,10 @@ class WalletController extends BaseController
 
         $validator = Validator::make($request->all(),[
             'amount' => 'required',    
-            'purpose' => 'required', 
+            'purpose' => 'required',
+            'operation_id' => 'required',
+            'payment_status' => 'required',
+            'transaction_id' => 'required',
            
         ]);
         if($validator->fails()){
@@ -103,29 +107,52 @@ class WalletController extends BaseController
                 $driver_wallet = Wallet::where('user_id',$user->id)->first();
                 if (is_null($driver_wallet)) 
                 {
-                   $driver_wallet = new Wallet();
-                   $driver_wallet->user_id = $user->id;
-                   $driver_wallet->earned_amount = $request['amount'];
-                   $driver_wallet->balance_amount = $request['amount'];
-                   $driver_wallet->save();
+                    if($request->payment_status == "TS")
+                    {
+                        $transaction = new Transaction();
+                        $transaction->request_id = $request['request_id'];
+                        $transaction->user_id = $user->id;
+                        $transaction->transaction_id = $request['transaction_id'];
+                        $transaction->amount = $request['amount'];
+                        $transaction->payment_status = $request['payment_status'];
+                        $transaction->operation_id = $request['operation_id'];
+                        $transaction->is_paid = 1;
+                        $transaction->save();
+                      
+                        $driver_wallet = new Wallet();
+                        $driver_wallet->user_id = $user->id;
+                        $driver_wallet->earned_amount = $request['amount'];
+                        $driver_wallet->balance_amount = $request['amount'];
+                        $driver_wallet->save();
+
+                    }  
                 } 
                 else 
                 {
+                        $transaction = new Transaction();
+                        $transaction->request_id = $request['request_id'];
+                        $transaction->user_id = $user->id;
+                        $transaction->transaction_id = $request['transaction_id'];
+                        $transaction->amount = $request['amount'];
+                        $transaction->payment_status = $request['payment_status'];
+                        $transaction->operation_id = $request['operation_id'];
+                        $transaction->is_paid = 1;
+                        $transaction->save();
 
-                $driver_wallet->earned_amount	+= $request['amount'];
-                $driver_wallet->balance_amount	+= $request['amount'];
-                $driver_wallet->save();
+                        $driver_wallet->earned_amount	+= $request['amount'];
+                        $driver_wallet->balance_amount	+= $request['amount'];
+                        $driver_wallet->save();
                 }
 
-                $walletTransaction = new WalletTransaction();
-                $walletTransaction->wallet_id = $driver_wallet->id;
-                $walletTransaction->user_id   = $user->id;
-                $walletTransaction->amount	  = $request['amount'];
-                $walletTransaction->purpose   = $request['purpose']; 
-                $walletTransaction->save();
+                        $walletTransaction = new WalletTransaction();
+                        $walletTransaction->wallet_id = $driver_wallet->id;
+                        $walletTransaction->user_id   = $user->id;
+                        $walletTransaction->amount	  = $request['amount'];
+                        $walletTransaction->purpose   = $request['purpose']; 
+                        $walletTransaction->save();
 
-                $response['wallet']  = $driver_wallet;
-                $response['wallet_transaction'] = $walletTransaction; 
+                        $response['wallet']  = $driver_wallet;
+                        $response['wallet_transaction'] = $walletTransaction; 
 
             
 

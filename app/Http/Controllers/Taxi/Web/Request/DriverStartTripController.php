@@ -116,7 +116,7 @@ class DriverStartTripController extends BaseController
             $socketData = ['event' => 'request_'.$userModel->slug,'message' => $socket_data];
             sendSocketData($socketData);
 
-            dispatch(new SendPushNotification($title, $sub_title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0));
+            dispatch(new SendPushNotification($title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0,$sub_title));
     
             // $pushData = ['notification_enum' => PushEnum::DRIVER_STARTED_THE_TRIP, 'result' => (string) $request_result->toJson()];
           

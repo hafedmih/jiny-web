@@ -35,19 +35,129 @@ class RequestController extends BaseController
     use CommanFunctions;
     public function request(Request $request)
     {
-    	$requests_now = RequestModel::orderBy('created_at','desc')->where('is_later',0)->where('trip_type','LOCAL')->get();
-    	$requests_later = RequestModel::orderBy('created_at','desc')->where('is_later',1)->where('trip_type','LOCAL')->get();
-        $requests_rental_now = RequestModel::where('is_later',0)->where('trip_type','RENTAL')->orderby('created_at','desc')->get();
-        $requests_rental_later = RequestModel::where('is_later',1)->where('trip_type','RENTAL')->orderby('created_at','desc')->get();
-        $oustation_list = RequestModel::where('trip_type','OUTSTATION')->orderby('created_at','desc')->get();
-        $cancelled_trips = RequestModel::where('is_cancelled',1)->orderby('created_at','desc')->get();
-        $on_going_trips = RequestModel::where('is_trip_start',1)->where('is_completed',0)->where('is_cancelled',0)->orderby('created_at','desc')->get();
+    	// $requests_now = RequestModel::orderBy('created_at','desc')->where('is_later',0)->where('trip_type','LOCAL')->get();
+        $requests_now = RequestModel::orderBy('created_at','desc')->where('is_later',0)->where('trip_type','LOCAL');
+        $result=[
+            'requests_now' => $requests_now->paginate(10),
+            'requests_later' =>[],
+            'requests_rental_now' => [],
+            'requests_rental_later' => [],
+            'outstation_list' => [],
+            'cancelled_trips' => [],
+            'on_going_trips' => [],
+        ];
         
-        return view('taxi.requests.Request',['requests_now' => $requests_now, 'requests_later' => $requests_later,'requests_rental_now' => $requests_rental_now, 'requests_rental_later' => $requests_rental_later,'oustation_list' => $oustation_list,'cancelled_trips' => $cancelled_trips,'on_going_trips' => $on_going_trips]);
+        return view('taxi.requests.Request',['result' => $result]);
 
         // return view('taxi.requests.Request', compact('requests_now','requests_later'));
     }
 
+    public function requests_later(Request $request)
+    {
+    	$requests_later = RequestModel::orderBy('created_at','desc')->where('is_later',1)->where('trip_type','LOCAL');
+
+        $result=[
+            'requests_now' => [],
+            'requests_later' =>$requests_later->paginate(10),
+            'requests_rental_now' => [],
+            'requests_rental_later' => [],
+            'outstation_list' => [],
+            'cancelled_trips' => [],
+            'on_going_trips' => [],
+        ];
+        return view('taxi.requests.Request',['result' => $result]);
+
+    }
+    public function requests_rental_now(Request $request)
+    {
+    	 $requests_rental_now = RequestModel::where('is_later',0)->where('trip_type','RENTAL')->orderby('created_at','desc');
+
+        $result=[
+            'requests_now' => [],
+            'requests_later' =>[],
+            'requests_rental_now' => $requests_rental_now->paginate(10),
+            'requests_rental_later' => [],
+            'outstation_list' => [],
+            'cancelled_trips' => [],
+            'on_going_trips' => [],
+        ];
+
+
+          return view('taxi.requests.Request',['result' => $result]);
+
+    }
+    public function requests_rental_later(Request $request)
+    {
+    	$requests_rental_later = RequestModel::where('is_later',1)->where('trip_type','RENTAL')->orderby('created_at','desc');
+        
+        $result=[
+            'requests_now' => [],
+            'requests_later' =>[],
+            'requests_rental_now' => [],
+            'requests_rental_later' => $requests_rental_later->paginate(10),
+            'outstation_list' => [],
+            'cancelled_trips' => [],
+            'on_going_trips' => [],
+        ];
+
+                 return view('taxi.requests.Request',['result' => $result]);
+
+    }
+    public function outstation_list(Request $request)
+    {
+    	 $outstation_list = RequestModel::where('trip_type','OUTSTATION')->orderby('created_at','desc');
+         
+        $result=[
+            'requests_now' => [],
+            'requests_later' =>[],
+            'requests_rental_now' => [],
+            'requests_rental_later' => [],
+            'outstation_list' => $outstation_list->paginate(10),
+            'cancelled_trips' => [],
+            'on_going_trips' => [],
+        ];
+
+
+
+         return view('taxi.requests.Request',['result' => $result]);
+
+    }
+    public function cancelled_trips(Request $request)
+    {
+    	$cancelled_trips = RequestModel::where('is_cancelled',1)->orderby('created_at','desc');
+        
+        $result=[
+            'requests_now' => [],
+            'requests_later' =>[],
+            'requests_rental_now' => [],
+            'requests_rental_later' => [],
+            'outstation_list' => [],
+            'cancelled_trips' => $cancelled_trips->paginate(10),
+            'on_going_trips' => [],
+        ];
+
+
+         return view('taxi.requests.Request',['result' => $result]);
+
+    }
+    public function on_going_trips(Request $request)
+    {
+        $on_going_trips = RequestModel::where('is_trip_start',1)->where('is_completed',0)->where('is_cancelled',0)->orderby('created_at','desc');
+
+        $result=[
+            'requests_now' => [],
+            'requests_later' =>[],
+            'requests_rental_now' => [],
+            'requests_rental_later' => [],
+            'outstation_list' => [],
+            'cancelled_trips' => [],
+            'on_going_trips' => $on_going_trips->paginate(10),
+        ];
+
+
+                 return view('taxi.requests.Request',['result' => $result]);
+
+    }
     public function requestView($id)
     {
     	$requests = RequestModel::where('id',$id)->first();
@@ -167,7 +277,7 @@ class RequestController extends BaseController
     
             // $pushData = ['notification_enum' => PushEnum::DRIVER_END_THE_TRIP, 'result' => (string) $request_result->toJson()];
             $pushData = ['notification_enum' => PushEnum::DRIVER_END_THE_TRIP, 'result' => $request_result];
-            dispatch(new SendPushNotification($title,$sub_title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0));
+            dispatch(new SendPushNotification($title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0,$sub_title));
         }
 
         $user_refernce_amount = Settings::where('name','wallet_driver_refernce_amount')->first();
@@ -416,7 +526,7 @@ class RequestController extends BaseController
                 $socketData = ['event' => 'package_changed_'.$userModel->slug,'message' => $socket_data];
                 sendSocketData($socketData);
 
-                dispatch(new SendPushNotification($title, $sub_title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0));
+                dispatch(new SendPushNotification($title, $pushData, $userModel->device_info_hash, $userModel->mobile_application_type,0,$sub_title));
 
                 $driverModel = User::find($requests->driver_id);
                 if($driverModel){
@@ -449,7 +559,7 @@ class RequestController extends BaseController
                     $socketData = ['event' => 'package_changed_'.$driverModel->slug,'message' => $socket_data];
                     sendSocketData($socketData);
 
-                    dispatch(new SendPushNotification($title, $sub_title, $pushData, $driverModel->device_info_hash, $driverModel->mobile_application_type,0));
+                    dispatch(new SendPushNotification($title, $pushData, $driverModel->device_info_hash, $driverModel->mobile_application_type,0,$sub_title));
                 }
             }
 

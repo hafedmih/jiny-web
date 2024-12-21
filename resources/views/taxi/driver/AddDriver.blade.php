@@ -33,7 +33,7 @@
                                 <input type="text" name="first_name" id="first_name" class="form-control" placeholder="{{ __('first-name') }}">
                             </div>
                         </div>
-                        <div class="form-group row col-md-6 form-group row required">
+                        <div class="form-group row col-md-6 form-group row">
                             <label class="col-form-label col-lg-3">{{ __('last-name') }}</label>
                             <div class="col-lg-9">
                                 <input type="text" name="last_name" id="last_name" class="form-control" placeholder="{{ __('last-name') }}">
@@ -57,7 +57,7 @@
                                 <select class="form-control" name="country" id="country">
 			                        <option value="">{{ __('country') }}</option>
 			                        @foreach($country as $value)
-			                            <option value="{{$value->id}}" @if($value->code == 'IN') selected @endif>{{$value->name}} ({{$value->dial_code}})</option>
+			                            <option value="{{$value->id}}">{{$value->name}} ({{$value->dial_code}})</option>
                                     @endforeach
 		                        </select>
                             </div>
@@ -133,25 +133,19 @@
                                 <input type="text" name="car_colour" id="car_colour" class="form-control" placeholder="{{ __('car-colour') }}">
                             </div>
                         </div> -->
-                        <div class="form-group row required col-md-6">
-                            <label class="col-form-label col-lg-3">{{ __('service_type') }}</label>
+                       
+                        <div class="form-group row col-md-6 form-group row required">
+                            <label class="col-form-label col-lg-3">{{ __('service_location') }}</label>
                             <div class="col-lg-9">
-                                <!-- <label class="custom-control custom-control-secondary custom-checkbox mb-2">
-									<input type="checkbox" class="custom-control-input" name="service_type[]" value="OUTSTATION" id="outstation">
-									<span class="custom-control-label">{{ __('outstation') }}</span>
-								</label> -->
-
-								<label class="custom-control custom-control-danger custom-checkbox mb-2">
-									<input type="checkbox" class="custom-control-input" name="service_type[]" value="RENTAL" id="rental" >
-									<span class="custom-control-label">{{ __('rental') }}</span>
-								</label>
-
-								<label class="custom-control custom-control-success custom-checkbox mb-2">
-									<input type="checkbox" class="custom-control-input" name="service_type[]" value="LOCAL" id="local">
-									<span class="custom-control-label">{{ __('local') }}</span>
-								</label>
+                                <select class="form-control" name="service_location" id="service_location">
+			                        <option value="">{{ __('service_location') }}</option>
+                                    @foreach($zone as $value)
+			                            <option value="{{$value->id}}">{{$value->zone_name}}</option>
+                                    @endforeach
+		                        </select>
                             </div>
                         </div>
+                        
                         <div class="form-group row col-md-6">
                             <label class="col-form-label col-lg-3">{{ __('address') }}</label>
                             <div class="col-lg-9">
@@ -270,6 +264,7 @@
         formData.append('email',$('#email').val());
         formData.append('phone_number',$('#phone_number').val());
         formData.append('country',$('#country').val());
+        formData.append('service_location',$('#service_location').val());
         formData.append('gender',$('#gender').val());
         formData.append('city',$('#city').val());
         formData.append('state',$('#state').val());

@@ -111,16 +111,6 @@
                             </select>  
                         </div>
                     </div> 
-                    <!-- <div class="col-md-4">
-                        <div class="form-group required">
-                            <label class="col-form-label require">{{ __('types') }}</label>
-                            <select id="types_id" class="form-control" multiple="multiple" name="types[]">
-                                @foreach($vehicleList as $values)
-			                    <option value="{{$values->slug}}" @if(in_array($values->id,$promolist->types)) selected @endif>{{$values->vehicle_name}}</option>
-                                @endforeach
-			                </select>
-                        </div>
-                    </div> -->
                     <div class="col-md-4" id="amount_1">
                         <div class="form-group">
                             <label>{{ __('amount')}}</label>

@@ -30,7 +30,7 @@ class DocumentsGroup extends Model
     }
 
     public function getDocument() {
-        return $this->hasMany(Documents::class, 'group_by' ,'id');
+        return $this->hasMany(Documents::class, 'group_by' ,'id')->where('status',1);
     }
     
 

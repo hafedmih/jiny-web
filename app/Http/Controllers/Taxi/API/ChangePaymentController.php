@@ -94,7 +94,7 @@ class ChangePaymentController extends BaseController
                     sendSocketData($socketData);
 
                     $pushData = ['notification_enum' => PushEnum::USER_PAYMENT_CHANGE];
-                    dispatch(new SendPushNotification($title, $sub_title,$pushData, $user->device_info_hash, $user->mobile_application_type,0));
+                    dispatch(new SendPushNotification($title,$pushData, $user->device_info_hash, $user->mobile_application_type,0,$sub_title));
 
 
                     $title = Null;
@@ -131,7 +131,7 @@ class ChangePaymentController extends BaseController
                     sendSocketData($socketData);
 
                     $pushData = ['notification_enum' => PushEnum::USER_PAYMENT_CHANGE];
-                    dispatch(new SendPushNotification($title, $sub_title,$pushData, $get_driverrequest->driverDetail->device_info_hash, $get_driverrequest->userDetail->mobile_application_type,0));
+                    dispatch(new SendPushNotification($title,$pushData, $get_driverrequest->driverDetail->device_info_hash, $get_driverrequest->userDetail->mobile_application_type,0,$sub_title));
                 }
 
 

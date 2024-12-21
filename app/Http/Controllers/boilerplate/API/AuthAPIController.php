@@ -181,7 +181,7 @@ class AuthAPIController extends BaseController
             $validator = Validator::make($request->all(), [
                 'phone_number' => 'required',
                 'country_code' => 'required',
-                'otp' => 'required',
+               // 'otp' => 'required',
                 'device_info_hash' => 'required',
                 'is_primary' => 'required'
             ]);
@@ -219,11 +219,11 @@ class AuthAPIController extends BaseController
             //         }
             //     }
             // }else{
-                $sendedOtp = UserOtp::where('phone_number',$request->phone_number)->where('country_code',$request->country_code)->where('otp',$request->otp)->first();
-                // dd($sendedOtp);
-                if(is_null($sendedOtp)){
-                    return $this->sendError('Wrong Otp',[],401);
-                }
+                // $sendedOtp = UserOtp::where('phone_number',$request->phone_number)->where('country_code',$request->country_code)->where('otp',$request->otp)->first();
+                // // dd($sendedOtp);
+                // if(is_null($sendedOtp)){
+                //     return $this->sendError('Wrong Otp',[],401);
+                // }
                 
             // } 
             // Check Data In Firebase
@@ -238,6 +238,7 @@ class AuthAPIController extends BaseController
             // if($user->device_info_hash != $request->device_info_hash){
                 // if($request->is_primary == true){
                     $user->device_info_hash = $request->device_info_hash;
+                    $user->mobile_application_type = $request->device_type;
                     $user->update();
                 // }else{
                 //     $data['error_code'] = 1001;
@@ -256,7 +257,7 @@ class AuthAPIController extends BaseController
             $data['client_id'] = $fetchOauth->id;
             $data['client_secret'] = $fetchOauth->secret;
             $data['new_user'] = false;
-            $sendedOtp->delete();
+            //$sendedOtp->delete();
             DB::commit();
             return $this->sendResponse('Data Found',$data,200); 
             

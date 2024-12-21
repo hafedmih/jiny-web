@@ -60,6 +60,8 @@ class RequestBillTransformer extends TransformerAbstract
             'package_hours'             => $bill->package_hours,
             'package_km'                => $bill->package_km,
             'pending_km'                => $bill->pending_km,
+            'wallet_credit_amount'      => $bill->wallet_credit_amount,
+            'cash_on_hand'              => $bill->cash_on_hand,
             
         ];
 

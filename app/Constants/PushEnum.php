@@ -10,7 +10,10 @@ class PushEnum
     const NO_DRIVER_FOUND ='no_driver_found';
     const REQUEST_CANCELLED_BY_USER = 'request_cancelled_by_user';
     const REQUEST_CANCELLED_BY_DRIVER ='request_cancelled_by_driver';
+    const REQUEST_CANCELLED_BY_DRIVER_REJECTED ='request_cancelled_by_driver_rejected';
     const REQUEST_CANCELLED_BY_DISPATCHER ='request_cancelled_by_dispatcher';
+    const DISPATCHER_REQUESTED_TO_CLOSE_THE_TRIP ='dispatcher_requested_to_close_the_trip';
+
 
     const DRIVER_ARRIVED = 'driver_arrived';
     const DRIVER_STARTED_THE_TRIP = 'driver_started_the_trip';
@@ -31,8 +34,12 @@ class PushEnum
     const PAYMENT_CHANGE = 'payment_change';
     const USER_PAYMENT_DONE = 'user_payment_done';
     const PAYMENT_DONE = 'payment_done';
+    const PAYMENT_FAIL = 'payment_failed';
+    const PAYMENT_PENDING = 'payment_pending';
     const ALREADY_DRIVER_ACCEPT_TRIP = 'already_driver_accept_trip';
-
+    const MONEY_BACK = 'money_back';
+    const TRIP_AMOUNT_CREDIT = 'trip_amount_credit';
+    const TRIP_AMOUNT_DEBIT = 'trip_amount_debit';
 
 
 }
