@@ -29,7 +29,8 @@ class Kernel extends ConsoleKernel
         GetDriverToOffline::class,
         ChangeDriverLogs::class,
         NightUploadPhoto::class,
-        DocumentExpiry::class,
+	DocumentExpiry::class,
+	 \App\Console\Commands\ResizeImages::class
     ];
 
     /**
